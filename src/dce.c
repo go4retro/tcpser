@@ -5,7 +5,10 @@
 #include "debug.h"
 #include "serial.h"
 #include "modem_core.h"
+#include "ip232.h"      // needs modem_core.h
 #include "dce.h"
+
+
 
 int dce_init_config(modem_config *cfg) {
   return 0;
@@ -13,10 +16,18 @@ int dce_init_config(modem_config *cfg) {
 
 
 int dce_init_conn(modem_config* cfg) {
+  int rc;
+
   LOG_ENTER();
-  cfg->dce_data.fd=ser_init_conn(cfg->dce_data.tty,cfg->dte_speed);
+  if (cfg->dce_data.is_ip232) {
+    rc=ip232_init_conn(cfg);
+  } else {
+    rc=ser_init_conn(cfg->dce_data.tty,cfg->dte_speed);
+    cfg->dce_data.fd=rc;
+  }
+
   LOG_EXIT();
-  return cfg->dce_data.fd;
+  return rc;
 }
 
 
@@ -38,7 +49,11 @@ int dce_set_flow_control(modem_config *cfg,int opts) {
     }
   }
 
-  rc=ser_set_flow_control(cfg->dce_data.fd,status);
+  if (cfg->dce_data.is_ip232) {
+    rc=ip232_set_flow_control(cfg,status);
+  } else {
+    rc=ser_set_flow_control(cfg->dce_data.fd,status);
+  }
 
   LOG_EXIT()
   return rc;
@@ -63,7 +78,12 @@ int dce_set_control_lines(modem_config *cfg,int state) {
     LOG(LOG_ALL,"Setting DCD pin low");
     //status &= ~TIOCM_DTR;
   }
-  rc = ser_set_control_lines(cfg->dce_data.fd,status);
+
+  if (cfg->dce_data.is_ip232) {
+    rc = ip232_set_control_lines(cfg,status);
+  } else {
+    rc = ser_set_control_lines(cfg->dce_data.fd,status);
+  }
 
   LOG_EXIT();
   return rc;
@@ -73,7 +93,11 @@ int dce_get_control_lines(modem_config *cfg) {
   int status;
   int rc_status;
 
-  status = ser_get_control_lines(cfg->dce_data.fd);
+  if (cfg->dce_data.is_ip232) {
+    status = ip232_get_control_lines(cfg);
+  } else {
+    status = ser_get_control_lines(cfg->dce_data.fd);
+  }
 
   if(status > -1) {
     rc_status=((status & TIOCM_DSR) != 0?MDM_CL_DTR_HIGH:0);
@@ -102,10 +126,16 @@ int dce_check_control_lines(modem_config *cfg) {
 
 
 int dce_write(modem_config *cfg,unsigned char data[], int len) {
+  if (cfg->dce_data.is_ip232) {
+      return ip232_write(cfg,data,len);
+  }
   return ser_write(cfg->dce_data.fd,data,len);
 }
 
 int dce_read(modem_config *cfg, unsigned char data[], int len) {
+  if (cfg->dce_data.is_ip232) {
+      return ip232_read(cfg,data,len);
+  }
   return ser_read(cfg->dce_data.fd,data,len);
 }
 

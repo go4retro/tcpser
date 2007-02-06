@@ -19,7 +19,8 @@ void print_help(unsigned char* name) {
   fprintf(stderr, "  The following can be repeated for each modem desired\n");
   fprintf(stderr, "  (-s, -S, and -i will apply to any subsequent device if not set again)\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  -d   serial device (defaults to /dev/ttyS0)\n");
+  fprintf(stderr, "  -d   serial device (e.g. /dev/ttyS0). Cannot be used with -v\n");
+  fprintf(stderr, "  -v   tcp port for VICE RS232 (e.g. 25232). Cannot be used with -d\n");
   fprintf(stderr, "  -s   serial port speed (defaults to 38400)\n");
   fprintf(stderr, "  -S   speed modem will report (defaults to -s value)\n");
   fprintf(stderr, "  -I   invert DCD pin\n");
@@ -49,18 +50,17 @@ int init(int argc,
   int opt=0;
   int trace_flags=0;
   unsigned char* tok;
-  unsigned char* tty=NULL;
   int dce_set=FALSE;
+  int tty_set=FALSE;
 
   LOG_ENTER();
   *port=6400;
   mdm_init_config(&cfg[0]);
   cfg[0].dte_speed=38400;
   cfg[0].dce_speed=38400;
-  //strncpy(cfg[0].dce_data.tty,"/dev/ttyS0",sizeof(cfg[0].dce_data.tty));
 
   while(opt>-1 && i < max_modem) {
-    opt=getopt(argc,argv,"p:s:S:d:hw:i:Il:L:t:n:a:A:c:C:N:B:T:D:");
+    opt=getopt(argc,argv,"p:s:S:d:v:hw:i:Il:L:t:n:a:A:c:C:N:B:T:D:");
     switch(opt) {
       case 't':
         trace_flags=log_get_trace_flags();
@@ -134,22 +134,29 @@ int init(int argc,
         print_help(argv[0]);
         break;
       case 'd':
-        if(tty != NULL) {
-          strncpy(cfg[i].dce_data.tty,tty,sizeof(cfg[i].dce_data.tty));
-          i++;
-          dce_set=FALSE;
-          mdm_init_config(&cfg[i]);
-          cfg[i].dte_speed=cfg[i-1].dte_speed;
-          cfg[i].dce_speed=cfg[i-1].dce_speed;
-          strncpy(cfg[i].config0,cfg[i-1].config0,sizeof(cfg[i].config0));
-          strncpy(cfg[i].data.local_connect,cfg[i-1].data.local_connect,sizeof(cfg[i].data.local_connect));
-          strncpy(cfg[i].data.remote_connect,cfg[i-1].data.remote_connect,sizeof(cfg[i].data.remote_connect));
-          strncpy(cfg[i].data.local_answer,cfg[i-1].data.local_answer,sizeof(cfg[i].data.local_answer));
-          strncpy(cfg[i].data.remote_answer,cfg[i-1].data.remote_answer,sizeof(cfg[i].data.remote_answer));
-          strncpy(cfg[i].data.no_answer,cfg[i-1].data.no_answer,sizeof(cfg[i].data.no_answer));
-          strncpy(cfg[i].data.inactive,cfg[i-1].data.inactive,sizeof(cfg[i].data.inactive));
+      case 'v':
+        if (tty_set) {
+          if (++i < max_modem) {
+            dce_set=FALSE;
+            mdm_init_config(&cfg[i]);
+            cfg[i].dte_speed=cfg[i-1].dte_speed;
+            cfg[i].dce_speed=cfg[i-1].dce_speed;
+            cfg[i].dce_data.is_ip232=FALSE;
+            strncpy(cfg[i].config0,cfg[i-1].config0,sizeof(cfg[i].config0));
+            strncpy(cfg[i].data.local_connect,cfg[i-1].data.local_connect,sizeof(cfg[i].data.local_connect));
+            strncpy(cfg[i].data.remote_connect,cfg[i-1].data.remote_connect,sizeof(cfg[i].data.remote_connect));
+            strncpy(cfg[i].data.local_answer,cfg[i-1].data.local_answer,sizeof(cfg[i].data.local_answer));
+            strncpy(cfg[i].data.remote_answer,cfg[i-1].data.remote_answer,sizeof(cfg[i].data.remote_answer));
+            strncpy(cfg[i].data.no_answer,cfg[i-1].data.no_answer,sizeof(cfg[i].data.no_answer));
+            strncpy(cfg[i].data.inactive,cfg[i-1].data.inactive,sizeof(cfg[i].data.inactive));
+          } else {
+            LOG(LOG_WARN,"Maximum modems defined - ignoring extra");
+            break;
+          }
         }
-        tty=optarg;
+        strncpy(cfg[i].dce_data.tty,optarg,sizeof(cfg[i].dce_data.tty));
+        cfg[i].dce_data.is_ip232=('v'==opt);
+        tty_set=TRUE;
         break;
       case 'S':
         cfg[i].dce_speed=atoi(optarg);
@@ -162,11 +169,10 @@ int init(int argc,
     }
   }
 
-  if(tty!=NULL && i<max_modem) {
-    strncpy(cfg[i].dce_data.tty,tty,sizeof(cfg[i].dce_data.tty));
-    i++;
-  }
-  if(i==0) {
+  if (tty_set) {
+    if (i < max_modem)
+      ++i;
+  } else {
     // no modems defined
     LOG(LOG_FATAL,"No modems defined");
     print_help(argv[0]);

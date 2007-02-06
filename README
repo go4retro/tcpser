@@ -1,3 +1,4 @@
+
 README
 
 Application:
@@ -35,16 +36,32 @@ Win32:  make -f Makefile.win32
 Note that at least the cygwin1.dll library is required to operate tcpser under 
 Windows.  I recommend downloading a recent version from www.cygwin.com
 
+This version of tcpser supports setting up an ip232 port instead of using a
+real serial port.  This is for use with the version of WinVICE 1.19 that has
+the ACIA fix and ip232 support, allowing WinVICE to use tcpser as if it was
+connected via a serial cable.
+
 Operation:
 
-tcpser -d <dev> -s <speed> -l <leg_level> -t <tracing options> ...
+tcpser -d <dev> -s <speed> -l <log_level> -t <tracing options> ...
 
-sample: tcpser -d /dev/ttyS0 -s 38400 -l 7 -tsSiI -i "s0=1" -p 6400
+-or-
+
+tcpser -v <port> -s <speed> -l <log_level> -t <tracing options> ...
+
+samples:
+
+tcpser -d /dev/ttyS0 -s 38400 -l 7 -tsSiI -i "s0=1" -p 6400
 
 Will start tcpser on ttyS0 at 38400 bps, level 7 logging, tracing of
 inbound serial, outbound serial, inbound IP, outbound IP, init
 modem to answer after 1 ring, and listen for incoming connections on port
 6400
+
+tcpser -v 25232 -s 38400 -l 4 -p 23
+
+Will set up an ip232 port at 25232, report 38400 bps connections,
+level 4 logging, and listen for incoming connections on port 23.
 
 tcpser -h will provide additional information
 
@@ -60,17 +77,16 @@ For connect and answer, there are separate options for sending a file to the
 local serial connection (-c, -a) and the remote IP connection (-C, -A).  
 
 If tcpser connects to a telnet service, tcpser will negotiate the connection
-using the telnet protocol.  Note though that telnet connections are NOT 8-bit
-clean, meaning file transfers will not likely work over such a connection.
-Normal non-telnet connections are 8-bit clean and file transfers should 
-operate correctly.
+using the telnet protocol.  If telnet is detected, then tcpser will support
+RFC 856 (Telnet Binary Transmission), so that 8-bit file transfers will
+work correctly.
 
-tcpser can be configured to support multiple serial ports on one TCP/IP port
-Simply repeat the -s and -d parameters on the command line for each serial
-port to be configured.  Options s,S,a,A,c,C,I, and T will "propagate" to
-subsequent connections, unless they are redefined.  Defaults for s and S are
-38400.  This configuration enables the operation of a multi-line BBS on one
-TCP/IP port.
+tcpser can be configured to support multiple serial/ip232 ports on one TCP/IP
+port. Simply repeat the -s and -d/-v parameters on the command line for each
+serial/ip232 port to be configured.  Options s,S,a,A,c,C,I, and T will
+"propagate" to subsequent connections, unless they are redefined.  Defaults
+for s and S are 38400.  This configuration enables the operation of a
+multi-line BBS on one TCP/IP port.
 
 Frequently used addresses can be configured in the "phonebook", like so:
 
@@ -184,20 +200,12 @@ Help:
 tcpser has a small but active user community.  Help can be found by asking a 
 question in comp.sys.cbm, on the NEWNet #c64friends IRC channel, or by emailing
 the author.
-
 -----------------------------------
 Jim Brain
 brain@jbrain.com
 www.jbrain.com
 
 
-
-
-
-
-
-
-
-
-
+The ip232 support was added by Anthony Tolle.  For questions regarding that,
+e-mail atolle@gcns.com
 

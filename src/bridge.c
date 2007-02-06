@@ -12,12 +12,17 @@
 #include "nvt.h"
 #include "modem_core.h"
 #include "ip.h"
-#include "serial.h"
+//#include "serial.h"
 #include "getcmd.h"
 
 #include "bridge.h"
 
+
 const unsigned char MDM_NO_ANSWER[] = "NO ANSWER\n";
+
+//const unsigned char CONNECT_NOTICE[] = "\r\nCONNECTING...\r\n";
+
+//const unsigned char TELNET_NOTICE[] = "TELNET MODE ENABLED\r\n";
 
 int accept_connection(modem_config* cfg) {
   LOG_ENTER();
@@ -30,6 +35,7 @@ int accept_connection(modem_config* cfg) {
       mdm_off_hook(cfg);
       cfg->cmd_mode=TRUE;
     } else {
+      //line_write(cfg,(unsigned char*)CONNECT_NOTICE,strlen(CONNECT_NOTICE));
       cfg->rings=0;
       mdm_send_ring(cfg);
     }
@@ -46,12 +52,14 @@ int parse_ip_data(modem_config *cfg, unsigned char* data, int len) {
   // I'm going to cheat and assume it comes in chunks.
   int i=0;
   unsigned char ch;
-  unsigned char text[1024];
+  unsigned char text[1025];
   int text_len=0;
 
   if(cfg->line_data.first_char==TRUE) {
     cfg->line_data.first_char=FALSE;
-    if(data[0] == 0xff) {
+    if((data[0] == 0xff) || (data[0] == 0x1a)) {
+      //line_write(cfg,(unsigned char*)TELNET_NOTICE,strlen(TELNET_NOTICE));
+      LOG(LOG_INFO,"Detected telnet");
       cfg->line_data.is_telnet=TRUE;
     } 
   }
@@ -68,28 +76,33 @@ int parse_ip_data(modem_config *cfg, unsigned char* data, int len) {
           case NVT_WONT:
           case NVT_DONT:
             /// again, overflow issues...
-            parse_nvt_command(cfg->line_data.fd,ch,data[i+2]);
+            LOG(LOG_INFO,"Parsing nvt command");
+            parse_nvt_command(cfg->line_data.fd, &cfg->line_data.nvt_data,ch,data[i+2]);
             i+=3;
             break;
           case NVT_SB:      // sub negotiation
             // again, overflow...
-            i+=parse_nvt_subcommand(cfg->line_data.fd, cfg->line_data.nvt_data,data + i,len);
+            i+=parse_nvt_subcommand(cfg->line_data.fd, &cfg->line_data.nvt_data,data + i,len - i);
             break;
+          case NVT_IAC:
+            if (cfg->line_data.nvt_data.binary_recv)
+              text[text_len++] = NVT_IAC;
+              // fall through to skip this sequence
           default:
             // ignore...
             i+=2;
         }
       } else {
         text[text_len++]=data[i++];
-        if(text_len == 1024) {
-          text[text_len] = 0;
-          // write to serial...
-          mdm_write(cfg,text,text_len);
-          text_len=0;
-        }
+      }
+      if(text_len == 1024) {
+        text[text_len] = 0;
+        // write to serial...
+        mdm_write(cfg,text,text_len);
+        text_len=0;
       }
     }
-    if(text_len> 0) {
+    if(text_len) {
       text[text_len] = 0;
       // write to serial...
       mdm_write(cfg,text,text_len);

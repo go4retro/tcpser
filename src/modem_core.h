@@ -74,9 +74,16 @@ typedef struct x_config {
 } x_config;
 
 typedef struct dce_config {
+  int is_ip232;
   unsigned char tty[256];
   int first_char;
   int fd;
+  int dp[2][2];
+  int sSocket;
+  int ip232_is_connected;
+  int ip232_dtr;
+  int ip232_dcd;
+  int ip232_iac;
 } dce_config;
 
 typedef struct modem_config {

@@ -11,8 +11,8 @@
 #define NVT_DONT 254
 #define NVT_IAC 255
 #define NVT_WILL_RESP 251
-#define NVT_WONT_RESP 253
-#define NVT_DO_RESP 252
+#define NVT_WONT_RESP 252
+#define NVT_DO_RESP 253
 #define NVT_DONT_RESP 254
 
 #define NVT_OPT_TRANSMIT_BINARY 0
@@ -30,17 +30,25 @@
 #define NVT_OPT_ENVIRON 36
 #define NVT_OPT_NEW_ENVIRON 39
 
+#define NVT_SB_IS 0
+#define NVT_SB_SEND 1
+
 #ifndef TRUE
 #define TRUE 1
 #define FALSE 0
 #endif
 
 typedef struct nvt_vars {
-  unsigned char term[255];
+  int binary_xmit;
+  int binary_recv;
+  unsigned char term[256];
 } nvt_vars;
 
+
 unsigned char get_nvt_cmd_response(unsigned char action, unsigned char type);
-int parse_nvt_subcommand(int fd, nvt_vars vars , unsigned char * data, int len);
-int parse_nvt_command(int fd, unsigned char action, unsigned char opt);
+int parse_nvt_subcommand(int fd, nvt_vars *vars , unsigned char * data, int len);
+int parse_nvt_command(int fd, nvt_vars *vars, unsigned char action, unsigned char opt);
+int nvt_init_config(nvt_vars *vars);
+int send_nvt_command(int fd, nvt_vars *vars, unsigned char action, unsigned char opt);
 
 #endif
