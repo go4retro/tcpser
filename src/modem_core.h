@@ -31,14 +31,39 @@
 #define MDM_CL_CTS_HIGH 4
 #define MDM_CL_DTR_LOW 0
 #define MDM_CL_DTR_HIGH 8
-
+#define MDM_FC_RTS 1
+#define MDM_FC_XON 2
 
 #ifndef TRUE
 #define TRUE 1
 #define FALSE 0
 #endif
 
-#include "modem_data.h"
+#include "nvt.h"
+
+
+typedef struct line_config {
+  int valid_conn;
+  int fd;
+  int sfd;
+  int is_telnet;
+  int first_char;
+  nvt_vars nvt_data;
+} line_config;
+
+typedef struct x_config {
+  int mp[2][2];
+  int cp[2][2];
+  int wp[2][2];
+  char no_answer[255];
+  char connect[255];
+  char inactive[255];
+} x_config;
+
+typedef struct dce_config {
+  char tty[255];
+  int fd;
+} dce_config;
 
 typedef struct modem_config {
   // master configuration information
@@ -107,18 +132,8 @@ int mdm_parse_data(modem_config* cfg,char* data, int len);
 int mdm_handle_timeout(modem_config* cfg);
 int mdm_send_ring(modem_config *cfg);
 
-int dce_init_config(modem_config *cfg);
-int dce_set_control_lines(modem_config *cfg, int state);
-int dce_write(modem_config *cfg,char* data,int len);
-int dce_check_for_break(modem_config *cfg, char ch, int chars_left);
-
-int sh_init_config(modem_config *cfg);
-
-int line_init_config(modem_config *cfg);
-int line_write(modem_config *cfg,char* data,int len);
-int line_listen(modem_config *cfg);
-int line_off_hook(modem_config *cfg);
-int line_connect(modem_config *cfg);
-int line_disconnect(modem_config *cfg);
+#include "line.h"
+#include "shared.h"
+#include "dce.h"
 
 #endif

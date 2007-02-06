@@ -1,13 +1,14 @@
 SRC=src
-SRCS = $(SRC)/main.c $(SRC)/bridge.c $(SRC)/debug.c $(SRC)/getcmd.c $(SRC)/ip.c $(SRC)/init.c $(SRC)/modem_core.c $(SRC)/nvt.c $(SRC)/serial.c $(SRC)/util.c $(SRC)/phone_book.c $(SRC)/shared.c
-OBJS = $(SRC)/main.o $(SRC)/bridge.o $(SRC)/debug.o $(SRC)/getcmd.o $(SRC)/ip.o $(SRC)/init.o $(SRC)/modem_core.o $(SRC)/nvt.o $(SRC)/serial.o $(SRC)/util.o $(SRC)/phone_book.o $(SRC)/shared.o
+SRCS = $(SRC)/tcpmdm.c $(SRC)/bridge.c $(SRC)/debug.c $(SRC)/getcmd.c $(SRC)/ip.c $(SRC)/init.c $(SRC)/modem_core.c $(SRC)/nvt.c $(SRC)/serial.c $(SRC)/util.c $(SRC)/phone_book.c $(SRC)/shared.c $(SRC)/tcpser.c $(SRC)/line.c $(SRC)/dce.c
+SEROBJS = $(SRC)/bridge.o $(SRC)/debug.o $(SRC)/getcmd.o $(SRC)/ip.o $(SRC)/init.o $(SRC)/modem_core.o $(SRC)/nvt.o $(SRC)/serial.o $(SRC)/util.o $(SRC)/phone_book.o $(SRC)/shared.o $(SRC)/tcpser.o $(SRC)/dce.o $(SRC)/line.o
+MDMOBJS = $(SRC)/debug.o $(SRC)/ip.o $(SRC)/serial.o $(SRC)/util.o $(SRC)/tcpmdm.o
 CC = gcc
 DEF = -DWIN32
 CFLAGS = -O $(DEF) -ggdb
 LDFLAGS = -s
 DEPEND = makedepend $(DEF) $(CFLAGS)
 
-all:	tcpser
+all:	tcpser tcpmdm
 
 #.o.c:
 #	$(CC) $(CFLAGS) -c $*.c
@@ -15,125 +16,18 @@ all:	tcpser
 $(SRCS):
 	$(CC) $(CFLAGS) -c $*.c
 
-tcpser: $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $(OBJS)
+tcpmdm: $(MDMOBJS)
+	$(CC) $(LDFLAGS) -o $@ $(MDMOBJS)
+
+tcpser: $(SEROBJS)
+	$(CC) $(LDFLAGS) -o $@ $(SEROBJS)
 
 depend: $(SRCS)
 	$(DEPEND) $(SRCS)
 
 clean:
-	-rm tcpser $(SRC)/*~ $(SRC)/*.o $(SRC)/*.bak core
+	-rm tcpser.exe tcpmdm.exe *.bak $(SRC)/*~ $(SRC)/*.o $(SRC)/*.bak core
 
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-src/main.o: /usr/include/stdio.h /usr/include/_ansi.h /usr/include/newlib.h
-src/main.o: /usr/include/sys/config.h /usr/include/machine/ieeefp.h
-src/main.o: /usr/lib/gcc-lib/i686-pc-cygwin/3.3.1/include/stddef.h
-src/main.o: /usr/lib/gcc-lib/i686-pc-cygwin/3.3.1/include/stdarg.h
-src/main.o: /usr/include/sys/reent.h /usr/include/sys/_types.h
-src/main.o: /usr/include/sys/types.h /usr/include/machine/types.h
-src/main.o: /usr/include/sys/stdio.h /usr/include/sys/param.h
-src/main.o: /usr/include/limits.h /usr/include/pthread.h
-src/main.o: /usr/include/signal.h /usr/include/sys/signal.h
-src/main.o: /usr/include/sys/features.h /usr/include/sched.h
-src/main.o: /usr/include/time.h /usr/include/machine/time.h src/init.h
-src/main.o: src/modem_core.h src/modem_data.h src/nvt.h src/ip.h src/bridge.h
-src/main.o: src/phone_book.h src/util.h src/debug.h /usr/include/string.h
-src/main.o: /usr/include/errno.h /usr/include/sys/errno.h src/main.h
-src/bridge.o: /usr/include/stdio.h /usr/include/_ansi.h /usr/include/newlib.h
-src/bridge.o: /usr/include/sys/config.h /usr/include/machine/ieeefp.h
-src/bridge.o: /usr/lib/gcc-lib/i686-pc-cygwin/3.3.1/include/stddef.h
-src/bridge.o: /usr/lib/gcc-lib/i686-pc-cygwin/3.3.1/include/stdarg.h
-src/bridge.o: /usr/include/sys/reent.h /usr/include/sys/_types.h
-src/bridge.o: /usr/include/sys/types.h /usr/include/machine/types.h
-src/bridge.o: /usr/include/sys/stdio.h /usr/include/sys/param.h
-src/bridge.o: /usr/include/limits.h /usr/include/sys/select.h
-src/bridge.o: /usr/include/sys/cdefs.h /usr/include/sys/time.h
-src/bridge.o: /usr/include/time.h /usr/include/machine/time.h
-src/bridge.o: /usr/include/sys/features.h /usr/include/pthread.h
-src/bridge.o: /usr/include/signal.h /usr/include/sys/signal.h
-src/bridge.o: /usr/include/sched.h src/debug.h /usr/include/string.h
-src/bridge.o: /usr/include/errno.h /usr/include/sys/errno.h src/nvt.h
-src/bridge.o: src/modem_core.h src/modem_data.h src/ip.h src/serial.h
-src/bridge.o: src/getcmd.h src/bridge.h
-src/debug.o: /usr/include/time.h /usr/include/_ansi.h /usr/include/newlib.h
-src/debug.o: /usr/include/sys/config.h /usr/include/machine/ieeefp.h
-src/debug.o: /usr/include/sys/reent.h /usr/include/sys/_types.h
-src/debug.o: /usr/lib/gcc-lib/i686-pc-cygwin/3.3.1/include/stddef.h
-src/debug.o: /usr/include/machine/time.h /usr/include/sys/types.h
-src/debug.o: /usr/include/machine/types.h /usr/include/sys/features.h
-src/debug.o: /usr/include/stdio.h
-src/debug.o: /usr/lib/gcc-lib/i686-pc-cygwin/3.3.1/include/stdarg.h
-src/debug.o: /usr/include/sys/stdio.h src/debug.h /usr/include/string.h
-src/debug.o: /usr/include/errno.h /usr/include/sys/errno.h
-src/getcmd.o: /usr/include/stdio.h /usr/include/_ansi.h /usr/include/newlib.h
-src/getcmd.o: /usr/include/sys/config.h /usr/include/machine/ieeefp.h
-src/getcmd.o: /usr/lib/gcc-lib/i686-pc-cygwin/3.3.1/include/stddef.h
-src/getcmd.o: /usr/lib/gcc-lib/i686-pc-cygwin/3.3.1/include/stdarg.h
-src/getcmd.o: /usr/include/sys/reent.h /usr/include/sys/_types.h
-src/getcmd.o: /usr/include/sys/types.h /usr/include/machine/types.h
-src/getcmd.o: /usr/include/sys/stdio.h src/getcmd.h
-src/ip.o: /usr/include/sys/socket.h /usr/include/features.h
-src/ip.o: /usr/include/sys/features.h /usr/include/cygwin/socket.h
-src/ip.o: /usr/include/asm/socket.h /usr/include/cygwin/if.h
-src/ip.o: /usr/include/sys/types.h /usr/include/_ansi.h /usr/include/newlib.h
-src/ip.o: /usr/include/sys/config.h /usr/include/machine/ieeefp.h
-src/ip.o: /usr/include/sys/_types.h
-src/ip.o: /usr/lib/gcc-lib/i686-pc-cygwin/3.3.1/include/stddef.h
-src/ip.o: /usr/include/machine/types.h /usr/include/cygwin/sockios.h
-src/ip.o: /usr/include/cygwin/uio.h /usr/include/sys/time.h
-src/ip.o: /usr/include/netinet/in.h /usr/include/cygwin/in.h
-src/ip.o: /usr/include/stdint.h /usr/include/asm/byteorder.h
-src/ip.o: /usr/include/arpa/inet.h /usr/include/netdb.h src/debug.h
-src/ip.o: /usr/include/stdio.h
-src/ip.o: /usr/lib/gcc-lib/i686-pc-cygwin/3.3.1/include/stdarg.h
-src/ip.o: /usr/include/sys/reent.h /usr/include/sys/stdio.h
-src/ip.o: /usr/include/string.h /usr/include/errno.h /usr/include/sys/errno.h
-src/ip.o: src/modem_core.h src/modem_data.h src/nvt.h src/phone_book.h
-src/ip.o: src/ip.h src/bridge.h
-src/init.o: /usr/include/stdio.h /usr/include/_ansi.h /usr/include/newlib.h
-src/init.o: /usr/include/sys/config.h /usr/include/machine/ieeefp.h
-src/init.o: /usr/lib/gcc-lib/i686-pc-cygwin/3.3.1/include/stddef.h
-src/init.o: /usr/lib/gcc-lib/i686-pc-cygwin/3.3.1/include/stdarg.h
-src/init.o: /usr/include/sys/reent.h /usr/include/sys/_types.h
-src/init.o: /usr/include/sys/types.h /usr/include/machine/types.h
-src/init.o: /usr/include/sys/stdio.h /usr/include/unistd.h
-src/init.o: /usr/include/sys/unistd.h /usr/include/sys/features.h src/debug.h
-src/init.o: /usr/include/string.h /usr/include/errno.h
-src/init.o: /usr/include/sys/errno.h src/init.h src/modem_core.h
-src/init.o: src/modem_data.h src/nvt.h
-src/modem_core.o: src/getcmd.h src/debug.h /usr/include/stdio.h
-src/modem_core.o: /usr/include/_ansi.h /usr/include/newlib.h
-src/modem_core.o: /usr/include/sys/config.h /usr/include/machine/ieeefp.h
-src/modem_core.o: /usr/lib/gcc-lib/i686-pc-cygwin/3.3.1/include/stddef.h
-src/modem_core.o: /usr/lib/gcc-lib/i686-pc-cygwin/3.3.1/include/stdarg.h
-src/modem_core.o: /usr/include/sys/reent.h /usr/include/sys/_types.h
-src/modem_core.o: /usr/include/sys/types.h /usr/include/machine/types.h
-src/modem_core.o: /usr/include/sys/stdio.h /usr/include/string.h
-src/modem_core.o: /usr/include/errno.h /usr/include/sys/errno.h
-src/modem_core.o: src/modem_data.h src/nvt.h src/modem_core.h
-src/nvt.o: src/ip.h src/modem_data.h src/nvt.h
-src/serial.o: /usr/include/termios.h /usr/include/sys/termios.h
-src/serial.o: /usr/include/stdio.h /usr/include/_ansi.h /usr/include/newlib.h
-src/serial.o: /usr/include/sys/config.h /usr/include/machine/ieeefp.h
-src/serial.o: /usr/lib/gcc-lib/i686-pc-cygwin/3.3.1/include/stddef.h
-src/serial.o: /usr/lib/gcc-lib/i686-pc-cygwin/3.3.1/include/stdarg.h
-src/serial.o: /usr/include/sys/reent.h /usr/include/sys/_types.h
-src/serial.o: /usr/include/sys/types.h /usr/include/machine/types.h
-src/serial.o: /usr/include/sys/stdio.h /usr/include/fcntl.h
-src/serial.o: /usr/include/sys/fcntl.h /usr/include/sys/stat.h
-src/serial.o: /usr/include/time.h /usr/include/machine/time.h
-src/serial.o: /usr/include/sys/features.h /usr/include/sys/ioctl.h
-src/serial.o: /usr/include/sys/cdefs.h /usr/include/sys/select.h
-src/serial.o: /usr/include/sys/time.h src/modem_data.h src/nvt.h
-src/serial.o: src/modem_core.h src/bridge.h src/debug.h /usr/include/string.h
-src/serial.o: /usr/include/errno.h /usr/include/sys/errno.h src/serial.h
-src/util.o: /usr/include/unistd.h /usr/include/sys/unistd.h
-src/util.o: /usr/include/_ansi.h /usr/include/newlib.h
-src/util.o: /usr/include/sys/config.h /usr/include/machine/ieeefp.h
-src/util.o: /usr/include/sys/types.h /usr/include/sys/_types.h
-src/util.o: /usr/lib/gcc-lib/i686-pc-cygwin/3.3.1/include/stddef.h
-src/util.o: /usr/include/machine/types.h /usr/include/sys/features.h
-src/util.o: src/util.h
-src/phone_book.o: src/phone_book.h

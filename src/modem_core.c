@@ -1,6 +1,5 @@
 #include "getcmd.h"
 #include "debug.h"
-#include "modem_data.h"
 #include "modem_core.h"
 
 char* mdm_responses[37];
@@ -26,7 +25,7 @@ int mdm_init() {
   mdm_responses[MDM_RESP_CONNECT_38400] = "CONNECT 38400";
   mdm_responses[MDM_RESP_CONNECT_57600] = "CONNECT 57600";
   mdm_responses[MDM_RESP_CONNECT_115200] = "CONNECT 115200";
-  mdm_responses[MDM_RESP_CONNECT_234000]="CONNECT 234000";
+  mdm_responses[MDM_RESP_CONNECT_234000]="CONNECT 230400";
   return 0;
 }
 
@@ -308,38 +307,19 @@ int config_modem(modem_config* cfg) {
       case AT_CMD_NONE:
         done=TRUE;
         break;
-      case 'S':
-          strncpy(tmp,command+start,end-start);
-          tmp[end-start]='\0';
-          cfg->s[num]=atoi(tmp);
-          switch(num) {
-            case 3:
-              cfg->crlf[0]=cfg->s[3];
-              break;
-            case 4:
-              cfg->crlf[1]=cfg->s[4];
-              break;
-          }
-          break;
-      case 'X':
-          if(num > -1 && num < 5) 
-            cfg->response_code_level=num;
-          else
-            cmd=AT_CMD_ERR;
-          break;
+      case 'O':
       case 'A':
           mdm_off_hook(cfg);
           cmd=AT_CMD_END;
           done=TRUE;
           break;
-      case 'H':
-          if(num == 0) {
-            mdm_disconnect(cfg);
-          } else if(num == 1) {
-            mdm_off_hook(cfg);
-          } else
-            cmd=AT_CMD_ERR;
-          break;
+      case 'B':   // 212A versus V.22 connection
+        if(num > 1) {
+          cmd-AT_CMD_ERR;
+        } else {
+          //cfg->connect_1200=num;
+        }
+        break;
       case 'D':
         if(end>start) {
           strncpy(cfg->dialno,command+start,end-start);
@@ -376,12 +356,40 @@ int config_modem(modem_config* cfg) {
           cmd=AT_CMD_ERR;
         }
         break;
-      case 'W':
-          if(num > -1 && num < 3) 
-            cfg->connect_response=num;
-          else
+      case 'H':
+          if(num == 0) {
+            mdm_disconnect(cfg);
+          } else if(num == 1) {
+            mdm_off_hook(cfg);
+          } else
             cmd=AT_CMD_ERR;
           break;
+      case 'I':   // Information.
+        break;
+      case 'L':   // Speaker volume
+        if(num < 1 || num > 3)
+          cmd-AT_CMD_ERR;
+        else {
+          //cfg->volume=num;
+        }
+        break;
+      case 'M':   // speaker settings
+        if(num > 3)
+          cmd-AT_CMD_ERR;
+        else {
+          //cfg->speaker_setting=num;
+        }
+        break;
+      case 'N':   // automode negotiate
+        if(num > 1)
+          cmd-AT_CMD_ERR;
+        else {
+          //cfg->auto_mode=num;
+        }
+        break;
+      case 'P':   // defaut to pulse dialing
+        //cfg->default_dial_type=MDM_DT_PULSE;
+        break;
       case 'Q':   // still need to define #2
         if(num == 0)
           cfg->send_responses=FALSE;
@@ -393,6 +401,22 @@ int config_modem(modem_config* cfg) {
           cmd=AT_CMD_ERR;
         }
         break;
+      case 'S':
+          strncpy(tmp,command+start,end-start);
+          tmp[end-start]='\0';
+          cfg->s[num]=atoi(tmp);
+          switch(num) {
+            case 3:
+              cfg->crlf[0]=cfg->s[3];
+              break;
+            case 4:
+              cfg->crlf[1]=cfg->s[4];
+              break;
+          }
+          break;
+      case 'T':   // defaut to tone dialing
+        //cfg->default_dial_type=MDM_DT_TONE;
+        break;
       case 'V':   // done
         if(num == 0)
           cfg->text_responses=FALSE;
@@ -400,6 +424,56 @@ int config_modem(modem_config* cfg) {
           cfg->text_responses=TRUE;
         else {
           cmd=AT_CMD_ERR;
+        }
+        break;
+      case 'W':
+          if(num > -1 && num < 3) 
+            cfg->connect_response=num;
+          else
+            cmd=AT_CMD_ERR;
+          break;
+      case 'X':
+          if(num > -1 && num < 5) 
+            cfg->response_code_level=num;
+          else
+            cmd=AT_CMD_ERR;
+          break;
+      case 'Y':   // long space disconnect.
+        if(num > 1)
+          cmd-AT_CMD_ERR;
+        else {
+          //cfg->long_disconnect=num;
+        }
+        break;
+      case 'Z':   // long space disconnect.
+        if(num > 1)
+          cmd-AT_CMD_ERR;
+        else {
+          // set config0 to cur_line and go.
+        }
+        break;
+      case AT_CMD_FLAG_EXT + 'K':
+        // flow control.
+        switch (num) {
+          case 0:
+            dce_set_flow_control(cfg,0);
+            break;
+          case 3:
+            dce_set_flow_control(cfg,MDM_FC_RTS);
+            break;
+          case 4:
+            dce_set_flow_control(cfg,MDM_FC_XON);
+            break;
+          case 5:
+            dce_set_flow_control(cfg,MDM_FC_XON);
+            // need to add passthrough..  Not sure how.
+            break;
+          case 6:
+            dce_set_flow_control(cfg,MDM_FC_XON | MDM_FC_RTS);
+            break;
+          default:
+            cmd=AT_CMD_ERR;
+            break;
         }
         break;
       default:

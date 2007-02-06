@@ -4,15 +4,12 @@
 #include <netdb.h>
 
 #include "debug.h"
-#include "modem_core.h"
-#include "phone_book.h"
 #include "ip.h"
-#include "bridge.h"
 
 
 const int BACK_LOG = 5;
 
-int ip_init(int port) {
+int ip_init_server_conn(int port) {
     int sSocket = 0,
         on = 0,
         rc = 0;
@@ -156,57 +153,21 @@ int ip_accept(int sSocket) {
   return cSocket;
 }
 
+int ip_disconnect(int fd) {
+  if(fd > -1)
+    close(fd);
+  return 0;
+}
+
 int ip_write(int fd,char* data,int len) {
   log_trace(TRACE_IP_OUT,data,len);
   return write(fd,data,len);
 }
 
+int ip_read(int fd, char* data, int len) {
+  int res;
 
-///  These are defined in modem_data.h....
-
-int line_init_config(modem_config *cfg) {
-  return 0;
+  res = recv(fd,data,len,0);
+  log_trace(TRACE_IP_IN,data,res);
+  return res;
 }
- 
-
-int line_write(modem_config *cfg,char* data,int len) {
-  return ip_write(cfg->line_data.fd,data,len);
-}
-
-
-int line_listen(modem_config *cfg) {
-  return 0;
-}
-
-int line_off_hook(modem_config *cfg) {
-  return 0;
-}
-
-
-int line_connect(modem_config *cfg) {
-  int i=0;
-  char* addy=cfg->dialno;
-  LOG(LOG_INFO,"Connecting");
-  addy = pb_search(addy);
-  cfg->line_data.fd=ip_connect(addy);
-  if(cfg->line_data.fd > -1) {
-    cfg->line_data.valid_conn = TRUE;
-    return 0;
-  } else {
-    cfg->line_data.valid_conn = FALSE;
-    return -1;
-  }
-}
-
-
-int line_disconnect(modem_config *cfg) {
-  LOG(LOG_INFO,"Disconnecting");
-  cfg->line_data.is_telnet=FALSE;
-  cfg->line_data.first_char=TRUE;
-  if(cfg->line_data.valid_conn == TRUE) {
-    close(cfg->line_data.fd);
-    cfg->line_data.valid_conn=FALSE;
-  }
-  return 0;
-}
-

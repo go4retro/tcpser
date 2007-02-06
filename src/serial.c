@@ -2,20 +2,16 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include <sys/select.h>
 #ifdef WIN32
 #include <time.h>
 //#include <Windows.h>
 #else
 #include <linux/serial.h>
 #endif
-#include "modem_data.h"
-#include "modem_core.h"
-#include "bridge.h"
 #include "debug.h"
 #include "serial.h"
 
-int get_bps_const(int speed) {
+int ser_get_bps_const(int speed) {
   LOG_ENTER();
   int bps_rate=0;
   
@@ -67,119 +63,106 @@ int get_bps_const(int speed) {
     case 50:
       bps_rate=B50;
       break;
+    case 0:
+      bps_rate=B0;
+      break;
     default:
-      ELOG(LOG_FATAL,"Unknown baud rate"); 
-      exit(-1);
+      ELOG(LOG_ERROR,"Unknown baud rate"); 
+      bps_rate=-1;
   }
   LOG_EXIT();
   return bps_rate;
 
 }
 
-int dce_init_config(modem_config *cfg) {
-  return 0;
-}
-
-int dce_init(char* tty, int speed) {
+int ser_init_conn(char* tty, int speed) {
   int fd = 0;
-  struct termios oldtio,tio;
+  struct termios tio;
   char buf[255];
-  int baud_rate=get_bps_const(speed);
+  int bps_rate=0;
 
   LOG_ENTER();
 
-  /* open the device to be non-blocking (read will return immediatly) */
-  LOG(LOG_INFO,"Opening serial device");
+  bps_rate=ser_get_bps_const(speed);
 
-  fd = open(tty, O_RDWR | O_NOCTTY);
+  if(bps_rate > -1) {
+    /* open the device to be non-blocking (read will return immediatly) */
+    LOG(LOG_INFO,"Opening serial device");
 
-  if (fd <0) {
-    ELOG(LOG_FATAL,"TTY %s could not be opened",tty); 
-    exit(-1); 
+    fd = open(tty, O_RDWR | O_NOCTTY);
+
+    if (fd <0) {
+      ELOG(LOG_ERROR,"TTY %s could not be opened",tty); 
+    }
+    LOG(LOG_INFO,"Opened serial device %s at speed %d as fd %d",tty,speed,fd);
+
+    /* Make the file descriptor asynchronous (the manual page says only 
+       O_APPEND and O_NONBLOCK, will work with F_SETFL...) */
+    fcntl(fd, F_SETFL, FASYNC);
+
+    tio.c_cflag = bps_rate | CS8 | CLOCAL | CREAD | CRTSCTS;
+
+    tio.c_iflag = (IGNBRK);
+    tio.c_oflag = 0;
+    tio.c_lflag = 0;
+    tio.c_cc[VMIN]=1;
+    tio.c_cc[VTIME]=0;
+
+    tcflush(fd, TCIFLUSH);
+    tcsetattr(fd,TCSANOW,&tio);
+    cfsetispeed(&tio, bps_rate);
+    cfsetospeed(&tio, bps_rate);
+    LOG(LOG_INFO,"serial device configured");
   }
-  LOG(LOG_INFO,"Opened serial device %s at speed %d as fd %d",tty,speed,fd);
-
-  /* Make the file descriptor asynchronous (the manual page says only 
-     O_APPEND and O_NONBLOCK, will work with F_SETFL...) */
-  fcntl(fd, F_SETFL, FASYNC);
-
-  tcgetattr(fd,&oldtio); /* save current port settings */
-  //cfmakeraw(&tio); /* set to raw */
-
-  /* set new port settings for canonical input processing */
-  //tio.c_cflag = baud_rate | CRTSCTS | CS8 | CLOCAL | CREAD;
-
-  tio.c_cflag = baud_rate | CS8 | CLOCAL | CREAD | CRTSCTS;
-
-  //tio.c_iflag &= ~(IGNPAR | PARMRK | IXON | IXANY | IXOFF | INLCR | IGNCR | ICRNL | IUCLC);
-
-  //tio.c_iflag &= ~(PARMRK | IXON | INLCR | IGNCR | ICRNL | IUCLC);
-  tio.c_iflag = (IGNBRK);
-  tio.c_oflag = 0;
-  tio.c_lflag = 0;
-  tio.c_cc[VMIN]=1;
-  tio.c_cc[VTIME]=0;
-  cfsetispeed(&tio, baud_rate);
-  cfsetospeed(&tio, baud_rate);
-
-
-  tcflush(fd, TCIFLUSH);
-  tcsetattr(fd,TCSANOW,&tio);
-  LOG(LOG_INFO,"serial device configured");
 
   LOG_EXIT();
-
   return fd;
 }
 
 
-int dce_set_control_lines(modem_config *cfg,int state) {
-  int status;
-
-  LOG_ENTER();
-  ioctl(cfg->dce_data.fd, TIOCMGET, &status);
-  if((state & MDM_CL_CTS_HIGH) != 0) {
-    LOG(LOG_ALL,"Setting CTS pin high");
-    status |= TIOCM_RTS;
-  } else {
-    LOG(LOG_ALL,"Setting CTS pin low");
-    status &= ~TIOCM_RTS;
-  }
-  if((state & MDM_CL_DCD_HIGH) != 0) {
-    LOG(LOG_ALL,"Setting DCD pin high");
-    status |= TIOCM_DTR;
-  } else {
-    LOG(LOG_ALL,"Setting DCD pin low");
-    status &= ~TIOCM_DTR;
-  }
-  ioctl(cfg->dce_data.fd, TIOCMSET, &status);
-  LOG_EXIT();
+int ser_set_flow_control(int fd, int status) {
+  struct termios tio;
+  if(0 != tcgetattr(fd,&tio)) {
+    ELOG(LOG_ERROR,"Could not get serial port attributes");
+    return -1;
+  } 
+  // turn all off.
+  tio.c_cflag &= ~(IXON | IXOFF | CRTSCTS);
+  tio.c_cflag |= status;
+  if(0 != tcsetattr(fd,TCSANOW,&tio)) {
+    ELOG(LOG_ERROR,"Could not set serial port attributes");
+    return -1;
+  } 
   return 0;
 }
 
-int dce_get_control_lines(modem_config *cfg) {
+
+int ser_get_control_lines(int fd) {
   int status;
-  int rc_status=0;
 
-  ioctl(cfg->dce_data.fd, TIOCMGET, &status);
-  rc_status=((status & TIOCM_DSR) != 0?MDM_CL_DTR_HIGH:0);
-  return rc_status;
-}
-
-
-int dce_check_control_lines(modem_config *cfg) {
-  int status=0;
-  int new_status=0;
-
-  LOG_ENTER();
-  status = dce_get_control_lines(cfg);
-  new_status = status;
-  while(status == new_status) {
-    usleep(100000);
-    new_status = dce_get_control_lines(cfg);
+  if(0 > ioctl(fd, TIOCMGET, &status)) {
+    ELOG(LOG_ERROR,"Could not obtain serial port status");
+    return -1;
   }
-  return new_status;
+  return status;
 }
+
+
+int ser_set_control_lines(int fd, int state) {
+  int status;
+
+  if(0 > (status=ser_get_control_lines(fd))) {
+    return status;
+  }
+  status &= ~(TIOCM_RTS | TIOCM_DTR);
+  status |= state;
+  if(0 > ioctl(fd, TIOCMSET, &status)) {
+    ELOG(LOG_ERROR,"Could not set serial port status");
+    return -1;
+  }
+  return 0;
+}
+
 
 #ifdef JB
 int watch_control_lines(int tty_fd, int pipe) {
@@ -269,10 +252,16 @@ int watch_control_lines(int tty_fd, int pipe) {
 }
 #endif
 
-
-int dce_write(modem_config *cfg,char data[], int len) {
-    log_trace(TRACE_MODEM_OUT,data,len);
-    return write(cfg->dce_data.fd,data,len);
+int ser_write(int fd, char* data,int len) {
+  log_trace(TRACE_MODEM_OUT,data,len);
+  return write(fd,data,len);
 }
 
+int ser_read(int fd, char* data, int len) {
+  int res;
+
+  res=read(fd,data,len);
+  log_trace(TRACE_MODEM_IN,data,res);
+  return res;
+}
 

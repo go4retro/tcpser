@@ -1,4 +1,5 @@
 #include <time.h>
+#include <pthread.h>
 #include <stdio.h>
 #define DEBUG_VARS 1   // need this so we don't get extern defs
 #include "debug.h"
@@ -8,6 +9,7 @@ FILE* log_file;
 int trace_flags=0;
 char* trace_type[9];  // cheesy, but I can't think of another o(1) way
 char* log_desc[LOG_TRACE+1];
+pthread_mutex_t log_mutex;
 
 
 void log_init() {
@@ -26,6 +28,10 @@ void log_init() {
   log_desc[LOG_ENTER_EXIT]="ENTER_EXIT";
   log_desc[LOG_ALL]="DEBUG_X";
   log_desc[LOG_TRACE]="";
+  if( -1 == pthread_mutex_init(&log_mutex,NULL)) {
+    perror("Could not create Log Mutex");
+    exit(-1);
+  }
 }
 
 
@@ -94,16 +100,27 @@ void log_trace(int type, char* line, int len) {
 }
 
 void log_start(int level) {
-  char* t = (char*)malloc(23);
-  time_t now=time(NULL);  
-  strftime(t,22,"%Y-%m-%d %H:%M:%S",localtime(&now));
-  fprintf(log_file,"%s:%5.5d:%s:",t,getpid(),log_desc[level]);
-  free(t);
+  //char* t = (char*)malloc(23);
+  char t[23];
+  time_t now;
+
+  if(-1 == pthread_mutex_lock(&log_mutex)) {
+    perror("Could not lock the log mutex");
+  } else {
+    // we have the lock.
+    now=time(NULL);  
+    strftime(t,22,"%Y-%m-%d %H:%M:%S",localtime(&now));
+    fprintf(log_file,"%s:%5.5d:%s:",t,pthread_self(),log_desc[level]);
+    //free(t);
+  }
 }
 
 void log_end() {
   fprintf(log_file,"\n");
   fflush(log_file);
+  if(-1 == pthread_mutex_unlock(&log_mutex)) {
+    perror("Could not lock the log mutex");
+  }
 }
 
 int main2(int a,char* b[]) {

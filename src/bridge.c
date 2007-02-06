@@ -9,6 +9,7 @@
 #include "ip.h"
 #include "serial.h"
 #include "getcmd.h"
+
 #include "bridge.h"
 
 const char MDM_NO_ANSWER[] = "NO ANSWER\n";

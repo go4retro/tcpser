@@ -9,7 +9,7 @@
 #include "phone_book.h"
 #include "util.h"
 #include "debug.h"
-#include "main.h"
+#include "tcpmdm.h"
 
 const char MDM_BUSY[]="BUSY\n";
 
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
 
   modem_count = init(argc, argv, cfg, 64, &port,all_busy,sizeof(all_busy));
 
-  sSocket = ip_init(port);
+  sSocket = ip_init_server_conn(port);
 
   for(i=0;i<modem_count;i++) {
     if( -1 == pipe(cfg[i].data.mp[0])) {
@@ -57,8 +57,10 @@ int main(int argc, char *argv[]) {
       ELOG(LOG_FATAL,"Bridge task outgoing IPC pipe could not be created");
       exit(-1);
     }
-    cfg[i].dce_data.fd = dce_init(cfg[i].dce_data.tty,cfg[i].dte_speed);
-    cfg[i].line_data.fd=-1;
+    if(dce_init_conn(&cfg[i]) < 0) {
+      LOG(LOG_FATAL,"Could not open serial port %s",cfg->dce_data.tty);
+      exit(-1);
+    }
     cfg[i].line_data.sfd=sSocket;
 
     rc=pthread_create(&thread_id,NULL,*run_bridge,(void *)&cfg[i]);
