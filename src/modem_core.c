@@ -200,7 +200,6 @@ int mdm_off_hook(modem_config *cfg) {
   cfg->off_hook=TRUE;
   cfg->cmd_mode=FALSE;
   line_off_hook(cfg);
-  mdm_set_control_lines(cfg);
   return 0;
 }
 
@@ -208,10 +207,12 @@ int mdm_answer(modem_config *cfg) {
   if(cfg->line_ringing == TRUE) {
     cfg->conn_type=MDM_CONN_INCOMING;
     mdm_off_hook(cfg);
+    mdm_set_control_lines(cfg);
     mdm_print_speed(cfg);
   } else if(cfg->conn_type == MDM_CONN_INCOMING) {
     // we are connected, just go off hook.
     mdm_off_hook(cfg);
+    mdm_set_control_lines(cfg);
   } else {
     mdm_disconnect(cfg);
   }
@@ -239,6 +240,7 @@ int mdm_connect(modem_config* cfg) {
   if(cfg->conn_type == MDM_CONN_NONE) {
     if(line_connect(cfg) == 0) {
       cfg->conn_type=MDM_CONN_OUTGOING;
+      mdm_set_control_lines(cfg);
       mdm_print_speed(cfg);
     } else {
       cfg->conn_type=MDM_CONN_OUTGOING;   // so disconnect will print NO CARRIER

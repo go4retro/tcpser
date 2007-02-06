@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
         LOG(LOG_DEBUG,"Incoming connection pending");
         // first try for a modem that is listening.
         for(i=0;i<modem_count;i++) {
-          if(cfg[i].s[0] != 0) {
+          if(cfg[i].s[0] != 0 && cfg[i].off_hook == FALSE) {
             // send signal to pipe saying pick up...
             LOG(LOG_DEBUG,"Sending incoming connection to listening modem #%d",i);
             writePipe(cfg[i].data.mp[1][1],MSG_ACCEPT);  
