@@ -57,7 +57,7 @@ int init(int argc,
   mdm_init_config(&cfg[0]);
   cfg[0].dte_speed=38400;
   cfg[0].dce_speed=38400;
-  strncpy(cfg[0].dce_data.tty,"/dev/ttyS0",sizeof(cfg[0].dce_data.tty));
+  //strncpy(cfg[0].dce_data.tty,"/dev/ttyS0",sizeof(cfg[0].dce_data.tty));
 
   while(opt>-1 && i < max_modem) {
     opt=getopt(argc,argv,"p:s:S:d:hw:i:Il:L:t:n:a:A:c:C:N:B:T:D:");
@@ -162,10 +162,14 @@ int init(int argc,
     }
   }
 
-  if(i<max_modem) {
-    if(tty != NULL)
-      strncpy(cfg[i].dce_data.tty,tty,sizeof(cfg[i].dce_data.tty));
+  if(tty!=NULL && i<max_modem) {
+    strncpy(cfg[i].dce_data.tty,tty,sizeof(cfg[i].dce_data.tty));
     i++;
+  }
+  if(i==0) {
+    // no modems defined
+    LOG(LOG_FATAL,"No modems defined");
+    print_help(argv[0]);
   }
 
   LOG(LOG_DEBUG,"Read configuration for %i serial port(s)",i);

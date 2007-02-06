@@ -235,7 +235,7 @@ int getcmd(unsigned char line[],
             case 0:
               return AT_CMD_ERR;
             case 'Z':
-              return parseRegister(line,AT_CMD_FLAG_EXT,index,num,len,data_start, data_end,FALSE);
+              return parseRegister(line,AT_CMD_FLAG_EXT,index,num,len,data_start, data_end,TRUE);
             default:
               return parseCommand(line,AT_CMD_FLAG_EXT, index,num,len);
           }
@@ -262,7 +262,7 @@ int getcmd(unsigned char line[],
         }
         return cmd;
       case 'S':
-        return parseRegister(line,AT_CMD_FLAG_BAS,index,num,len,data_start, data_end,TRUE);
+        return parseRegister(line,AT_CMD_FLAG_BAS,index,num,len,data_start, data_end,FALSE);
       default:
         return parseCommand(line,AT_CMD_FLAG_BAS, index,num,len);
     }

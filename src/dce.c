@@ -25,11 +25,13 @@ int dce_set_flow_control(modem_config *cfg,int opts) {
   int rc=0;
 
   LOG_ENTER();
-  if(MDM_FC_RTS) {
+  if((opts & MDM_FC_RTS) != 0) {
+    LOG(LOG_ALL,"Setting RTSCTS flow control");
     status |= CRTSCTS;
   }
-  if(MDM_FC_XON) {
+  if((opts && MDM_FC_XON) != 0) {
     status |= (IXON | IXOFF);
+    LOG(LOG_ALL,"Setting XON/XOFF flow control");
   }
 
   rc=ser_set_flow_control(cfg->dce_data.fd,status);

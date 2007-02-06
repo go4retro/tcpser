@@ -4,9 +4,6 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#ifdef __linux__
-#include <linux/serial.h>
-#endif
 #include "debug.h"
 #include "serial.h"
 
@@ -157,8 +154,10 @@ int ser_set_control_lines(int fd, int state) {
   status &= ~(TIOCM_RTS | TIOCM_DTR);
   status |= state;
   if(0 > ioctl(fd, TIOCMSET, &status)) {
+#ifndef WIN32
     ELOG(LOG_FATAL,"Could not set serial port status");
     return -1;
+#endif
   }
   return 0;
 }

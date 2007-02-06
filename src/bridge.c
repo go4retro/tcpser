@@ -132,7 +132,7 @@ void *ip_thread(void *arg) {
       // handle error
     } else {
       // we got data
-      if (FD_ISSET(cfg->line_data.fd,&readfs)) {  // socket
+      if (cfg->line_data.valid_conn==TRUE && FD_ISSET(cfg->line_data.fd,&readfs)) {  // socket
         LOG(LOG_DEBUG,"Data available on socket");
         res = recv(cfg->line_data.fd,buf,sizeof(buf),0);
         if(0 >= res) {
@@ -147,6 +147,7 @@ void *ip_thread(void *arg) {
         }
       }
       if (FD_ISSET(cfg->data.cp[1][0],&readfs)) {  // pipe
+
         res = read(cfg->data.cp[1][0],buf,sizeof(buf) - 1);
         LOG(LOG_DEBUG,"IP thread notified");
         action_pending=FALSE;
@@ -225,7 +226,7 @@ void *run_bridge(void * arg) {
   int rc=0;
 
   int last_conn_type;
-  int last_cmd_mode;
+  int last_cmd_mode=cfg->cmd_mode;
 
 
   LOG_ENTER();
@@ -390,10 +391,13 @@ void *run_bridge(void * arg) {
         case MSG_DISCONNECT:
           if(cfg->data.direct_conn == TRUE) {
             // what should we do here...
-            LOG(LOG_ERROR,"Direct Connection Link broken, switching to normal mode");
+            LOG(LOG_ERROR,"Direct Connection Link broken, disconnecting and awaiting new direct connection");
             cfg->data.direct_conn=FALSE;
-          } 
-          mdm_disconnect(cfg);
+            mdm_disconnect(cfg);
+            cfg->data.direct_conn=TRUE;
+          } else {
+            mdm_disconnect(cfg);
+          }
           break;
       }
     }

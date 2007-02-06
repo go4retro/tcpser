@@ -355,10 +355,11 @@ int mdm_parse_cmd(modem_config* cfg) {
           cfg->dial_type=0;
           cfg->last_dial_type=0;
         }
-        if(strlen(cfg->dialno) > 0)
+        if(strlen(cfg->dialno) > 0) {
           mdm_connect(cfg);
-        else
+        } else {
           mdm_off_hook(cfg);
+        }
         done=TRUE;
         break;
       case 'E':   // still need to define #2
@@ -532,13 +533,12 @@ int mdm_handle_char(modem_config* cfg, unsigned char ch) {
       cfg->cur_line[cfg->cur_line_idx] = 0;
       strncpy(cfg->last_cmd,cfg->cur_line,sizeof(cfg->last_cmd) - 1);
       mdm_parse_cmd(cfg);
-      cfg->cur_line_idx=0;
+      cfg->found_a=FALSE;
       cfg->cmd_started=FALSE;
     } else {
       cfg->cur_line[cfg->cur_line_idx++ % sizeof(cfg->cur_line)]=ch;
     }
   } else if(cfg->found_a == TRUE) {
-    cfg->found_a=FALSE;
     if(ch == 't' || ch == 'T') {
       cfg->cmd_started=TRUE;
       LOG(LOG_ALL,"'T' parsed in serial stream, switching to command parse mode");
@@ -547,8 +547,9 @@ int mdm_handle_char(modem_config* cfg, unsigned char ch) {
       cfg->cur_line_idx=strlen(cfg->last_cmd);
       strncpy(cfg->cur_line,cfg->last_cmd,cfg->cur_line_idx);
       mdm_parse_cmd(cfg);
-      cfg->cur_line_idx=0;
       cfg->cmd_started=FALSE;
+    } else if(ch!='a' && ch!='A') {
+      cfg->found_a=FALSE;
     }
 
   } else if(ch == 'a' || ch == 'A') {
