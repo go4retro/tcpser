@@ -241,13 +241,13 @@ void *run_bridge(void * arg) {
 
   mdm_set_control_lines(cfg);
   strncpy(cfg->cur_line,cfg->config0,sizeof(cfg->cur_line));
-  cfg->allow_transmit=FALSE;
-  // call some functions behind the scenes
-  mdm_parse_cmd(cfg);
-  mdm_disconnect(cfg);
-  cfg->allow_transmit=TRUE;
   cfg->line_data.fd=-1;
   last_conn_type=cfg->conn_type;
+  cfg->allow_transmit=FALSE;
+  // call some functions behind the scenes
+  mdm_disconnect(cfg);
+  mdm_parse_cmd(cfg);
+  cfg->allow_transmit=TRUE;
   for(;;) {
     if(last_conn_type!= cfg->conn_type) {
       //writePipe(cfg->data.mp[0][1],MSG_NOTIFY);

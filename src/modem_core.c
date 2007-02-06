@@ -400,9 +400,9 @@ int mdm_parse_cmd(modem_config* cfg) {
         break;
       case 'Q':   // still need to define #2
         if(num == 0)
-          cfg->send_responses=FALSE;
-        else if(num == 1)
           cfg->send_responses=TRUE;
+        else if(num == 1)
+          cfg->send_responses=FALSE;
         else if(num == 2)  // this should be yes orig/no answer.
           cfg->send_responses=TRUE;
         else {
@@ -616,7 +616,7 @@ int mdm_send_ring(modem_config *cfg) {
   cfg->rings++;
   LOG(LOG_ALL,"Sent #%d ring",cfg->rings);
   if(cfg->cmd_mode == FALSE || (cfg->s[0] != 0 &&cfg->rings>=cfg->s[0])) {
-    mdm_off_hook(cfg);
+    mdm_answer(cfg);
   }
   return 0;
 }
