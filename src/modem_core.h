@@ -69,6 +69,8 @@ typedef struct x_config {
   unsigned char local_answer[256];
   unsigned char remote_answer[256];
   unsigned char inactive[256];
+  unsigned int direct_conn;
+  unsigned char direct_conn_num[256];
 } x_config;
 
 typedef struct dce_config {

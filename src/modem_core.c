@@ -200,6 +200,7 @@ int mdm_off_hook(modem_config *cfg) {
   cfg->off_hook=TRUE;
   cfg->cmd_mode=FALSE;
   line_off_hook(cfg);
+  mdm_set_control_lines(cfg);
   return 0;
 }
 
@@ -208,6 +209,9 @@ int mdm_answer(modem_config *cfg) {
     cfg->conn_type=MDM_CONN_INCOMING;
     mdm_off_hook(cfg);
     mdm_print_speed(cfg);
+  } else if(cfg->conn_type == MDM_CONN_INCOMING) {
+    // we are connected, just go off hook.
+    mdm_off_hook(cfg);
   } else {
     mdm_disconnect(cfg);
   }
@@ -217,7 +221,6 @@ int mdm_answer(modem_config *cfg) {
 int mdm_print_speed(modem_config *cfg) {
   int speed;
 
-  mdm_set_control_lines(cfg);
   switch(cfg->connect_response) {
     case 2:
       speed=cfg->dte_speed;
@@ -256,21 +259,24 @@ int mdm_disconnect(modem_config* cfg) {
 
   LOG_ENTER();
   LOG(LOG_INFO,"Disconnecting modem");
-  type=cfg->conn_type;
-  cfg->conn_type=MDM_CONN_NONE;
-  cfg->off_hook=FALSE;
   cfg->cmd_mode=TRUE;
+  cfg->off_hook=FALSE;
   cfg->break_len=0;
   cfg->line_ringing = FALSE;
   cfg->pre_break_delay=FALSE;
-  mdm_set_control_lines(cfg);
-  line_disconnect(cfg);
-  if(type != MDM_CONN_NONE) {
-    mdm_send_response(MDM_RESP_NO_CARRIER,cfg);
-    usleep(cfg->disconnect_delay * 1000);
+  if(0 == line_disconnect(cfg)) {
+    type=cfg->conn_type;
+    cfg->conn_type=MDM_CONN_NONE;
+    mdm_set_control_lines(cfg);
+    if(type != MDM_CONN_NONE) {
+      mdm_send_response(MDM_RESP_NO_CARRIER,cfg);
+      usleep(cfg->disconnect_delay * 1000);
+    }
+    cfg->rings=0;
+    mdm_listen(cfg);
+  } else {
+    // line still connected.
   }
-  cfg->rings=0;
-  mdm_listen(cfg);
   LOG_EXIT();
   return 0;
 }
@@ -468,9 +474,11 @@ int mdm_parse_cmd(modem_config* cfg) {
         switch(num) {
           case 0:
             cfg->dcd_on=TRUE;
+            mdm_set_control_lines(cfg);
             break;
           case 1:
             cfg->dcd_on=FALSE;
+            mdm_set_control_lines(cfg);
             break;
           default:
             cmd=AT_CMD_ERR;

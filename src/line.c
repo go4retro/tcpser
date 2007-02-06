@@ -7,6 +7,9 @@
 
 int line_init_config(modem_config *cfg) {
   cfg->line_data.fd=-1;
+  cfg->line_data.is_telnet=FALSE;
+  cfg->line_data.first_char=TRUE;
+  cfg->line_data.valid_conn=FALSE;
   return 0;
 }
  
@@ -42,11 +45,16 @@ int line_connect(modem_config *cfg) {
 
 int line_disconnect(modem_config *cfg) {
   LOG(LOG_INFO,"Disconnecting");
-  cfg->line_data.is_telnet=FALSE;
-  cfg->line_data.first_char=TRUE;
-  if(cfg->line_data.valid_conn == TRUE) {
-    ip_disconnect(cfg->line_data.fd);
-    cfg->line_data.valid_conn=FALSE;
+  if(cfg->data.direct_conn == TRUE) {
+    LOG(LOG_INFO,"Direct connection active, maintaining link");
+    return -1;
+  } else {
+    cfg->line_data.is_telnet=FALSE;
+    cfg->line_data.first_char=TRUE;
+    if(cfg->line_data.valid_conn == TRUE) {
+      ip_disconnect(cfg->line_data.fd);
+      cfg->line_data.valid_conn=FALSE;
+    }
   }
   return 0;
 }

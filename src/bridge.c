@@ -25,8 +25,14 @@ int accept_connection(modem_config* cfg) {
   cfg->line_data.fd=ip_accept(cfg->line_data.sfd);
   if(cfg->line_data.fd > -1) {
     cfg->line_data.valid_conn=TRUE;
-    cfg->rings=0;
-    mdm_send_ring(cfg);
+    if(cfg->data.direct_conn == TRUE) {
+      cfg->conn_type=MDM_CONN_INCOMING;
+      mdm_off_hook(cfg);
+      cfg->cmd_mode=TRUE;
+    } else {
+      cfg->rings=0;
+      mdm_send_ring(cfg);
+    }
     // tell parent I got it.
     LOG(LOG_DEBUG,"Informing parent task that I am busy");
     writePipe(cfg->data.mp[0][1],MSG_ACCEPTED);
@@ -219,6 +225,7 @@ void *run_bridge(void * arg) {
   int rc=0;
 
   int last_conn_type;
+  int last_cmd_mode;
 
 
   LOG_ENTER();
@@ -241,15 +248,32 @@ void *run_bridge(void * arg) {
 
   mdm_set_control_lines(cfg);
   strncpy(cfg->cur_line,cfg->config0,sizeof(cfg->cur_line));
-  cfg->line_data.fd=-1;
   last_conn_type=cfg->conn_type;
+  last_cmd_mode=cfg->cmd_mode;
   cfg->allow_transmit=FALSE;
   // call some functions behind the scenes
   mdm_disconnect(cfg);
   mdm_parse_cmd(cfg);
+  // if direct connection, and num length > 0, dial number.
+  if (cfg->data.direct_conn == TRUE) {
+    if(strlen(cfg->data.direct_conn_num) > 0 &&
+       cfg->data.direct_conn_num[0] != ':') {
+        // we have a direct number to connect to.
+      strncpy(cfg->dialno,cfg->data.direct_conn_num,sizeof(cfg->dialno));
+      if(0 != line_connect(cfg)) {
+        LOG(LOG_FATAL,"Cannot connect to Direct line address!");
+        // probably should exit...
+        exit(-1);
+      } else {
+        cfg->conn_type=MDM_CONN_OUTGOING;
+      }
+    
+    }
+  }
   cfg->allow_transmit=TRUE;
   for(;;) {
     if(last_conn_type!= cfg->conn_type) {
+      LOG(LOG_ALL,"Connection status change, handling");
       //writePipe(cfg->data.mp[0][1],MSG_NOTIFY);
       writePipe(cfg->data.cp[1][1],MSG_NOTIFY);
       if(cfg->conn_type == MDM_CONN_OUTGOING) {
@@ -268,6 +292,10 @@ void *run_bridge(void * arg) {
         } 
       }
       last_conn_type=cfg->conn_type;
+    }
+    if(last_cmd_mode != cfg->cmd_mode) {
+      writePipe(cfg->data.cp[1][1],MSG_NOTIFY);
+      last_cmd_mode=cfg->cmd_mode;
     }
     LOG(LOG_ALL,"Waiting for modem/control line/timer/socket activity");
     LOG(LOG_ALL,"Command Mode=%d, Connection status=%d",cfg->cmd_mode,cfg->conn_type);
@@ -360,6 +388,11 @@ void *run_bridge(void * arg) {
       LOG(LOG_DEBUG,"Received %c from ip thread",buf[0]);
       switch (buf[0]) {
         case MSG_DISCONNECT:
+          if(cfg->data.direct_conn == TRUE) {
+            // what should we do here...
+            LOG(LOG_ERROR,"Direct Connection Link broken, switching to normal mode");
+            cfg->data.direct_conn=FALSE;
+          } 
           mdm_disconnect(cfg);
           break;
       }

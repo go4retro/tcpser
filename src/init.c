@@ -22,16 +22,17 @@ void print_help(unsigned char* name) {
   fprintf(stderr, "  -d   serial device (defaults to /dev/ttyS0)\n");
   fprintf(stderr, "  -s   serial port speed (defaults to 38400)\n");
   fprintf(stderr, "  -S   speed modem will report (defaults to -s value)\n");
-  fprintf(stderr, "  -D   invert DCD pin\n");
+  fprintf(stderr, "  -I   invert DCD pin\n");
   fprintf(stderr, "  -n   add phone entry (number=replacement)\n");
   fprintf(stderr, "  -a   filename to send to local side upon answer\n");
   fprintf(stderr, "  -A   filename to send to remote side upon answer\n");
   fprintf(stderr, "  -c   filename to send to local side upon connect\n");
   fprintf(stderr, "  -C   filename to send to remote side upon connect\n");
-  fprintf(stderr, "  -I   filename to send when no answer\n");
+  fprintf(stderr, "  -N   filename to send when no answer\n");
   fprintf(stderr, "  -B   filename to send when modem(s) busy\n");
   fprintf(stderr, "  -T   filename to send upon inactivity timeout\n");
   fprintf(stderr, "  -i   modem init string (defaults to '', leave off 'at' prefix when specifying)\n");
+  fprintf(stderr, "  -D   direct connection (follow with hostname:port for caller, : for receiver)\n");
   exit(1);
 }
 
@@ -59,7 +60,7 @@ int init(int argc,
   strncpy(cfg[0].dce_data.tty,"/dev/ttyS0",sizeof(cfg[0].dce_data.tty));
 
   while(opt>-1 && i < max_modem) {
-    opt=getopt(argc,argv,"p:s:S:d:hw:i:Dl:L:t:n:a:A:c:C:I:B:T:");
+    opt=getopt(argc,argv,"p:s:S:d:hw:i:Il:L:t:n:a:A:c:C:N:B:T:D:");
     switch(opt) {
       case 't':
         trace_flags=log_get_trace_flags();
@@ -96,7 +97,7 @@ int init(int argc,
       case 'B':
         strncpy(all_busy,optarg,all_busy_len);
         break;
-      case 'I':
+      case 'N':
         strncpy(cfg[i].data.no_answer,optarg,sizeof(cfg[i].data.no_answer));
         break;
       case 'T':
@@ -105,7 +106,7 @@ int init(int argc,
       case 'i':
         strncpy(cfg[i].config0,optarg,255);
         break;
-      case 'D':
+      case 'I':
         cfg[i].invert_dcd=TRUE;
         break;
       case 'p':
@@ -153,6 +154,10 @@ int init(int argc,
       case 'S':
         cfg[i].dce_speed=atoi(optarg);
         dce_set=TRUE;
+        break;
+      case 'D':
+        cfg[i].data.direct_conn=TRUE;
+        strncpy(cfg[i].data.direct_conn_num,optarg,sizeof(cfg[i].data.direct_conn_num));
         break;
     }
   }
