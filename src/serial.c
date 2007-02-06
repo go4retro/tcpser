@@ -108,9 +108,9 @@ int ser_init_conn(unsigned char* tty, int speed) {
       tio.c_cc[VTIME]=0;
 
       tcflush(fd, TCIFLUSH);
-      tcsetattr(fd,TCSANOW,&tio);
       cfsetispeed(&tio, bps_rate);
       cfsetospeed(&tio, bps_rate);
+      tcsetattr(fd,TCSANOW,&tio);
       LOG(LOG_INFO,"serial device configured");
     }
   } 
