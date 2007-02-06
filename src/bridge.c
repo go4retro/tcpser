@@ -1,8 +1,13 @@
 #include <stdio.h>
+
+#include <sys/socket.h>   // for recv...
+#include <unistd.h>       // for read...
+#include <stdlib.h>       // for exit...
 #include <sys/param.h>
-#include <sys/select.h>
+#include <sys/time.h>
 #include <pthread.h>
 
+#include "util.h"
 #include "debug.h"
 #include "nvt.h"
 #include "modem_core.h"
@@ -12,7 +17,7 @@
 
 #include "bridge.h"
 
-const char MDM_NO_ANSWER[] = "NO ANSWER\n";
+const unsigned char MDM_NO_ANSWER[] = "NO ANSWER\n";
 
 int accept_connection(modem_config* cfg) {
   LOG_ENTER();
@@ -27,36 +32,37 @@ int accept_connection(modem_config* cfg) {
     writePipe(cfg->data.mp[0][1],MSG_ACCEPTED);
   }
   LOG_EXIT();
+  return 0;
 }
 
 
-int parse_ip_data(modem_config *cfg, char* data, int len) {
+int parse_ip_data(modem_config *cfg, unsigned char* data, int len) {
   // I'm going to cheat and assume it comes in chunks.
   int i=0;
   unsigned char ch;
-  char text[1024];
+  unsigned char text[1024];
   int text_len=0;
 
   if(cfg->line_data.first_char==TRUE) {
     cfg->line_data.first_char=FALSE;
-    if(data[0] == '\xff') {
+    if(data[0] == 0xff) {
       cfg->line_data.is_telnet=TRUE;
     }
   }
 
   if(cfg->line_data.is_telnet == TRUE) {
     while(i<len) {
-      ch=(unsigned char)data[i];
+      ch=data[i];
       if(NVT_IAC == ch) {
         // what if we roll off the end?
-        ch=(unsigned char)data[i+1];
+        ch=data[i+1];
         switch(ch) {
           case NVT_WILL:
           case NVT_DO:
           case NVT_WONT:
           case NVT_DONT:
             /// again, overflow issues...
-            parse_nvt_command(cfg->line_data.fd,ch,(unsigned char)data[i+2]);
+            parse_nvt_command(cfg->line_data.fd,ch,data[i+2]);
             i+=3;
             break;
           case NVT_SB:      // sub negotiation
@@ -85,6 +91,7 @@ int parse_ip_data(modem_config *cfg, char* data, int len) {
   } else {
       mdm_write(cfg,data,len);
   }
+  return 0;
 }
 
 void *ip_thread(void *arg) {
@@ -94,7 +101,7 @@ void *ip_thread(void *arg) {
   fd_set readfs; 
   int max_fd;
   int res=0;
-  char buf[255];
+  unsigned char buf[255];
   int rc;
 
 
@@ -135,7 +142,7 @@ void *ip_thread(void *arg) {
       }
       if (FD_ISSET(cfg->data.cp[1][0],&readfs)) {  // pipe
         res = read(cfg->data.cp[1][0],buf,sizeof(buf) - 1);
-        LOG(LOG_DEBUG,"IP thread notified",res);
+        LOG(LOG_DEBUG,"IP thread notified");
         action_pending=FALSE;
       }
     }
@@ -174,7 +181,7 @@ int spawn_ctrl_thread(modem_config *cfg) {
   pthread_t thread_id;
 
   rc=pthread_create(&thread_id,NULL,ctrl_thread,(void *)cfg);
-  LOG(LOG_ALL,"CTRL thread ID=%d",thread_id);
+  LOG(LOG_ALL,"CTRL thread ID=%d",(int)thread_id);
 
   if(rc < 0) {
       ELOG(LOG_FATAL,"CTRL thread could not be started");
@@ -188,7 +195,7 @@ int spawn_ip_thread(modem_config *cfg) {
   pthread_t thread_id;
 
   rc=pthread_create(&thread_id,NULL,ip_thread,(void *)cfg);
-  LOG(LOG_ALL,"IP thread ID=%d",thread_id);
+  LOG(LOG_ALL,"IP thread ID=%d",(int)thread_id);
 
   if(rc < 0) {
       ELOG(LOG_FATAL,"IP thread could not be started");
@@ -204,10 +211,8 @@ void *run_bridge(void * arg) {
   int max_fd=0;
   fd_set readfs; 
   int res=0;
-  char buf[255];
+  unsigned char buf[255];
   int rc=0;
-
-  int i=0;
 
   int last_connected;
 
@@ -233,7 +238,7 @@ void *run_bridge(void * arg) {
   mdm_set_control_lines(cfg);
   strncpy(cfg->cur_line,cfg->config0,sizeof(cfg->cur_line));
   cfg->allow_transmit=FALSE;
-  config_modem(cfg);
+  mdm_parse_cmd(cfg);
   cfg->allow_transmit=TRUE;
   cfg->line_data.fd=-1;
   line_disconnect(cfg);
@@ -295,7 +300,7 @@ void *run_bridge(void * arg) {
         if(cfg->s[0] == 0 && cfg->rings==10) {
           // not going to answer, send some data back to IP and disconnect.
           if(strlen(cfg->data.no_answer) == 0) {
-            line_write(cfg,MDM_NO_ANSWER,strlen(MDM_NO_ANSWER));
+            line_write(cfg,(unsigned char*)MDM_NO_ANSWER,strlen(MDM_NO_ANSWER));
           } else {
             writeFile(cfg->data.no_answer,cfg->line_data.fd);
           }

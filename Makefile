@@ -4,8 +4,8 @@ SEROBJS = $(SRC)/bridge.o $(SRC)/debug.o $(SRC)/getcmd.o $(SRC)/ip.o $(SRC)/init
 MDMOBJS = $(SRC)/debug.o $(SRC)/ip.o $(SRC)/serial.o $(SRC)/util.o $(SRC)/tcpmdm.o
 CC = gcc
 DEF = 
-CFLAGS = -O $(DEF) -ggdb
-LDFLAGS = -s -lpthread
+CFLAGS = -O $(DEF) -Wall
+LDFLAGS = -lpthread
 DEPEND = makedepend $(DEF) $(CFLAGS)
 
 all:	tcpser tcpmdm

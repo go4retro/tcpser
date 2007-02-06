@@ -1,7 +1,10 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/types.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <unistd.h>       // for read...
+#include <stdlib.h>       // for exit...
 
 #include "debug.h"
 #include "ip.h"
@@ -73,14 +76,14 @@ int ip_init_server_conn(int port) {
 
 
 
-int ip_connect(char addy[]) {
+int ip_connect(unsigned char addy[]) {
 	struct sockaddr_in pin;
   struct in_addr cin_addr;
 	struct hostent *hp;
   int sd=0;
   int port=23;
-  char* address=(char*)strtok(addy,":");
-  char* tmp=(char*)strtok((char*)0,":");
+  unsigned char* address=(unsigned char*)strtok(addy,":");
+  unsigned char* tmp=(unsigned char*)strtok((unsigned char*)0,":");
 
   if(tmp != NULL && strlen(tmp) > 0) {
     port=atoi(tmp);
@@ -159,12 +162,12 @@ int ip_disconnect(int fd) {
   return 0;
 }
 
-int ip_write(int fd,char* data,int len) {
+int ip_write(int fd,unsigned char* data,int len) {
   log_trace(TRACE_IP_OUT,data,len);
   return write(fd,data,len);
 }
 
-int ip_read(int fd, char* data, int len) {
+int ip_read(int fd, unsigned char* data, int len) {
   int res;
 
   res = recv(fd,data,len,0);

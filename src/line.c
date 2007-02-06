@@ -11,7 +11,7 @@ int line_init_config(modem_config *cfg) {
 }
  
 
-int line_write(modem_config *cfg,char* data,int len) {
+int line_write(modem_config *cfg,unsigned char* data,int len) {
   return ip_write(cfg->line_data.fd,data,len);
 }
 
@@ -26,8 +26,7 @@ int line_off_hook(modem_config *cfg) {
 
 
 int line_connect(modem_config *cfg) {
-  int i=0;
-  char* addy=cfg->dialno;
+  unsigned char* addy=cfg->dialno;
   LOG(LOG_INFO,"Connecting");
   addy = pb_search(addy);
   cfg->line_data.fd=ip_connect(addy);

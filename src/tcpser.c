@@ -1,4 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h> 
+#include <sys/time.h> 
+
 #include <sys/param.h>
 #include <pthread.h>
 
@@ -11,7 +15,7 @@
 #include "debug.h"
 #include "tcpmdm.h"
 
-const char MDM_BUSY[]="BUSY\n";
+const unsigned char MDM_BUSY[]="BUSY\n";
 
 
 
@@ -20,7 +24,7 @@ int main(int argc, char *argv[]) {
   int modem_count;
   int port=0;
 
-  char all_busy[255];
+  unsigned char all_busy[255];
 
   pthread_t thread_id;
   int i;
@@ -32,7 +36,7 @@ int main(int argc, char *argv[]) {
   int accept_pending=FALSE;
 
   int res=0;
-  char buf[255];
+  unsigned char buf[255];
 
   int cSocket;
 
@@ -122,7 +126,7 @@ int main(int argc, char *argv[]) {
           cSocket=ip_accept(sSocket);
           if(cSocket > -1) {
             if(strlen(all_busy) < 1) {
-              ip_write(cSocket,MDM_BUSY,strlen(MDM_BUSY));
+              ip_write(cSocket,(unsigned char*)MDM_BUSY,strlen(MDM_BUSY));
             } else {
               writeFile(all_busy,cSocket);
             }

@@ -55,13 +55,13 @@ typedef struct x_config {
   int mp[2][2];
   int cp[2][2];
   int wp[2][2];
-  char no_answer[255];
-  char connect[255];
-  char inactive[255];
+  unsigned char no_answer[255];
+  unsigned char connect[255];
+  unsigned char inactive[255];
 } x_config;
 
 typedef struct dce_config {
-  char tty[255];
+  unsigned char tty[255];
   int fd;
 } dce_config;
 
@@ -72,8 +72,8 @@ typedef struct modem_config {
   dce_config dce_data;
   line_config line_data;
   x_config data;
-  char config0[1024];
-  char config1[1024];
+  unsigned char config0[1024];
+  unsigned char config1[1024];
   int dce_speed;
   int dte_speed;
   int connected;
@@ -83,7 +83,7 @@ typedef struct modem_config {
   int dsr_active;
   int dsr_on;
   int dcd_on;
-  char last_char;
+  unsigned char last_char;
   int invert_dsr;
   int invert_dcd;
   int allow_transmit;
@@ -93,13 +93,13 @@ typedef struct modem_config {
   int found_a;
   int cmd_started;
   int cmd_mode;
-  char cur_line[1024];
+  unsigned char cur_line[1024];
   int cur_line_idx;
   // dailing information
-  char dialno[256];
-  char last_dialno[256];
-  char dial_type;
-  char last_dial_type;
+  unsigned char dialno[256];
+  unsigned char last_dialno[256];
+  unsigned char dial_type;
+  unsigned char last_dial_type;
   int memory_dial;
   // modem config
   int connect_response;
@@ -110,25 +110,26 @@ typedef struct modem_config {
   int s[100];
   int break_len;
   int disconnect_delay;
-  char crlf[3];
+  unsigned char crlf[3];
 } modem_config;
 
-int modem_init();
-int get_connect_response(int speed, int level);
-void mdm_init_config(modem_config *cfg);
+int mdm_init(void);
+void mdm_init_config(modem_config* cfg);
 int get_new_cts_state(modem_config *cfg, int up);
 int get_new_dsr_state(modem_config *cfg, int up);
 int get_new_dcd_state(modem_config *cfg, int up);
 int mdm_set_control_lines(modem_config *cfg);
-void mdm_write_char(modem_config *cfg,char data);
-void mdm_write(modem_config *cfg,char data[], int len);
+void mdm_write_char(modem_config *cfg,unsigned char data);
+void mdm_write(modem_config *cfg,unsigned char data[], int len);
 void mdm_send_response(int msg,modem_config *cfg);
-int connect_modem(modem_config* cfg);
-int disconnect_modem(modem_config* cfg);
-int config_modem(modem_config* cfg);
-int mdm_handle_char(modem_config* cfg, char ch);
+int mdm_off_hook(modem_config *cfg);
+int mdm_connect(modem_config* cfg);
+int mdm_listen(modem_config *cfg);
+int mdm_disconnect(modem_config* cfg);
+int mdm_parse_cmd(modem_config* cfg);
+int mdm_handle_char(modem_config* cfg, unsigned char ch);
 int mdm_clear_break(modem_config* cfg);
-int mdm_parse_data(modem_config* cfg,char* data, int len);
+int mdm_parse_data(modem_config* cfg,unsigned char* data, int len);
 int mdm_handle_timeout(modem_config* cfg);
 int mdm_send_ring(modem_config *cfg);
 

@@ -1,7 +1,10 @@
 #include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+
 #include "getcmd.h"
 
-int getData(char line[], 
+int getData(unsigned char line[], 
             int* index, 
             int len, 
             int* data_start,
@@ -62,7 +65,7 @@ int getData(char line[],
   return 0;
 }
 
-int getNumber(char line[], int* index, int len ) {
+int getNumber(unsigned char line[], int* index, int len ) {
   int num=0;
   int found=FALSE;
   while(*index <len && 0 != isdigit(line[*index])) {
@@ -75,14 +78,14 @@ int getNumber(char line[], int* index, int len ) {
 }
 
 
-int skip(char line[], int* index, int len, char ch) {
+int skip(unsigned char line[], int* index, int len, unsigned char ch) {
   while(*index<len && ch == line[*index])
     (*index)++;
   return 0;
 
 }
 
-int getCommand(char line[], 
+int getCommand(unsigned char line[], 
                int flags, 
                int* index, 
                int* num, 
@@ -94,7 +97,7 @@ int getCommand(char line[],
 }
 
 
-int parseCommand(char line[], 
+int parseCommand(unsigned char line[], 
                int flags, 
                int* index, 
                int* num, 
@@ -107,7 +110,7 @@ int parseCommand(char line[],
 }
 
 
-int parseRegister(char line[], 
+int parseRegister(unsigned char line[], 
                 int flags, 
                 int* index, 
                 int* num, 
@@ -131,7 +134,7 @@ int parseRegister(char line[],
   return toupper(cmd) | flags;
 }
 
-int getcmd(char line[], 
+int getcmd(unsigned char line[], 
            int* index, 
            int* num, 
            int* data_start, 
@@ -216,14 +219,14 @@ int getcmd(char line[],
 }
 
 int main_getcmd(int argc, char** argv) {
-  char data[]="DT 555-1212";
+  unsigned char data[]="DT 555-1212";
   int index=0,num=0,start=0,end=0;
   int cmd=0;
   while(cmd != AT_CMD_END) {
     cmd=getcmd(data,&index,&num,&start,&end);
     printf("Cmd: %c Index: %d Num: %d Start: %d End: %d\n",cmd, index,num,start,end);
   }
-
+  return 0;
 }
 
 

@@ -1,9 +1,11 @@
 #include <stdio.h>
+#include <stdlib.h>       // for exit,atoi
 #include <unistd.h>
 #include "debug.h"
+#include "phone_book.h"
 #include "init.h"
 
-void print_help(char* name) {
+void print_help(unsigned char* name) {
   fprintf(stderr, "Usage: %s <parameters>\n",name);
   fprintf(stderr, "  -p   port to listen on (defaults to 6400)\n");
   fprintf(stderr, "  -t   trace flags: (can be combined)\n");
@@ -35,7 +37,7 @@ int init(int argc,
          modem_config cfg[],
          int max_modem, 
          int* port,
-         char* all_busy,
+         unsigned char* all_busy,
          int all_busy_len
          ) {
   LOG_ENTER();
@@ -43,7 +45,7 @@ int init(int argc,
   int j=0;
   int opt=0;
   int trace_flags=0;
-  char* tok;
+  unsigned char* tok;
 
   *port=6400;
   mdm_init_config(&cfg[0]);
@@ -51,7 +53,7 @@ int init(int argc,
   cfg[0].dce_speed=38400;
   strncpy(cfg[0].dce_data.tty,"/dev/ttyS0",sizeof(cfg[0].dce_data.tty));
 
-  char* tty=NULL;
+  unsigned char* tty=NULL;
   int dce_set=FALSE;
   while(opt>-1 && i < max_modem) {
     opt=getopt(argc,argv,"p:s:S:d:hw:i:Dl:L:t:n:C:I:B:T:");

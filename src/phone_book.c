@@ -1,15 +1,17 @@
 #include <stdio.h>
+#include <string.h> 
 #include "phone_book.h"
 
 #define PBSIZE 100
 
-char phone_book[PBSIZE][2][128];
+unsigned char phone_book[PBSIZE][2][128];
 int size=0;
 
 int pb_init() {
+  return 0;
 }
 
-int pb_add(char* from,char* to) {
+int pb_add(unsigned char* from,unsigned char* to) {
   if(size < PBSIZE 
      && from != NULL
      && to != NULL
@@ -25,7 +27,7 @@ int pb_add(char* from,char* to) {
   return -1;
 }
 
-char* pb_search(char *number) {
+unsigned char* pb_search(unsigned char *number) {
   int i=0;
   for(i=0;i<size;i++) {
     if(strcmp(phone_book[i][0],number) == 0) {

@@ -1,4 +1,4 @@
-int pb_init();
-int pb_add(char* from,char* to);
-char* pb_search(char *number);
+int pb_init(void);
+int pb_add(unsigned char* from,unsigned char* to);
+unsigned char* pb_search(unsigned char *number);
 

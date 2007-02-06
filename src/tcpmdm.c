@@ -1,4 +1,5 @@
-#include <sys/select.h>
+#include <sys/time.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/param.h>
 #include <termios.h>
@@ -14,18 +15,18 @@
 int main(int argc, char* argv[]) {
   struct timeval timer;  
   struct timeval* ptimer;  
-  char tty[255]="/dev/ttyS2";
-  char addy[255]="dilbert:6400";
-  char init[255]="at";
-  char cr[1]="\x0d";
+  unsigned char tty[255]="/dev/ttyS2";
+  //unsigned char addy[255]="dilbert:6400";
+  unsigned char init[255]="at";
+  unsigned char cr[1]="\x0d";
   int speed=38400;
   int sfd=-1;
   int csd=-1;
-  int ssd=-1;
+  //int ssd=-1;
   int max_fd=0;
   fd_set readfs; 
   int res=0;
-  char buf[255];
+  unsigned char buf[255];
   int rc;
 
   log_init();

@@ -36,11 +36,11 @@
 #endif
 
 typedef struct nvt_vars {
-  char term[255];
+  unsigned char term[255];
 } nvt_vars;
 
-int get_nvt_cmd_response(int action, int type);
-int parse_nvt_subcommand(int fd, nvt_vars vars , char * data, int len);
-int parse_nvt_command(int fd, int action, int opt);
+unsigned char get_nvt_cmd_response(unsigned char action, unsigned char type);
+int parse_nvt_subcommand(int fd, nvt_vars vars , unsigned char * data, int len);
+int parse_nvt_command(int fd, unsigned char action, unsigned char opt);
 
 #endif

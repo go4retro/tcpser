@@ -1,8 +1,10 @@
+#include <string.h>
+
 #include "ip.h"
 #include "nvt.h"
 
-int get_nvt_cmd_response(int action, int type) {
-  int rc=0;
+unsigned char get_nvt_cmd_response(unsigned char action, unsigned char type) {
+  unsigned char rc=0;
 
   if(type == TRUE) {
     switch (action) {
@@ -34,12 +36,12 @@ int get_nvt_cmd_response(int action, int type) {
   return rc;
 }
 
-int parse_nvt_subcommand(int fd, nvt_vars vars , char * data, int len) {
+int parse_nvt_subcommand(int fd, nvt_vars vars , unsigned char * data, int len) {
   // overflow issue, again...
-  int opt=(unsigned char)data[2];
-  char resp[100];
+  int opt=data[2];
+  unsigned char resp[100];
   int resp_len=0;
-  char tty_type[]="VT100";
+  unsigned char tty_type[]="VT100";
   int rc=0;
   int slen=0;
 
@@ -69,10 +71,10 @@ int parse_nvt_subcommand(int fd, nvt_vars vars , char * data, int len) {
 }
 
 
-int parse_nvt_command(int fd, int action, int opt) {
-  char resp[3];
+int parse_nvt_command(int fd, unsigned char action, unsigned char opt) {
+  unsigned char resp[3];
   resp[0]= NVT_IAC;
-  resp[2]= (char)opt;
+  resp[2]= opt;
 
   switch (opt) {
     case NVT_OPT_NAWS:
@@ -83,10 +85,10 @@ int parse_nvt_command(int fd, int action, int opt) {
     case NVT_OPT_ENVIRON:             // but telnet seems to expect.
     case NVT_OPT_NEW_ENVIRON:         // them.
     case NVT_OPT_TERMINAL_SPEED:
-      resp[1] = (char)get_nvt_cmd_response(action,TRUE);
+      resp[1] = get_nvt_cmd_response(action,TRUE);
       break;
     default:
-      resp[1] = (char)get_nvt_cmd_response(action,FALSE);
+      resp[1] = get_nvt_cmd_response(action,FALSE);
       break;
   }
   ip_write(fd,resp,3);

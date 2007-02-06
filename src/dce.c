@@ -1,5 +1,6 @@
 #include <termios.h>
 #include <sys/ioctl.h>
+#include <unistd.h>
 
 #include "debug.h"
 #include "serial.h"
@@ -38,7 +39,7 @@ int dce_set_flow_control(modem_config *cfg,int opts) {
 }
 
 int dce_set_control_lines(modem_config *cfg,int state) {
-  int status;
+  int status=0;
   int rc;
 
   LOG_ENTER();
@@ -90,11 +91,11 @@ int dce_check_control_lines(modem_config *cfg) {
 }
 
 
-int dce_write(modem_config *cfg,char data[], int len) {
+int dce_write(modem_config *cfg,unsigned char data[], int len) {
   return ser_write(cfg->dce_data.fd,data,len);
 }
 
-int dce_read(modem_config *cfg, char data[], int len) {
+int dce_read(modem_config *cfg, unsigned char data[], int len) {
   return ser_read(cfg->dce_data.fd,data,len);
 }
 

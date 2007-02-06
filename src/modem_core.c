@@ -1,8 +1,11 @@
+#include <unistd.h>
+#include <stdlib.h>       // for atoi
+
 #include "getcmd.h"
 #include "debug.h"
 #include "modem_core.h"
 
-char* mdm_responses[37];
+unsigned char* mdm_responses[37];
 
 int mdm_init() {
   mdm_responses[MDM_RESP_OK]="OK";
@@ -158,16 +161,17 @@ int mdm_set_control_lines(modem_config *cfg) {
      );
 
   dce_set_control_lines(cfg,state);
+  return 0;
 }
 
 
-void mdm_write_char(modem_config *cfg,char data) {
-  char str[2];
+void mdm_write_char(modem_config *cfg,unsigned char data) {
+  unsigned char str[2];
   str[0]=data;
   mdm_write(cfg,str,1);
 }
 
-void mdm_write(modem_config *cfg,char data[], int len) {
+void mdm_write(modem_config *cfg,unsigned char data[], int len) {
   if(cfg->allow_transmit == TRUE) {
     dce_write(cfg,data,len);
   }
@@ -182,7 +186,7 @@ void mdm_send_response(int msg,modem_config *cfg) {
       mdm_write(cfg,mdm_responses[msg],strlen(mdm_responses[msg]));
     } else {
       LOG(LOG_ALL,"Sending numeric response");
-      char msgID[17];
+      unsigned char msgID[17];
       sprintf(msgID,"%d",msg);
       mdm_write(cfg,msgID,strlen(msgID));
     }
@@ -242,7 +246,7 @@ int mdm_connect(modem_config* cfg) {
 
 
 int mdm_listen(modem_config *cfg) {
-  line_listen(cfg);
+  return line_listen(cfg);
 }
 
 
@@ -268,15 +272,15 @@ int mdm_disconnect(modem_config* cfg) {
   return 0;
 }
 
-int config_modem(modem_config* cfg) {
+int mdm_parse_cmd(modem_config* cfg) {
   int done=FALSE;
   int index=0;
   int num=0;
   int start=0;
   int end=0;
   int cmd=AT_CMD_NONE;
-  char* command=cfg->cur_line;
-  char tmp[256];
+  unsigned char* command=cfg->cur_line;
+  unsigned char tmp[256];
 
   LOG_ENTER();
 
@@ -315,7 +319,7 @@ int config_modem(modem_config* cfg) {
           break;
       case 'B':   // 212A versus V.22 connection
         if(num > 1) {
-          cmd-AT_CMD_ERR;
+          cmd=AT_CMD_ERR;
         } else {
           //cfg->connect_1200=num;
         }
@@ -324,8 +328,8 @@ int config_modem(modem_config* cfg) {
         if(end>start) {
           strncpy(cfg->dialno,command+start,end-start);
           cfg->dialno[end-start]='\0';
-          cfg->dial_type=(char)num;
-          cfg->last_dial_type=(char)num;
+          cfg->dial_type=(unsigned char)num;
+          cfg->last_dial_type=(unsigned char)num;
           strncpy(cfg->last_dialno,command+start,end-start);
           cfg->last_dialno[end-start]='\0';
           cfg->memory_dial=FALSE;
@@ -368,21 +372,21 @@ int config_modem(modem_config* cfg) {
         break;
       case 'L':   // Speaker volume
         if(num < 1 || num > 3)
-          cmd-AT_CMD_ERR;
+          cmd=AT_CMD_ERR;
         else {
           //cfg->volume=num;
         }
         break;
       case 'M':   // speaker settings
         if(num > 3)
-          cmd-AT_CMD_ERR;
+          cmd=AT_CMD_ERR;
         else {
           //cfg->speaker_setting=num;
         }
         break;
       case 'N':   // automode negotiate
         if(num > 1)
-          cmd-AT_CMD_ERR;
+          cmd=AT_CMD_ERR;
         else {
           //cfg->auto_mode=num;
         }
@@ -440,14 +444,14 @@ int config_modem(modem_config* cfg) {
           break;
       case 'Y':   // long space disconnect.
         if(num > 1)
-          cmd-AT_CMD_ERR;
+          cmd=AT_CMD_ERR;
         else {
           //cfg->long_disconnect=num;
         }
         break;
       case 'Z':   // long space disconnect.
         if(num > 1)
-          cmd-AT_CMD_ERR;
+          cmd=AT_CMD_ERR;
         else {
           // set config0 to cur_line and go.
         }
@@ -484,20 +488,20 @@ int config_modem(modem_config* cfg) {
   return cmd;
 }
 
-int mdm_handle_char(modem_config* cfg, char ch) {
+int mdm_handle_char(modem_config* cfg, unsigned char ch) {
   if(cfg->echo == TRUE)
     mdm_write_char(cfg,ch);
   if(cfg->cmd_started == TRUE) {
-    if(ch == (char)(cfg->s[5])) {
+    if(ch == (unsigned char)(cfg->s[5])) {
       if(cfg->cur_line_idx == 0 && cfg->echo == TRUE) {
         mdm_write_char(cfg,'T');
       } else {
         cfg->cur_line_idx--;
       }
-    } else if(ch == (char)(cfg->s[3])) {
+    } else if(ch == (unsigned char)(cfg->s[3])) {
       // we have a line, process.
       cfg->cur_line[cfg->cur_line_idx]=0;
-      config_modem(cfg);
+      mdm_parse_cmd(cfg);
       cfg->cur_line_idx=0;
       cfg->cmd_started=FALSE;
     } else {
@@ -513,14 +517,16 @@ int mdm_handle_char(modem_config* cfg, char ch) {
     LOG(LOG_ALL,"We found an 'A' in the serial stream");
     cfg->found_a=TRUE;
   } 
+  return 0;
 }
 
 int mdm_clear_break(modem_config* cfg) {
   cfg->break_len=0;
   cfg->pre_break_delay=FALSE;
+  return 0;
 }
 
-int mdm_parse_data(modem_config* cfg,char* data, int len) {
+int mdm_parse_data(modem_config* cfg,unsigned char* data, int len) {
   int i;
 
   if(cfg->cmd_mode==TRUE) {
@@ -531,7 +537,7 @@ int mdm_parse_data(modem_config* cfg,char* data, int len) {
     line_write(cfg,data,len);
     if(cfg->pre_break_delay == TRUE) {
       for(i=0;i<len;i++) {
-        if(data[i] == (char)cfg->s[2]) {
+        if(data[i] == (unsigned char)cfg->s[2]) {
           LOG(LOG_DEBUG,"Break character received");
           cfg->break_len++;
           if(cfg->break_len > 3) {  // more than 3, considered invalid
@@ -570,6 +576,7 @@ int mdm_handle_timeout(modem_config* cfg) {
     LOG(LOG_INFO,"DTE communication inactivity timeout");
     mdm_disconnect(cfg);
   }
+  return 0;
 }
 
 int mdm_send_ring(modem_config *cfg) {

@@ -1,11 +1,9 @@
+#include <unistd.h> 
 #include <termios.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#ifdef WIN32
-#include <time.h>
-//#include <Windows.h>
-#else
+#ifdef __linux__
 #include <linux/serial.h>
 #endif
 #include "debug.h"
@@ -75,10 +73,9 @@ int ser_get_bps_const(int speed) {
 
 }
 
-int ser_init_conn(char* tty, int speed) {
+int ser_init_conn(unsigned char* tty, int speed) {
   int fd = 0;
   struct termios tio;
-  char buf[255];
   int bps_rate=0;
 
   LOG_ENTER();
@@ -252,12 +249,12 @@ int watch_control_lines(int tty_fd, int pipe) {
 }
 #endif
 
-int ser_write(int fd, char* data,int len) {
+int ser_write(int fd, unsigned char* data,int len) {
   log_trace(TRACE_MODEM_OUT,data,len);
   return write(fd,data,len);
 }
 
-int ser_read(int fd, char* data, int len) {
+int ser_read(int fd, unsigned char* data, int len) {
   int res;
 
   res=read(fd,data,len);
