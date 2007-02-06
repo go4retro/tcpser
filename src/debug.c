@@ -17,8 +17,8 @@ int log_init() {
   log_file=stderr;
   log_level=0;
   trace_flags=0;
-  trace_type[TRACE_MODEM_IN]="MO<-";
-  trace_type[TRACE_MODEM_OUT]="MO->";
+  trace_type[TRACE_MODEM_IN]="RS<-";
+  trace_type[TRACE_MODEM_OUT]="RS->";
   trace_type[TRACE_IP_IN]="IP<-";
   trace_type[TRACE_IP_OUT]="IP->";
   log_desc[LOG_FATAL]="FATAL";
@@ -64,6 +64,9 @@ void log_trace(int type, unsigned char* line, int len) {
   unsigned char *dptr=NULL;
   unsigned char text[17];
 
+  if(len==0)
+    return;
+
   if((type & trace_flags) != 0) {
     text[16]=0;
     for(i=0;i<len;i++) {
@@ -88,15 +91,17 @@ void log_trace(int type, unsigned char* line, int len) {
       }
     }
     i=i%16;
-    for(;i<16;i++) {
-      sprintf(dptr + 5 + ((i % 16) * 3),"  ");
-      if((i % 16) != 15) {
-        sprintf(dptr + 7 + ((i % 16) * 3)," ");
+    if(i > 0) {
+      for(;i<16;i++) {
+        sprintf(dptr + 5 + ((i % 16) * 3),"  ");
+        if((i % 16) != 15) {
+          sprintf(dptr + 7 + ((i % 16) * 3)," ");
+        }
+        text[i % 16] = ' ';
       }
-      text[i % 16] = ' ';
+      log_start(LOG_TRACE);
+      fprintf(log_file,"%s|%s|%s|",trace_type[type],data,text);
     }
-    log_start(LOG_TRACE);
-    fprintf(log_file,"%s|%s|%s|",trace_type[type],data,text);
     log_end();
   }
 }
@@ -124,10 +129,3 @@ void log_end() {
   }
 }
 
-int main2(int a,unsigned char* b[]) {
-  log_init();
-  trace_flags=TRACE_IP_OUT | TRACE_IP_IN;
-  unsigned char text[255]="Hi, this is jim, and I am coding as we speak";
-  log_trace(TRACE_IP_IN,text,254);
-  return 0;
-}

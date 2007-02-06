@@ -4,7 +4,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>       // for read...
-#include <stdlib.h>       // for exit...
+#include <stdlib.h>       // for atoi...
 
 #include "debug.h"
 #include "ip.h"
@@ -13,20 +13,19 @@
 const int BACK_LOG = 5;
 
 int ip_init_server_conn(int port) {
-    int sSocket = 0,
-        on = 0,
-        rc = 0;
-    struct sockaddr_in serverName = { 0 };
+  int sSocket = 0,
+      on = 0,
+      rc = 0;
+  struct sockaddr_in serverName = { 0 };
 
-    LOG_ENTER();
+  LOG_ENTER();
 
-    LOG(LOG_DEBUG,"Creating server socket");
+  LOG(LOG_DEBUG,"Creating server socket");
 
-    sSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (-1 == sSocket) {
-        ELOG(LOG_FATAL,"Server socket could not be created");
-        exit(1);
-    }
+  sSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+  if (-1 == sSocket) {
+      ELOG(LOG_FATAL,"Server socket could not be created");
+  } else {
 
     /*
      * turn off bind address checking, and allow 
@@ -39,7 +38,7 @@ int ip_init_server_conn(int port) {
 
     rc = setsockopt(sSocket, 
                     SOL_SOCKET, 
-		                SO_REUSEADDR,
+                    SO_REUSEADDR,
                     (const char *) &on, 
                     sizeof(on)
                    );
@@ -55,23 +54,25 @@ int ip_init_server_conn(int port) {
 
     LOG(LOG_DEBUG,"Binding server socket to port %d",port);
     rc = bind(sSocket,  
-	            (struct sockaddr *) &serverName,
+              (struct sockaddr *) &serverName,
               sizeof(serverName)
              );
     if (-1 == rc) {
         ELOG(LOG_FATAL,"Server socket could not be bound to port");
-        exit(1);
-    }
-    LOG(LOG_INFO,"Server socket bound to port");
+        sSocket = -1;
+    } else {
+      LOG(LOG_INFO,"Server socket bound to port");
 
-    rc = listen(sSocket, BACK_LOG);
-    LOG(LOG_INFO,"Server socket listening for connections");
-    if (-1 == rc) {
-      ELOG(LOG_FATAL,"Server socket could not listen on port");
-      exit(1);
+      rc = listen(sSocket, BACK_LOG);
+      LOG(LOG_INFO,"Server socket listening for connections");
+      if (-1 == rc) {
+        ELOG(LOG_FATAL,"Server socket could not listen on port");
+        sSocket = -1;
+      }
     }
-
-    return sSocket;
+  }
+  LOG_EXIT();
+  return sSocket;
 }
 
 
@@ -82,14 +83,17 @@ int ip_connect(unsigned char addy[]) {
 	struct hostent *hp;
   int sd=0;
   int port=23;
-  unsigned char* address=(unsigned char*)strtok(addy,":");
-  unsigned char* tmp=(unsigned char*)strtok((unsigned char*)0,":");
+  unsigned char* address;
+  unsigned char* tmp;
 
+  LOG_ENTER();
+
+  address=(unsigned char*)strtok(addy,":");
+  tmp=(unsigned char*)strtok((unsigned char*)0,":");
   if(tmp != NULL && strlen(tmp) > 0) {
     port=atoi(tmp);
   }
 
-  LOG_ENTER();
   LOG(LOG_DEBUG,"Calling %s",addy);
 	memset(&pin, 0, sizeof(pin));
 

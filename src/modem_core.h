@@ -34,12 +34,20 @@
 #define MDM_FC_RTS 1
 #define MDM_FC_XON 2
 
+#define MDM_CONN_NONE 0
+#define MDM_CONN_OUTGOING 1
+#define MDM_CONN_INCOMING 2
+
 #ifndef TRUE
 #define TRUE 1
 #define FALSE 0
 #endif
 
 #include "nvt.h"
+
+#ifndef MAX
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
 
 
 typedef struct line_config {
@@ -55,13 +63,17 @@ typedef struct x_config {
   int mp[2][2];
   int cp[2][2];
   int wp[2][2];
-  unsigned char no_answer[255];
-  unsigned char connect[255];
-  unsigned char inactive[255];
+  unsigned char no_answer[256];
+  unsigned char local_connect[256];
+  unsigned char remote_connect[256];
+  unsigned char local_answer[256];
+  unsigned char remote_answer[256];
+  unsigned char inactive[256];
 } x_config;
 
 typedef struct dce_config {
-  unsigned char tty[255];
+  unsigned char tty[256];
+  int first_char;
   int fd;
 } dce_config;
 
@@ -76,14 +88,12 @@ typedef struct modem_config {
   unsigned char config1[1024];
   int dce_speed;
   int dte_speed;
-  int connected;
-  int connect;
+  int conn_type;
   int line_ringing;
   int off_hook;
   int dsr_active;
   int dsr_on;
   int dcd_on;
-  unsigned char last_char;
   int invert_dsr;
   int invert_dcd;
   int allow_transmit;
@@ -93,6 +103,7 @@ typedef struct modem_config {
   int found_a;
   int cmd_started;
   int cmd_mode;
+  unsigned char last_cmd[1024];
   unsigned char cur_line[1024];
   int cur_line_idx;
   // dailing information
@@ -123,6 +134,8 @@ void mdm_write_char(modem_config *cfg,unsigned char data);
 void mdm_write(modem_config *cfg,unsigned char data[], int len);
 void mdm_send_response(int msg,modem_config *cfg);
 int mdm_off_hook(modem_config *cfg);
+int mdm_answer(modem_config *cfg);
+int mdm_print_speed(modem_config *cfg);
 int mdm_connect(modem_config* cfg);
 int mdm_listen(modem_config *cfg);
 int mdm_disconnect(modem_config* cfg);

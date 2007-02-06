@@ -44,6 +44,8 @@ int main(int argc, char *argv[]) {
 
   LOG_ENTER();
 
+  log_set_level(LOG_FATAL);
+
   mdm_init();
 
   pb_init();

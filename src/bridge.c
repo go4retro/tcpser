@@ -47,7 +47,7 @@ int parse_ip_data(modem_config *cfg, unsigned char* data, int len) {
     cfg->line_data.first_char=FALSE;
     if(data[0] == 0xff) {
       cfg->line_data.is_telnet=TRUE;
-    }
+    } 
   }
 
   if(cfg->line_data.is_telnet == TRUE) {
@@ -101,7 +101,7 @@ void *ip_thread(void *arg) {
   fd_set readfs; 
   int max_fd;
   int res=0;
-  unsigned char buf[255];
+  unsigned char buf[256];
   int rc;
 
 
@@ -111,7 +111,7 @@ void *ip_thread(void *arg) {
     FD_SET(cfg->data.cp[1][0], &readfs); 
     max_fd=cfg->data.cp[1][0];
     if(action_pending == FALSE 
-       && cfg->connected == TRUE 
+       && cfg->conn_type != MDM_CONN_NONE 
        && cfg->cmd_mode == FALSE 
        && cfg->line_data.fd > -1
        && cfg->line_data.valid_conn ==TRUE
@@ -128,7 +128,7 @@ void *ip_thread(void *arg) {
       // we got data
       if (FD_ISSET(cfg->line_data.fd,&readfs)) {  // socket
         LOG(LOG_DEBUG,"Data available on socket");
-        res = recv(cfg->line_data.fd,buf,sizeof(buf) - 1,0);
+        res = recv(cfg->line_data.fd,buf,sizeof(buf),0);
         if(0 >= res) {
           LOG(LOG_INFO,"No socket data read, assume closed peer");
           writePipe(cfg->data.cp[0][1],MSG_DISCONNECT);
@@ -152,13 +152,15 @@ void *ip_thread(void *arg) {
 
 void *ctrl_thread(void *arg) {
   modem_config* cfg=(modem_config *)arg;
-  int status=dce_get_control_lines(cfg);
+  int status;
   int new_status;
 
   LOG_ENTER();
-  while(TRUE) {
+
+  status=dce_get_control_lines(cfg);
+  while(status > -1) {
     new_status = dce_check_control_lines(cfg);
-    if(status != new_status) {
+    if(new_status > -1 && status != new_status) {
       // something changed
       if((status & MDM_CL_DTR_HIGH) != (new_status & MDM_CL_DTR_HIGH)) {
         if((new_status & MDM_CL_DTR_HIGH) == 0) {
@@ -173,6 +175,8 @@ void *ctrl_thread(void *arg) {
     status = new_status;
   }
   LOG_EXIT();
+  // need to quit application, as status cannot be obtained.
+  exit(-1);
 }
 
 
@@ -211,10 +215,10 @@ void *run_bridge(void * arg) {
   int max_fd=0;
   fd_set readfs; 
   int res=0;
-  unsigned char buf[255];
+  unsigned char buf[256];
   int rc=0;
 
-  int last_connected;
+  int last_conn_type;
 
 
   LOG_ENTER();
@@ -238,25 +242,35 @@ void *run_bridge(void * arg) {
   mdm_set_control_lines(cfg);
   strncpy(cfg->cur_line,cfg->config0,sizeof(cfg->cur_line));
   cfg->allow_transmit=FALSE;
+  // call some functions behind the scenes
   mdm_parse_cmd(cfg);
+  mdm_disconnect(cfg);
   cfg->allow_transmit=TRUE;
   cfg->line_data.fd=-1;
-  line_disconnect(cfg);
-  last_connected=cfg->connected;
-  // IP stuff
+  last_conn_type=cfg->conn_type;
   for(;;) {
-    if(last_connected != cfg->connected) {
+    if(last_conn_type!= cfg->conn_type) {
       //writePipe(cfg->data.mp[0][1],MSG_NOTIFY);
       writePipe(cfg->data.cp[1][1],MSG_NOTIFY);
-      if(cfg->connected == TRUE) {
-        if(strlen(cfg->data.connect) > 0) {
-          writeFile(cfg->data.connect,cfg->line_data.fd);
+      if(cfg->conn_type == MDM_CONN_OUTGOING) {
+        if(strlen(cfg->data.local_connect) > 0) {
+          writeFile(cfg->data.local_connect,cfg->line_data.fd);
+        } 
+        if(strlen(cfg->data.remote_connect) > 0) {
+          writeFile(cfg->data.remote_connect,cfg->line_data.fd);
+        } 
+      } else if(cfg->conn_type == MDM_CONN_INCOMING) {
+        if(strlen(cfg->data.local_answer) > 0) {
+          writeFile(cfg->data.local_answer,cfg->line_data.fd);
+        } 
+        if(strlen(cfg->data.remote_answer) > 0) {
+          writeFile(cfg->data.remote_answer,cfg->line_data.fd);
         } 
       }
-      last_connected=cfg->connected;
+      last_conn_type=cfg->conn_type;
     }
     LOG(LOG_ALL,"Waiting for modem/control line/timer/socket activity");
-    LOG(LOG_ALL,"Command Mode=%d, Connection status=%d",cfg->cmd_mode,cfg->connected);
+    LOG(LOG_ALL,"Command Mode=%d, Connection status=%d",cfg->cmd_mode,cfg->conn_type);
     max_fd=MAX(cfg->data.mp[1][0],cfg->dce_data.fd);
     max_fd=MAX(max_fd,cfg->data.wp[0][0]);
     max_fd=MAX(max_fd,cfg->data.cp[0][0]);
@@ -283,7 +297,7 @@ void *run_bridge(void * arg) {
         timer.tv_usec=0;
         ptimer=&timer;
       }
-    } else if(cfg->cmd_mode == TRUE && cfg->connected == FALSE && cfg->line_data.valid_conn ==TRUE) {
+    } else if(cfg->cmd_mode == TRUE && cfg->conn_type== MDM_CONN_NONE && cfg->line_data.valid_conn ==TRUE) {
         LOG(LOG_ALL,"Setting timer for rings");
         timer.tv_sec=4;
         timer.tv_usec=0;
@@ -296,7 +310,7 @@ void *run_bridge(void * arg) {
       // handle error
     } else if(rc == 0) {
       // timer popped.
-      if(cfg->cmd_mode == TRUE && cfg->connected == FALSE && cfg->line_data.valid_conn == TRUE) {
+      if(cfg->cmd_mode == TRUE && cfg->conn_type == MDM_CONN_NONE && cfg->line_data.valid_conn == TRUE) {
         if(cfg->s[0] == 0 && cfg->rings==10) {
           // not going to answer, send some data back to IP and disconnect.
           if(strlen(cfg->data.no_answer) == 0) {
@@ -313,12 +327,17 @@ void *run_bridge(void * arg) {
     }
     if (FD_ISSET(cfg->dce_data.fd,&readfs)) {  // serial port
       LOG(LOG_DEBUG,"Data available on serial port");
-      res = read(cfg->dce_data.fd,buf,sizeof(buf) -1);
+      res = dce_read(cfg,buf,sizeof(buf));
       LOG(LOG_DEBUG,"Read %d bytes from serial port",res);
       if(res > 0) {
-        buf[res]=0;
-        log_trace(TRACE_MODEM_IN,buf,res);
-        mdm_parse_data(cfg,buf,res);
+        if(cfg->conn_type == MDM_CONN_NONE && cfg->off_hook == TRUE) {
+          // this handles the case where atdt goes off hook, but no
+          // connection
+          mdm_disconnect(cfg);
+          mdm_send_response(MDM_RESP_OK,cfg);
+        } else {
+          mdm_parse_data(cfg,buf,res);
+        }
       }
       
     }
@@ -337,8 +356,7 @@ void *run_bridge(void * arg) {
       }
     }
     if (FD_ISSET(cfg->data.cp[0][0],&readfs)) {  // ip thread pipe
-      res = read(cfg->data.cp[0][0],buf,sizeof(buf) -1);
-      buf[res]=0;
+      res = read(cfg->data.cp[0][0],buf,sizeof(buf));
       LOG(LOG_DEBUG,"Received %c from ip thread",buf[0]);
       switch (buf[0]) {
         case MSG_DISCONNECT:
@@ -348,8 +366,7 @@ void *run_bridge(void * arg) {
     }
     if (FD_ISSET(cfg->data.mp[1][0],&readfs)) {  // parent pipe
       LOG(LOG_DEBUG,"Data available on incoming IPC pipe");
-      res = read(cfg->data.mp[1][0],buf,sizeof(buf) -1);
-      buf[res]=0;
+      res = read(cfg->data.mp[1][0],buf,sizeof(buf));
       switch (buf[0]) {
         case MSG_ACCEPT:       // accept connection.
           accept_connection(cfg);

@@ -1,0 +1,152 @@
+README
+
+TCPSER turns a PC serial port into an emulated Hayes compatible modem that 
+uses TCP/IP for incoming and outgoing connections.  It can be used to allow 
+older applications and systems designed for modem use to operate on the
+Internet.  TCPSER supports all standard Hayes commands, and understands
+extended and vendor proprietary commands (though it does not implement
+many of them).  TCPSER can be used for both inbound and outbound connections.
+
+TCPSER is distributed under the GPL 2.0 or later
+
+To build:
+
+Win32:  make -f Makefile.win32
+Linux:  make
+Solaris: make -f Makefile.solaris
+*BSD: gmake
+
+Win32 users must have at least the cygwin1.dll in the tcpser 
+directory to run the application.  To develop, use the cygwin 
+development toolshain
+
+To run:
+
+tcpser -d <dev> -s <speed> -l <leg_level> -t <tracing options> ...
+
+sample:
+
+tcpser -d /dev/ttyS0 -s 38400 -l 7 -tsSiI -i "s0=1" -p 6400
+
+Will start tcpser on ttyS0 at 38400 bps, level 7 logging, tracing of
+inbound serial, outbound serial, inbound IP, outbound IP, init
+modem to answer after 1 ring, and listen for incoming connections on port
+6400
+
+Cable:
+
+tcpser can be used with a regular null modem cable, but it sets DSR and
+DCD on the remote side to reflect the status of the Carrier (no carrier
+= low, carrier = high).  For some systems that require DSR to be high
+this may present a problem.  If so, you can force DSR HI by forcing DCD
+hi (-i "&C0").  However, this will inhibit correct settings of the DCD
+line, which is needed by some BBS applications.  As a result, a 
+modified null-modem cable is recommended:
+
+CTS-RTS
+RTS-CTS
+SND-RCV
+RCV-SND
+DTR-DCD
+DCD-DTR
+GND-GND
+
+This differs from a regular null-modem cable in that it does not provide
+DSR-DTR
+DTR-DSR
+
+In practice, this does not seem to pose a problem.  If it does, simply
+tie the remote computer's DSR line to the remote computer's DTR line.
+
+tcpser causes the configured serial port to emulate semantics of a 
+Hayes compatible modem.  tcpser substitutes the phone line for an
+TCP/IP connection, and phone numbers for IP addresses or DNS entries.
+
+All of the standard Hayes commands should behave as expected.  Some of
+of the proprietary commands are not implemented, but should not cause
+errors.  
+
+Examples:
+
+ats0=1                ; set number of rings to answer
+ata                   ; answer the line
+ath0                  ; hang up
+ats12?                ; query S register 12
+ate0                  ; turn off echo
+at&k3                 ; set flow control to RTS/CTS
+atdtjbrain.com:6400   ; "dial" jbrain.com, port 6400 (defaults to port 23)
+atdl                  ; "dial" last number
+a/                    ; repeat last command
+
+Commands can be chained, as on a regular modem:
+
+ats0=1z&c1&k3%f0s3=13dtjbrain.com
+
+tcpser can be configured to send the contents of a file upon:
+
+connect               ; -c -C
+answer                ; -a -A
+no-answer             ; -I
+busy                  ; -B
+inactivity-timeout    ; -T
+
+For connect and answer, there are separate options for sending a file to the
+local serial connection (-c, -a) and the remote IP connection (-C, -A).  
+
+tcpser -h will provide additional information
+
+If tcpser connects to a telnet service, tcpser will negotiate the connection
+using the telnet protocol.  Note though that telnet connections are NOT 8-bit
+clean, meaning file transfers will not likely work over such a connection.
+Normal non-telnet connections are 8-bit clean and file transfers should 
+operate correctly.
+
+tcpser can be configured to support multiple serial ports on one TCP/IP port
+Simply repeat the -s and -d parameters on the command line for each serial
+port to be configured.  Options s,S,a,A,c,C,I, and T will "propogate" to
+subsequent connections, unless they are redefined.  Defaults for s and S are
+38400.  This configuration enables the operation of a multi-line BBS on one
+TCP/IP port.
+
+Freqently used addresses can be configured in the "phonebook", like so:
+
+tcpser .... -nhome=jbrain.com:6400
+
+This is also useful for systems that do not accept non-numeric phone numbers:
+
+tcpser .... -n555-1212=bestbbs.net
+
+One can even "hide" a regular IP address or DNS entry by aliasing it to
+something else:
+
+tcpser .... -njbrain.com=bestbbs.com
+
+At this point, phonebook support is very alpha, so use with care.
+
+tcpser supports the Hayes break sequence semantics, so +++ should operate
+correctly, even if the sequence of characters is used in normal data 
+transmissions.
+
+Platform notes:
+
+Win32 users should use /dev/ttyS0-3 for COM1-4.  At present, using "com1:"
+does not operate correctly.
+
+This has been tested on Linux 2.4.20-8 and Windows XP.  
+
+
+Jim Brain
+brain@jbrain.com
+www.jbrain.com
+
+
+
+
+
+
+
+
+
+
+
+

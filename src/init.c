@@ -9,8 +9,8 @@ void print_help(unsigned char* name) {
   fprintf(stderr, "Usage: %s <parameters>\n",name);
   fprintf(stderr, "  -p   port to listen on (defaults to 6400)\n");
   fprintf(stderr, "  -t   trace flags: (can be combined)\n");
-  fprintf(stderr, "       'm' = modem input\n");
-  fprintf(stderr, "       'M' = modem output\n");
+  fprintf(stderr, "       's' = modem input\n");
+  fprintf(stderr, "       'S' = modem output\n");
   fprintf(stderr, "       'i' = IP input\n");
   fprintf(stderr, "       'I' = IP input\n");
   fprintf(stderr, "  -l   0 (NONE), 1 (FATAL) - 7 (DEBUG_X) (defaults to 0)\n");
@@ -24,7 +24,10 @@ void print_help(unsigned char* name) {
   fprintf(stderr, "  -S   speed modem will report (defaults to -s value)\n");
   fprintf(stderr, "  -D   invert DCD pin\n");
   fprintf(stderr, "  -n   add phone entry (number=replacement)\n");
-  fprintf(stderr, "  -C   filename to send upon connect\n");
+  fprintf(stderr, "  -a   filename to send to local side upon answer\n");
+  fprintf(stderr, "  -A   filename to send to remote side upon answer\n");
+  fprintf(stderr, "  -c   filename to send to local side upon connect\n");
+  fprintf(stderr, "  -C   filename to send to remote side upon connect\n");
   fprintf(stderr, "  -I   filename to send when no answer\n");
   fprintf(stderr, "  -B   filename to send when modem(s) busy\n");
   fprintf(stderr, "  -T   filename to send upon inactivity timeout\n");
@@ -40,32 +43,32 @@ int init(int argc,
          unsigned char* all_busy,
          int all_busy_len
          ) {
-  LOG_ENTER();
   int i=0;
   int j=0;
   int opt=0;
   int trace_flags=0;
   unsigned char* tok;
+  unsigned char* tty=NULL;
+  int dce_set=FALSE;
 
+  LOG_ENTER();
   *port=6400;
   mdm_init_config(&cfg[0]);
   cfg[0].dte_speed=38400;
   cfg[0].dce_speed=38400;
   strncpy(cfg[0].dce_data.tty,"/dev/ttyS0",sizeof(cfg[0].dce_data.tty));
 
-  unsigned char* tty=NULL;
-  int dce_set=FALSE;
   while(opt>-1 && i < max_modem) {
-    opt=getopt(argc,argv,"p:s:S:d:hw:i:Dl:L:t:n:C:I:B:T:");
+    opt=getopt(argc,argv,"p:s:S:d:hw:i:Dl:L:t:n:a:A:c:C:I:B:T:");
     switch(opt) {
       case 't':
         trace_flags=log_get_trace_flags();
         for(j=0;j<strlen(optarg);j++) {
           switch(optarg[j]) {
-            case 'm':
+            case 's':
               trace_flags|=TRACE_MODEM_IN;
               break;
-            case 'M':
+            case 'S':
               trace_flags|=TRACE_MODEM_OUT;
               break;
             case 'i':
@@ -78,8 +81,17 @@ int init(int argc,
           log_set_trace_flags(trace_flags);
         }
         break;
+      case 'a':
+        strncpy(cfg[i].data.local_answer,optarg,sizeof(cfg[i].data.local_answer));
+        break;
+      case 'A':
+        strncpy(cfg[i].data.remote_answer,optarg,sizeof(cfg[i].data.remote_answer));
+        break;
+      case 'c':
+        strncpy(cfg[i].data.local_connect,optarg,sizeof(cfg[i].data.local_connect));
+        break;
       case 'C':
-        strncpy(cfg[i].data.connect,optarg,sizeof(cfg[i].data.connect));
+        strncpy(cfg[i].data.remote_connect,optarg,sizeof(cfg[i].data.remote_connect));
         break;
       case 'B':
         strncpy(all_busy,optarg,all_busy_len);
@@ -129,7 +141,10 @@ int init(int argc,
           cfg[i].dte_speed=cfg[i-1].dte_speed;
           cfg[i].dce_speed=cfg[i-1].dce_speed;
           strncpy(cfg[i].config0,cfg[i-1].config0,sizeof(cfg[i].config0));
-          strncpy(cfg[i].data.connect,cfg[i-1].data.connect,sizeof(cfg[i].data.connect));
+          strncpy(cfg[i].data.local_connect,cfg[i-1].data.local_connect,sizeof(cfg[i].data.local_connect));
+          strncpy(cfg[i].data.remote_connect,cfg[i-1].data.remote_connect,sizeof(cfg[i].data.remote_connect));
+          strncpy(cfg[i].data.local_answer,cfg[i-1].data.local_answer,sizeof(cfg[i].data.local_answer));
+          strncpy(cfg[i].data.remote_answer,cfg[i-1].data.remote_answer,sizeof(cfg[i].data.remote_answer));
           strncpy(cfg[i].data.no_answer,cfg[i-1].data.no_answer,sizeof(cfg[i].data.no_answer));
           strncpy(cfg[i].data.inactive,cfg[i-1].data.inactive,sizeof(cfg[i].data.inactive));
         }

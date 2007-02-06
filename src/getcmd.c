@@ -123,14 +123,27 @@ int parseRegister(unsigned char line[],
 
   int cmd=0;
   cmd = getCommand(line,flags,index,num,len);
-  if(0 > num
-     || 0 > skip(line,index,len,' ')
-     || len == *index
-     || '=' != line[(*index)++]
-     || 0 > skip(line, index, len, ' ') 
-     || 0 > getData(line, index, len, data_start, data_end, complex_parse)
-    )
+  if(0 > num)
     return AT_CMD_ERR;
+  skip(line,index,len,' ');
+  if(len == *index)
+    return AT_CMD_ERR;
+  switch (line[(*index)++]) {
+    case '=':
+      // set a register
+      skip(line, index, len, ' ');
+      if(0 > getData(line, index, len, data_start, data_end, complex_parse))
+        return AT_CMD_ERR;
+      break;
+    case '?':
+      // query a register
+      flags |= AT_CMD_FLAG_QUERY;
+      if(*num < 0)
+        *num=0;
+      break;
+    default:
+      return AT_CMD_ERR;
+  }
   return toupper(cmd) | flags;
 }
 
@@ -158,6 +171,19 @@ int getcmd(unsigned char line[],
       case 0:
         return AT_CMD_END;
       case '%':
+        (*index)++;
+        while(*index<len) {
+          switch(toupper(line[*index])) {
+            case ' ':
+              break;
+            case 0:
+              return AT_CMD_ERR;
+            default:
+              return parseCommand(line,AT_CMD_FLAG_PRO_PCT, index,num,len);
+          }
+          (*index)++;
+        }
+        break;
       case '\\':
         (*index)++;
         while(*index<len) {
@@ -167,7 +193,35 @@ int getcmd(unsigned char line[],
             case 0:
               return AT_CMD_ERR;
             default:
-              return parseCommand(line,AT_CMD_FLAG_PRO, index,num,len);
+              return parseCommand(line,AT_CMD_FLAG_PRO_BACK, index,num,len);
+          }
+          (*index)++;
+        }
+        break;
+      case ':':
+        (*index)++;
+        while(*index<len) {
+          switch(toupper(line[*index])) {
+            case ' ':
+              break;
+            case 0:
+              return AT_CMD_ERR;
+            default:
+              return parseCommand(line,AT_CMD_FLAG_PRO_COLON, index,num,len);
+          }
+          (*index)++;
+        }
+        break;
+      case '-':
+        (*index)++;
+        while(*index<len) {
+          switch(toupper(line[*index])) {
+            case ' ':
+              break;
+            case 0:
+              return AT_CMD_ERR;
+            default:
+              return parseCommand(line,AT_CMD_FLAG_PRO_MINUS, index,num,len);
           }
           (*index)++;
         }

@@ -41,7 +41,7 @@
                          if(a <= log_level) { \
                            log_start(a); \
                            fprintf(log_file,args); \
-                           fprintf(log_file,"(%s)\n",strerror(errno)); \
+                           fprintf(log_file," (%s)\n",strerror(errno)); \
                            log_end(); \
                          } \
                        } while(0)

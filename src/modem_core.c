@@ -68,7 +68,7 @@ void mdm_init_config(modem_config* cfg) {
   cfg->text_responses=TRUE;
   cfg->echo=TRUE;
   cfg->cmd_mode=TRUE;
-  cfg->connected=FALSE;
+  cfg->conn_type=MDM_CONN_NONE;
   cfg->off_hook=FALSE;
   cfg->line_ringing=FALSE;
   cfg->cur_line_idx=0;
@@ -92,7 +92,6 @@ void mdm_init_config(modem_config* cfg) {
   cfg->crlf[1]=cfg->s[4];
   cfg->crlf[2]=0;
 
-  cfg->last_char='\0';
   cfg->dial_type=0;
   cfg->last_dial_type=0;
   cfg->disconnect_delay=0;
@@ -148,16 +147,16 @@ int get_new_dcd_state(modem_config *cfg, int up) {
 
 int mdm_set_control_lines(modem_config *cfg) {
   int state=0;
-  int up=cfg->connected;
+  int up=(cfg->conn_type == MDM_CONN_NONE?FALSE:TRUE);
 
   state |=get_new_cts_state(cfg,up);
   state |=get_new_dsr_state(cfg,up);
   state |=get_new_dcd_state(cfg,up);
 
   LOG(LOG_INFO,"Control Lines: DSR:%d DCD:%d CTS:%d",
-      (state & MDM_CL_DSR_HIGH),
-      (state & MDM_CL_DCD_HIGH),
-      (state & MDM_CL_CTS_HIGH)
+      ((state & MDM_CL_DSR_HIGH) != 0?1:0),
+      ((state & MDM_CL_DCD_HIGH) != 0?1:0),
+      ((state & MDM_CL_CTS_HIGH) != 0?1:0)
      );
 
   dce_set_control_lines(cfg,state);
@@ -178,6 +177,8 @@ void mdm_write(modem_config *cfg,unsigned char data[], int len) {
 }
 
 void mdm_send_response(int msg,modem_config *cfg) {
+  unsigned char msgID[17];
+
   LOG(LOG_DEBUG,"Sending %s response to modem",mdm_responses[msg]);
   if(cfg->send_responses==TRUE) {
     mdm_write(cfg,cfg->crlf,2);
@@ -186,7 +187,6 @@ void mdm_send_response(int msg,modem_config *cfg) {
       mdm_write(cfg,mdm_responses[msg],strlen(mdm_responses[msg]));
     } else {
       LOG(LOG_ALL,"Sending numeric response");
-      unsigned char msgID[17];
       sprintf(msgID,"%d",msg);
       mdm_write(cfg,msgID,strlen(msgID));
     }
@@ -195,49 +195,50 @@ void mdm_send_response(int msg,modem_config *cfg) {
 }
 
 int mdm_off_hook(modem_config *cfg) {
-  int speed;
 
   LOG(LOG_INFO,"taking modem off hook");
   cfg->off_hook=TRUE;
   cfg->cmd_mode=FALSE;
   line_off_hook(cfg);
+  return 0;
+}
+
+int mdm_answer(modem_config *cfg) {
   if(cfg->line_ringing == TRUE) {
-    cfg->connected=TRUE;
-    mdm_set_control_lines(cfg);
-    switch(cfg->connect_response) {
-      case 2:
-        speed=cfg->dte_speed;
-        break;
-      default:
-        speed=cfg->dce_speed;
-        break;
-  
-    } 
-    mdm_send_response(get_connect_response(speed,cfg->response_code_level),cfg);
-    mdm_set_control_lines(cfg);
+    cfg->conn_type=MDM_CONN_INCOMING;
+    mdm_off_hook(cfg);
+    mdm_print_speed(cfg);
+  } else {
+    mdm_disconnect(cfg);
   }
   return 0;
 }
 
-int mdm_connect(modem_config* cfg) {
+int mdm_print_speed(modem_config *cfg) {
   int speed;
-  mdm_off_hook(cfg);
-  if(cfg->connected == FALSE) {
-    if(line_connect(cfg) == 0) {
-      cfg->connected=TRUE;
-      mdm_set_control_lines(cfg);
-      switch(cfg->connect_response) {
-        case 2:
-          speed=cfg->dte_speed;
-          break;
-        default:
-          speed=cfg->dce_speed;
-          break;
 
-      } 
-      mdm_send_response(get_connect_response(speed,cfg->response_code_level),cfg);
+  mdm_set_control_lines(cfg);
+  switch(cfg->connect_response) {
+    case 2:
+      speed=cfg->dte_speed;
+      break;
+    default:
+      speed=cfg->dce_speed;
+      break;
+
+  } 
+  mdm_send_response(get_connect_response(speed,cfg->response_code_level),cfg);
+  return 0;
+}
+
+int mdm_connect(modem_config* cfg) {
+  mdm_off_hook(cfg);
+  if(cfg->conn_type == MDM_CONN_NONE) {
+    if(line_connect(cfg) == 0) {
+      cfg->conn_type=MDM_CONN_OUTGOING;
+      mdm_print_speed(cfg);
     } else {
-      cfg->connected=TRUE;   // so disconnect will print NO CARRIER
+      cfg->conn_type=MDM_CONN_OUTGOING;   // so disconnect will print NO CARRIER
       mdm_disconnect(cfg);
     }
   }
@@ -251,10 +252,12 @@ int mdm_listen(modem_config *cfg) {
 
 
 int mdm_disconnect(modem_config* cfg) {
+  int type;
+
   LOG_ENTER();
   LOG(LOG_INFO,"Disconnecting modem");
-  int up=cfg->connected;
-  cfg->connected=FALSE;
+  type=cfg->conn_type;
+  cfg->conn_type=MDM_CONN_NONE;
   cfg->off_hook=FALSE;
   cfg->cmd_mode=TRUE;
   cfg->break_len=0;
@@ -262,7 +265,7 @@ int mdm_disconnect(modem_config* cfg) {
   cfg->pre_break_delay=FALSE;
   mdm_set_control_lines(cfg);
   line_disconnect(cfg);
-  if(up == TRUE) {
+  if(type != MDM_CONN_NONE) {
     mdm_send_response(MDM_RESP_NO_CARRIER,cfg);
     usleep(cfg->disconnect_delay * 1000);
   }
@@ -289,9 +292,10 @@ int mdm_parse_cmd(modem_config* cfg) {
   while(TRUE != done ) {
     if(cmd != AT_CMD_ERR) {
       cmd=getcmd(command,&index,&num, &start,&end);
-          LOG(LOG_DEBUG,"Command: %c, Flags: %d, index=%d, num=%d, data=%d-%d",
+          LOG(LOG_DEBUG,"Command: %c (%d), Flags: %d, index=%d, num=%d, data=%d-%d",
+                 (cmd > -1?cmd & 0xff:' '),
                  cmd,
-                 cmd /256,
+                 cmd  >> 8,
                  index,
                  num,
                  start,
@@ -313,7 +317,7 @@ int mdm_parse_cmd(modem_config* cfg) {
         break;
       case 'O':
       case 'A':
-          mdm_off_hook(cfg);
+          mdm_answer(cfg);
           cmd=AT_CMD_END;
           done=TRUE;
           break;
@@ -364,7 +368,7 @@ int mdm_parse_cmd(modem_config* cfg) {
           if(num == 0) {
             mdm_disconnect(cfg);
           } else if(num == 1) {
-            mdm_off_hook(cfg);
+            mdm_answer(cfg);
           } else
             cmd=AT_CMD_ERR;
           break;
@@ -406,18 +410,22 @@ int mdm_parse_cmd(modem_config* cfg) {
         }
         break;
       case 'S':
-          strncpy(tmp,command+start,end-start);
-          tmp[end-start]='\0';
-          cfg->s[num]=atoi(tmp);
-          switch(num) {
-            case 3:
-              cfg->crlf[0]=cfg->s[3];
-              break;
-            case 4:
-              cfg->crlf[1]=cfg->s[4];
-              break;
-          }
-          break;
+        strncpy(tmp,command+start,end-start);
+        tmp[end-start]='\0';
+        cfg->s[num]=atoi(tmp);
+        switch(num) {
+          case 3:
+            cfg->crlf[0]=cfg->s[3];
+            break;
+          case 4:
+            cfg->crlf[1]=cfg->s[4];
+            break;
+        }
+        break;
+      case AT_CMD_FLAG_QUERY | 'S':
+        sprintf(tmp,"%s%3.3d",cfg->crlf,cfg->s[num]);
+        mdm_write(cfg,tmp,strlen(tmp));
+        break;
       case 'T':   // defaut to tone dialing
         //cfg->default_dial_type=MDM_DT_TONE;
         break;
@@ -454,6 +462,19 @@ int mdm_parse_cmd(modem_config* cfg) {
           cmd=AT_CMD_ERR;
         else {
           // set config0 to cur_line and go.
+        }
+        break;
+      case AT_CMD_FLAG_EXT + 'C':
+        switch(num) {
+          case 0:
+            cfg->dcd_on=TRUE;
+            break;
+          case 1:
+            cfg->dcd_on=FALSE;
+            break;
+          default:
+            cmd=AT_CMD_ERR;
+            break;
         }
         break;
       case AT_CMD_FLAG_EXT + 'K':
@@ -500,7 +521,8 @@ int mdm_handle_char(modem_config* cfg, unsigned char ch) {
       }
     } else if(ch == (unsigned char)(cfg->s[3])) {
       // we have a line, process.
-      cfg->cur_line[cfg->cur_line_idx]=0;
+      cfg->cur_line[cfg->cur_line_idx] = 0;
+      strncpy(cfg->last_cmd,cfg->cur_line,sizeof(cfg->last_cmd) - 1);
       mdm_parse_cmd(cfg);
       cfg->cur_line_idx=0;
       cfg->cmd_started=FALSE;
@@ -511,10 +533,18 @@ int mdm_handle_char(modem_config* cfg, unsigned char ch) {
     cfg->found_a=FALSE;
     if(ch == 't' || ch == 'T') {
       cfg->cmd_started=TRUE;
-      LOG(LOG_ALL,"We found a 'T' in the serial stream, switching to command parse mode");
+      LOG(LOG_ALL,"'T' parsed in serial stream, switching to command parse mode");
+    } else if(ch == '/') {
+      LOG(LOG_ALL,"'/' parsed in the serial stream, replaying last command");
+      cfg->cur_line_idx=strlen(cfg->last_cmd);
+      strncpy(cfg->cur_line,cfg->last_cmd,cfg->cur_line_idx);
+      mdm_parse_cmd(cfg);
+      cfg->cur_line_idx=0;
+      cfg->cmd_started=FALSE;
     }
+
   } else if(ch == 'a' || ch == 'A') {
-    LOG(LOG_ALL,"We found an 'A' in the serial stream");
+    LOG(LOG_ALL,"'A' parsed in serial stream");
     cfg->found_a=TRUE;
   } 
   return 0;

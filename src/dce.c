@@ -69,7 +69,11 @@ int dce_get_control_lines(modem_config *cfg) {
 
   status = ser_get_control_lines(cfg->dce_data.fd);
 
-  rc_status=((status & TIOCM_DSR) != 0?MDM_CL_DTR_HIGH:0);
+  if(status > -1) {
+    rc_status=((status & TIOCM_DSR) != 0?MDM_CL_DTR_HIGH:0);
+  } else {
+    rc_status=status;
+  }
 
   return rc_status;
 }
@@ -81,7 +85,7 @@ int dce_check_control_lines(modem_config *cfg) {
   LOG_ENTER();
   status = dce_get_control_lines(cfg);
   new_status = status;
-  while(status == new_status) {
+  while(new_status > -1 && status == new_status) {
     usleep(100000);
     new_status = dce_get_control_lines(cfg);
   }
