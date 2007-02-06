@@ -34,9 +34,11 @@ int line_connect(modem_config *cfg) {
   addy = pb_search(addy);
   cfg->line_data.fd=ip_connect(addy);
   if(cfg->line_data.fd > -1) {
+    LOG(LOG_ALL,"Connected to %s",addy);
     cfg->line_data.valid_conn = TRUE;
     return 0;
   } else {
+    LOG(LOG_ALL,"Could not connect to %s",addy);
     cfg->line_data.valid_conn = FALSE;
     return -1;
   }

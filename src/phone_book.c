@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h> 
 #include "phone_book.h"
+#include "debug.h"
 
 #define PBSIZE 100
 
@@ -12,6 +13,7 @@ int pb_init() {
 }
 
 int pb_add(unsigned char* from,unsigned char* to) {
+  LOG_ENTER();
   if(size < PBSIZE 
      && from != NULL
      && to != NULL
@@ -22,20 +24,26 @@ int pb_add(unsigned char* from,unsigned char* to) {
     strncpy(phone_book[size][0],from,sizeof(phone_book[size][0]));
     strncpy(phone_book[size][1],to,sizeof(phone_book[size][1]));
     size++;
+    LOG_EXIT();
     return 0;
   }
+  LOG_EXIT();
   return -1;
 }
 
 unsigned char* pb_search(unsigned char *number) {
   int i=0;
+
+  LOG_ENTER();
   for(i=0;i<size;i++) {
     if(strcmp(phone_book[i][0],number) == 0) {
-      printf("Found a match\n");
+
+      LOG(LOG_INFO,"Found a match for '%s': '%s'",number,phone_book[i][1]);
       strcpy(number,phone_book[i][1]);
       break;
     }
   }
+  LOG_EXIT();
   return number;
 }
 

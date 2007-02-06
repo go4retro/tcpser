@@ -29,6 +29,10 @@
 1.0rc9
   Fixed bug that would stop first session if second call came in
   Fixed outbound call not bringing DCD high.
+1.0rc10
+  Added some more debugging information
+  Changed logging to go to stdout from stderr
+  Fixed Phone book matching function to use logger
 
   
   

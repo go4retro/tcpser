@@ -93,7 +93,7 @@ int getCommand(unsigned char line[],
                ) {
   int cmd=line[(*index)++];
   *num= getNumber(line,index, len);
-  return toupper(cmd) | flags;
+  return cmd;
 }
 
 

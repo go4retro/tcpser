@@ -146,7 +146,8 @@ int ser_get_control_lines(int fd) {
 
 
 int ser_set_control_lines(int fd, int state) {
-  int status;
+  unsigned int status;
+  
 
   if(0 > (status=ser_get_control_lines(fd))) {
     return status;
@@ -157,6 +158,8 @@ int ser_set_control_lines(int fd, int state) {
 #ifndef WIN32
     ELOG(LOG_FATAL,"Could not set serial port status");
     return -1;
+#else
+    ELOG(LOG_WARN,"Could not set serial port status, CYGWIN bug?");
 #endif
   }
   return 0;

@@ -25,13 +25,17 @@ int dce_set_flow_control(modem_config *cfg,int opts) {
   int rc=0;
 
   LOG_ENTER();
-  if((opts & MDM_FC_RTS) != 0) {
-    LOG(LOG_ALL,"Setting RTSCTS flow control");
-    status |= CRTSCTS;
-  }
-  if((opts && MDM_FC_XON) != 0) {
-    status |= (IXON | IXOFF);
-    LOG(LOG_ALL,"Setting XON/XOFF flow control");
+  if(opts == 0) {
+      LOG(LOG_ALL,"Setting NONE flow control");
+  } else {
+    if((opts & MDM_FC_RTS) != 0) {
+      LOG(LOG_ALL,"Setting RTSCTS flow control");
+      status |= CRTSCTS;
+    }
+    if((opts && MDM_FC_XON) != 0) {
+      status |= (IXON | IXOFF);
+      LOG(LOG_ALL,"Setting XON/XOFF flow control");
+    }
   }
 
   rc=ser_set_flow_control(cfg->dce_data.fd,status);
@@ -50,14 +54,14 @@ int dce_set_control_lines(modem_config *cfg,int state) {
     status |= TIOCM_RTS;
   } else {
     LOG(LOG_ALL,"Setting CTS pin low");
-    status &= ~TIOCM_RTS;
+    //status &= ~TIOCM_RTS;
   }
   if((state & MDM_CL_DCD_HIGH) != 0) {
     LOG(LOG_ALL,"Setting DCD pin high");
     status |= TIOCM_DTR;
   } else {
     LOG(LOG_ALL,"Setting DCD pin low");
-    status &= ~TIOCM_DTR;
+    //status &= ~TIOCM_DTR;
   }
   rc = ser_set_control_lines(cfg->dce_data.fd,status);
 

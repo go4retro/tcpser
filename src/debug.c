@@ -14,7 +14,7 @@ pthread_mutex_t log_mutex;
 
 
 int log_init() {
-  log_file=stderr;
+  log_file=stdout;
   log_level=0;
   trace_flags=0;
   trace_type[TRACE_MODEM_IN]="RS<-";
