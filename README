@@ -188,6 +188,29 @@ Platform notes:
 Win32 users should use /dev/ttyS0-3 for COM1-4.  At present, using "com1:"
 does not operate correctly.
 
+Raymond Day sends the following Ubuntu 7.10 autorun scripts:
+
+In:
+ 
+/etc/init.d/
+ 
+Make a file named something like tcpser with this code in it:
+ 
+#!/bin/sh
+# Start tcpser at 1200 boud on both RS232 ports for Q-Link Reloaded.
+case "$1" in
+'start')
+ tcpser -d /dev/ttyS0 -s 1200 -i"e0&k0&c0" -n"5551212"=66.135.39.36:5190&
+ tcpser -d /dev/ttyS1 -p 6401 -s 1200 -i"e0&k0&c0" -n"5551212"=66.135.39.36:5190&
+ ;;
+'stop')
+ ;;
+*)
+ echo "Usage: $0 { start | stop }"
+ ;;
+esac
+exit 0
+
 This has been tested on the following platforms:
 
 Linux 2.4.20-8

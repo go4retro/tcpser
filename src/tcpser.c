@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <unistd.h> 
 #include <sys/time.h> 
 
@@ -16,7 +17,6 @@
 #include "tcpmdm.h"
 
 const unsigned char MDM_BUSY[]="BUSY\n";
-
 
 
 int main(int argc, char *argv[]) {
@@ -49,6 +49,8 @@ int main(int argc, char *argv[]) {
   mdm_init();
 
   pb_init();
+  
+  signal(SIGIO,SIG_IGN); /* Some Linux variant term on SIGIO by default */
 
   modem_count = init(argc, argv, cfg, 64, &port,all_busy,sizeof(all_busy));
 

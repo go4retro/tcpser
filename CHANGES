@@ -36,5 +36,5 @@
 1.0rc11
   Added ip232 support with custom protocol for use with matching modified version of WinVICE 1.19
   Added full support for Telnet Binary Transmission (RFC 856)
-
-  
+1.0rc12
+  Added code to hook SIG_IO to SIG_IGN.  Newer versions of Linux are terminating when IO arrives.
