@@ -92,8 +92,8 @@ int ip232_init_conn(modem_config *cfg) {
   LOG_ENTER();
 
   LOG(LOG_INFO,"Opening ip232 device");
-  port = atoi(cfg->dce_data.tty);
-  rc = ip_init_server_conn(port);
+  port = atoi((char *)cfg->dce_data.tty);
+  rc = ip_init_server_conn("", port);
 
   if (rc < 0) {
     ELOG(LOG_FATAL,"Could not initialize ip232 server socket");

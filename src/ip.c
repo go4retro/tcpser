@@ -12,7 +12,7 @@
 
 const int BACK_LOG = 5;
 
-int ip_init_server_conn(int port) {
+int ip_init_server_conn(char *ip_addr, int port) {
   int sSocket = 0,
       on = 0,
       rc = 0;
@@ -46,7 +46,12 @@ int ip_init_server_conn(int port) {
         ELOG(LOG_ERROR,"bind address checking could not be turned off");
     }
 
-    serverName.sin_addr.s_addr=htonl(INADDR_ANY);
+    if (ip_addr != NULL) {
+      serverName.sin_addr.s_addr = inet_addr(ip_addr);
+      LOG(LOG_DEBUG,"Using specified ip address %s",ip_addr);
+    } else {
+      serverName.sin_addr.s_addr=htonl(INADDR_ANY);
+    }
     serverName.sin_family = AF_INET;
 
     /* network-order */
@@ -88,19 +93,19 @@ int ip_connect(unsigned char addy[]) {
 
   LOG_ENTER();
 
-  address=(unsigned char*)strtok(addy,":");
-  tmp=(unsigned char*)strtok((unsigned char*)0,":");
-  if(tmp != NULL && strlen(tmp) > 0) {
-    port=atoi(tmp);
+  address=(unsigned char*)strtok((char *)addy,":");
+  tmp=(unsigned char*)strtok(NULL, ":");
+  if(tmp != NULL && strlen((char *)tmp) > 0) {
+    port=atoi((char *)tmp);
   }
 
   LOG(LOG_DEBUG,"Calling %s",addy);
 	memset(&pin, 0, sizeof(pin));
 
 	/* go find out about the desired host machine */
-	if ((hp = gethostbyname(address)) == 0) {
+	if ((hp = gethostbyname((char *)address)) == 0) {
     // well, not a DNS entry... Treat as IP...
-    if(1 != inet_aton(address,&cin_addr)) {
+    if(1 != inet_aton((char *)address, &cin_addr)) {
       ELOG(LOG_ERROR,"Host %s was invalid",addy);
       return -1;
     }

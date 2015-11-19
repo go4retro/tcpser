@@ -21,7 +21,7 @@ int writeFile(unsigned char* name, int fd) {
   size_t size=1;
   size_t max=255;
 
-  if(NULL != (file = fopen(name,"rb"))) {
+  if(NULL != (file = fopen((char *)name,"rb"))) {
     while(0 < (len = fread(buf,size,max,file))) {
       write(fd, buf, len);
     }

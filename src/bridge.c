@@ -261,7 +261,7 @@ void *run_bridge(void * arg) {
   spawn_ip_thread(cfg);
 
   mdm_set_control_lines(cfg);
-  strncpy(cfg->cur_line,cfg->config0,sizeof(cfg->cur_line));
+  strncpy((char *)cfg->cur_line,(char *)cfg->config0,sizeof(cfg->cur_line));
   last_conn_type=cfg->conn_type;
   last_cmd_mode=cfg->cmd_mode;
   cfg->allow_transmit=FALSE;
@@ -270,10 +270,10 @@ void *run_bridge(void * arg) {
   mdm_parse_cmd(cfg);
   // if direct connection, and num length > 0, dial number.
   if (cfg->data.direct_conn == TRUE) {
-    if(strlen(cfg->data.direct_conn_num) > 0 &&
+    if(strlen((char *)cfg->data.direct_conn_num) > 0 &&
        cfg->data.direct_conn_num[0] != ':') {
         // we have a direct number to connect to.
-      strncpy(cfg->dialno,cfg->data.direct_conn_num,sizeof(cfg->dialno));
+      strncpy((char *)cfg->dialno,(char *)cfg->data.direct_conn_num,sizeof(cfg->dialno));
       if(0 != line_connect(cfg)) {
         LOG(LOG_FATAL,"Cannot connect to Direct line address!");
         // probably should exit...
@@ -291,17 +291,17 @@ void *run_bridge(void * arg) {
       //writePipe(cfg->data.mp[0][1],MSG_NOTIFY);
       writePipe(cfg->data.cp[1][1],MSG_NOTIFY);
       if(cfg->conn_type == MDM_CONN_OUTGOING) {
-        if(strlen(cfg->data.local_connect) > 0) {
+        if(strlen((char *)cfg->data.local_connect) > 0) {
           writeFile(cfg->data.local_connect,cfg->line_data.fd);
         } 
-        if(strlen(cfg->data.remote_connect) > 0) {
+        if(strlen((char *)cfg->data.remote_connect) > 0) {
           writeFile(cfg->data.remote_connect,cfg->line_data.fd);
         } 
       } else if(cfg->conn_type == MDM_CONN_INCOMING) {
-        if(strlen(cfg->data.local_answer) > 0) {
+        if(strlen((char *)cfg->data.local_answer) > 0) {
           writeFile(cfg->data.local_answer,cfg->line_data.fd);
         } 
-        if(strlen(cfg->data.remote_answer) > 0) {
+        if(strlen((char *)cfg->data.remote_answer) > 0) {
           writeFile(cfg->data.remote_answer,cfg->line_data.fd);
         } 
       }
@@ -355,8 +355,8 @@ void *run_bridge(void * arg) {
       if(cfg->cmd_mode == TRUE && cfg->conn_type == MDM_CONN_NONE && cfg->line_data.valid_conn == TRUE) {
         if(cfg->s[0] == 0 && cfg->rings==10) {
           // not going to answer, send some data back to IP and disconnect.
-          if(strlen(cfg->data.no_answer) == 0) {
-            line_write(cfg,(unsigned char*)MDM_NO_ANSWER,strlen(MDM_NO_ANSWER));
+          if(strlen((char *)cfg->data.no_answer) == 0) {
+            line_write(cfg,(unsigned char *)MDM_NO_ANSWER,strlen((char *)MDM_NO_ANSWER));
           } else {
             writeFile(cfg->data.no_answer,cfg->line_data.fd);
           }

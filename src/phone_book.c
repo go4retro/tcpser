@@ -17,12 +17,12 @@ int pb_add(unsigned char* from,unsigned char* to) {
   if(size < PBSIZE 
      && from != NULL
      && to != NULL
-     && strlen(from) > 0
-     && strlen(to) > 0
+     && strlen((char *)from) > 0
+     && strlen((char *)to) > 0
     ) {
     // should really trim spaces.
-    strncpy(phone_book[size][0],from,sizeof(phone_book[size][0]));
-    strncpy(phone_book[size][1],to,sizeof(phone_book[size][1]));
+    strncpy((char *)phone_book[size][0],(char *)from,sizeof((char *)phone_book[size][0]));
+    strncpy((char *)phone_book[size][1],(char *)to,sizeof((char *)phone_book[size][1]));
     size++;
     LOG_EXIT();
     return 0;
@@ -36,10 +36,10 @@ unsigned char* pb_search(unsigned char *number) {
 
   LOG_ENTER();
   for(i=0;i<size;i++) {
-    if(strcmp(phone_book[i][0],number) == 0) {
+    if(strcmp((char *)phone_book[i][0], (char *)number) == 0) {
 
       LOG(LOG_INFO,"Found a match for '%s': '%s'",number,phone_book[i][1]);
-      strcpy(number,phone_book[i][1]);
+      strcpy((char *)number,(char *)phone_book[i][1]);
       break;
     }
   }

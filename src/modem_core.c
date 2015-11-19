@@ -8,27 +8,27 @@
 unsigned char* mdm_responses[37];
 
 int mdm_init() {
-  mdm_responses[MDM_RESP_OK]="OK";
-  mdm_responses[MDM_RESP_RING]="RING";
-  mdm_responses[MDM_RESP_ERROR]="ERROR";
-  mdm_responses[MDM_RESP_CONNECT]="CONNECT";
-  mdm_responses[MDM_RESP_NO_CARRIER]="NO CARRIER";
-  mdm_responses[MDM_RESP_CONNECT_1200] = "CONNECT 1200";
-  mdm_responses[MDM_RESP_NO_DIALTONE] = "NO DIALTONE";
-  mdm_responses[MDM_RESP_BUSY] = "BUSY";
-  mdm_responses[MDM_RESP_NO_ANSWER] = "NO ANSWER";
-  mdm_responses[MDM_RESP_CONNECT_0600] = "CONNECT 0600";
-  mdm_responses[MDM_RESP_CONNECT_2400] = "CONNECT 2400";
-  mdm_responses[MDM_RESP_CONNECT_4800] = "CONNECT 4800";
-  mdm_responses[MDM_RESP_CONNECT_9600] = "CONNECT 9600";
-  mdm_responses[MDM_RESP_CONNECT_7200] = "CONNECT 7200";
-  mdm_responses[MDM_RESP_CONNECT_12000] = "CONNECT 12000";
-  mdm_responses[MDM_RESP_CONNECT_14400] = "CONNECT 14400";
-  mdm_responses[MDM_RESP_CONNECT_19200] = "CONNECT 19200";
-  mdm_responses[MDM_RESP_CONNECT_38400] = "CONNECT 38400";
-  mdm_responses[MDM_RESP_CONNECT_57600] = "CONNECT 57600";
-  mdm_responses[MDM_RESP_CONNECT_115200] = "CONNECT 115200";
-  mdm_responses[MDM_RESP_CONNECT_234000]="CONNECT 230400";
+  mdm_responses[MDM_RESP_OK] =             (unsigned char *)"OK";
+  mdm_responses[MDM_RESP_RING] =           (unsigned char *)"RING";
+  mdm_responses[MDM_RESP_ERROR] =          (unsigned char *)"ERROR";
+  mdm_responses[MDM_RESP_CONNECT] =        (unsigned char *)"CONNECT";
+  mdm_responses[MDM_RESP_NO_CARRIER] =     (unsigned char *)"NO CARRIER";
+  mdm_responses[MDM_RESP_CONNECT_1200] =   (unsigned char *)"CONNECT 1200";
+  mdm_responses[MDM_RESP_NO_DIALTONE] =    (unsigned char *)"NO DIALTONE";
+  mdm_responses[MDM_RESP_BUSY] =           (unsigned char *)"BUSY";
+  mdm_responses[MDM_RESP_NO_ANSWER] =      (unsigned char *)"NO ANSWER";
+  mdm_responses[MDM_RESP_CONNECT_0600] =   (unsigned char *)"CONNECT 0600";
+  mdm_responses[MDM_RESP_CONNECT_2400] =   (unsigned char *)"CONNECT 2400";
+  mdm_responses[MDM_RESP_CONNECT_4800] =   (unsigned char *)"CONNECT 4800";
+  mdm_responses[MDM_RESP_CONNECT_9600] =   (unsigned char *)"CONNECT 9600";
+  mdm_responses[MDM_RESP_CONNECT_7200] =   (unsigned char *)"CONNECT 7200";
+  mdm_responses[MDM_RESP_CONNECT_12000] =  (unsigned char *)"CONNECT 12000";
+  mdm_responses[MDM_RESP_CONNECT_14400] =  (unsigned char *)"CONNECT 14400";
+  mdm_responses[MDM_RESP_CONNECT_19200] =  (unsigned char *)"CONNECT 19200";
+  mdm_responses[MDM_RESP_CONNECT_38400] =  (unsigned char *)"CONNECT 38400";
+  mdm_responses[MDM_RESP_CONNECT_57600] =  (unsigned char *)"CONNECT 57600";
+  mdm_responses[MDM_RESP_CONNECT_115200] = (unsigned char *)"CONNECT 115200";
+  mdm_responses[MDM_RESP_CONNECT_234000]=  (unsigned char *)"CONNECT 230400";
   return 0;
 }
 
@@ -184,11 +184,11 @@ void mdm_send_response(int msg,modem_config *cfg) {
     mdm_write(cfg,cfg->crlf,2);
     if(cfg->text_responses==TRUE) {
       LOG(LOG_ALL,"Sending text response");
-      mdm_write(cfg,mdm_responses[msg],strlen(mdm_responses[msg]));
+      mdm_write(cfg,mdm_responses[msg],strlen((char *)mdm_responses[msg]));
     } else {
       LOG(LOG_ALL,"Sending numeric response");
-      sprintf(msgID,"%d",msg);
-      mdm_write(cfg,msgID,strlen(msgID));
+      sprintf((char *)msgID,"%d",msg);
+      mdm_write(cfg,msgID,strlen((char *)msgID));
     }
     mdm_write(cfg,cfg->crlf,2);
   }
@@ -338,26 +338,26 @@ int mdm_parse_cmd(modem_config* cfg) {
         break;
       case 'D':
         if(end>start) {
-          strncpy(cfg->dialno,command+start,end-start);
+          strncpy((char *)cfg->dialno,(char *)command+start,end-start);
           cfg->dialno[end-start]='\0';
           cfg->dial_type=(unsigned char)num;
           cfg->last_dial_type=(unsigned char)num;
-          strncpy(cfg->last_dialno,command+start,end-start);
+          strncpy((char *)cfg->last_dialno,(char *)command+start,end-start);
           cfg->last_dialno[end-start]='\0';
           cfg->memory_dial=FALSE;
         } else if (num == 'L') {
-          strncpy(cfg->dialno,cfg->last_dialno,strlen(cfg->last_dialno));
+          strncpy((char *)cfg->dialno,(char *)cfg->last_dialno,strlen((char *)cfg->last_dialno));
           cfg->dial_type=cfg->dial_type;
           cfg->memory_dial=TRUE;
           mdm_write(cfg,cfg->crlf,2);
-          mdm_write(cfg,cfg->dialno,strlen(cfg->dialno));
+          mdm_write(cfg,cfg->dialno,strlen((char *)cfg->dialno));
         } else {
           cfg->dialno[0]=0;
           cfg->last_dialno[0]=0;
           cfg->dial_type=0;
           cfg->last_dial_type=0;
         }
-        if(strlen(cfg->dialno) > 0) {
+        if(strlen((char *)cfg->dialno) > 0) {
           mdm_connect(cfg);
         } else {
           mdm_off_hook(cfg);
@@ -419,9 +419,9 @@ int mdm_parse_cmd(modem_config* cfg) {
         }
         break;
       case 'S':
-        strncpy(tmp,command+start,end-start);
+        strncpy((char *)tmp,(char *)command+start,end-start);
         tmp[end-start]='\0';
-        cfg->s[num]=atoi(tmp);
+        cfg->s[num]=atoi((char *)tmp);
         switch(num) {
           case 3:
             cfg->crlf[0]=cfg->s[3];
@@ -432,8 +432,8 @@ int mdm_parse_cmd(modem_config* cfg) {
         }
         break;
       case AT_CMD_FLAG_QUERY | 'S':
-        sprintf(tmp,"%s%3.3d",cfg->crlf,cfg->s[num]);
-        mdm_write(cfg,tmp,strlen(tmp));
+        sprintf((char *)tmp,"%s%3.3d",cfg->crlf,cfg->s[num]);
+        mdm_write(cfg,tmp,strlen((char *)tmp));
         break;
       case 'T':   // defaut to tone dialing
         //cfg->default_dial_type=MDM_DT_TONE;
@@ -533,7 +533,7 @@ int mdm_handle_char(modem_config* cfg, unsigned char ch) {
     } else if(ch == (unsigned char)(cfg->s[3])) {
       // we have a line, process.
       cfg->cur_line[cfg->cur_line_idx] = 0;
-      strncpy(cfg->last_cmd,cfg->cur_line,sizeof(cfg->last_cmd) - 1);
+      strncpy((char *)cfg->last_cmd,(char *)cfg->cur_line,sizeof(cfg->last_cmd) - 1);
       mdm_parse_cmd(cfg);
       cfg->found_a=FALSE;
       cfg->cmd_started=FALSE;
@@ -546,8 +546,8 @@ int mdm_handle_char(modem_config* cfg, unsigned char ch) {
       LOG(LOG_ALL,"'T' parsed in serial stream, switching to command parse mode");
     } else if(ch == '/') {
       LOG(LOG_ALL,"'/' parsed in the serial stream, replaying last command");
-      cfg->cur_line_idx=strlen(cfg->last_cmd);
-      strncpy(cfg->cur_line,cfg->last_cmd,cfg->cur_line_idx);
+      cfg->cur_line_idx=strlen((char *)cfg->last_cmd);
+      strncpy((char *)cfg->cur_line,(char *)cfg->last_cmd,cfg->cur_line_idx);
       mdm_parse_cmd(cfg);
       cfg->cmd_started=FALSE;
     } else if(ch!='a' && ch!='A') {

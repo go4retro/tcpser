@@ -77,8 +77,8 @@ int parse_nvt_subcommand(int fd, nvt_vars *vars , unsigned char * data, int len)
         response[response_len++] = NVT_SB_IS;
         switch(opt) {
           case NVT_OPT_TERMINAL_TYPE:
-            slen=strlen(tty_type);
-            strncpy(response + response_len,tty_type,slen);
+            slen=strlen((char *)tty_type);
+            strncpy((char *)response + response_len,(char *)tty_type,slen);
             response_len += slen;
             break;
         }

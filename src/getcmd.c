@@ -162,7 +162,7 @@ int getcmd(unsigned char line[],
 
   if(line == NULL)
     return AT_CMD_NONE;
-  len=strlen(line);
+  len=strlen((char *)line);
   while(*index < len) {
     cmd=toupper(line[*index]);
     switch (cmd) {

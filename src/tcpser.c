@@ -24,6 +24,8 @@ int main(int argc, char *argv[]) {
   int modem_count;
   int port=0;
 
+  char *ip_addr = NULL;
+
   unsigned char all_busy[255];
 
   pthread_t thread_id;
@@ -52,9 +54,8 @@ int main(int argc, char *argv[]) {
   
   signal(SIGIO,SIG_IGN); /* Some Linux variant term on SIGIO by default */
 
-  modem_count = init(argc, argv, cfg, 64, &port,all_busy,sizeof(all_busy));
-
-  sSocket = ip_init_server_conn(port);
+  modem_count = init(argc, argv, cfg, 64, &ip_addr, &port,all_busy,sizeof(all_busy));
+  sSocket = ip_init_server_conn(ip_addr, port);
 
   for(i=0;i<modem_count;i++) {
     if( -1 == pipe(cfg[i].data.mp[0])) {
@@ -129,8 +130,8 @@ int main(int argc, char *argv[]) {
           // no connections.., accept and print error
           cSocket=ip_accept(sSocket);
           if(cSocket > -1) {
-            if(strlen(all_busy) < 1) {
-              ip_write(cSocket,(unsigned char*)MDM_BUSY,strlen(MDM_BUSY));
+            if(strlen((char *)all_busy) < 1) {
+              ip_write(cSocket,(unsigned char *)MDM_BUSY,strlen((char *)MDM_BUSY));
             } else {
               writeFile(all_busy,cSocket);
             }

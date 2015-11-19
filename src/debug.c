@@ -17,18 +17,18 @@ int log_init() {
   log_file=stdout;
   log_level=0;
   trace_flags=0;
-  trace_type[TRACE_MODEM_IN]="RS<-";
-  trace_type[TRACE_MODEM_OUT]="RS->";
-  trace_type[TRACE_IP_IN]="IP<-";
-  trace_type[TRACE_IP_OUT]="IP->";
-  log_desc[LOG_FATAL]="FATAL";
-  log_desc[LOG_ERROR]="ERROR";
-  log_desc[LOG_WARN]="WARN";
-  log_desc[LOG_INFO]="INFO";
-  log_desc[LOG_DEBUG]="DEBUG";
-  log_desc[LOG_ENTER_EXIT]="ENTER_EXIT";
-  log_desc[LOG_ALL]="DEBUG_X";
-  log_desc[LOG_TRACE]="";
+  trace_type[TRACE_MODEM_IN] =  (unsigned char *)"RS<-";
+  trace_type[TRACE_MODEM_OUT] = (unsigned char *)"RS->";
+  trace_type[TRACE_IP_IN] =     (unsigned char *)"IP<-";
+  trace_type[TRACE_IP_OUT] =    (unsigned char *)"IP->";
+  log_desc[LOG_FATAL] =         (unsigned char *)"FATAL";
+  log_desc[LOG_ERROR] =         (unsigned char *)"ERROR";
+  log_desc[LOG_WARN] =          (unsigned char *)"WARN";
+  log_desc[LOG_INFO] =          (unsigned char *)"INFO";
+  log_desc[LOG_DEBUG] =         (unsigned char *)"DEBUG";
+  log_desc[LOG_ENTER_EXIT] =    (unsigned char *)"ENTER_EXIT";
+  log_desc[LOG_ALL] =           (unsigned char *)"DEBUG_X";
+  log_desc[LOG_TRACE]=          (unsigned char *)"";
   if( -1 == pthread_mutex_init(&log_mutex,NULL)) {
     perror("Could not create Log Mutex");
     exit(-1);
@@ -73,10 +73,10 @@ void log_trace(int type, unsigned char* line, int len) {
       if((i % 16) == 0) {
         // beginning of line
         dptr=data;
-        sprintf(dptr,"%4.4x|",i);
+        sprintf((char *)dptr,"%4.4x|",i);
       }
       ch=line[i];
-      sprintf(dptr + 5 + ((i % 16) * 3),"%2.2x",ch);
+      sprintf((char *)dptr + 5 + ((i % 16) * 3),"%2.2x",ch);
       if(ch > 31 && ch < 127) {
         text[i % 16] = ch;
       } else {
@@ -87,15 +87,15 @@ void log_trace(int type, unsigned char* line, int len) {
         fprintf(log_file,"%s|%s|%s|",trace_type[type],data,text);
         log_end();
       } else {
-        sprintf(dptr + 7 + ((i % 16) * 3)," ");
+        sprintf((char *)dptr + 7 + ((i % 16) * 3)," ");
       }
     }
     i=i%16;
     if(i > 0) {
       for(;i<16;i++) {
-        sprintf(dptr + 5 + ((i % 16) * 3),"  ");
+        sprintf((char *)dptr + 5 + ((i % 16) * 3),"  ");
         if((i % 16) != 15) {
-          sprintf(dptr + 7 + ((i % 16) * 3)," ");
+          sprintf((char *)dptr + 7 + ((i % 16) * 3)," ");
         }
         text[i % 16] = ' ';
       }
@@ -115,7 +115,7 @@ void log_start(int level) {
   } else {
     // we have the lock.
     now=time(NULL);  
-    strftime(t,22,"%Y-%m-%d %H:%M:%S",localtime(&now));
+    strftime((char*)t,22,"%Y-%m-%d %H:%M:%S",localtime(&now));
     fprintf(log_file,"%s:%5.5d:%s:",t,(int)pthread_self(),log_desc[level]);
     //free(t);
   }
