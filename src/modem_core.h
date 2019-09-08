@@ -21,7 +21,7 @@
 #define MDM_RESP_CONNECT_38400 17
 #define MDM_RESP_CONNECT_57600 18
 #define MDM_RESP_CONNECT_115200 19
-#define MDM_RESP_CONNECT_234000 20
+#define MDM_RESP_CONNECT_230400 20
 
 #define MDM_CL_DSR_LOW 0
 #define MDM_CL_DSR_HIGH 1
@@ -63,19 +63,19 @@ typedef struct x_config {
   int mp[2][2];
   int cp[2][2];
   int wp[2][2];
-  unsigned char no_answer[256];
-  unsigned char local_connect[256];
-  unsigned char remote_connect[256];
-  unsigned char local_answer[256];
-  unsigned char remote_answer[256];
-  unsigned char inactive[256];
+  char no_answer[256];
+  char local_connect[256];
+  char remote_connect[256];
+  char local_answer[256];
+  char remote_answer[256];
+  char inactive[256];
   unsigned int direct_conn;
-  unsigned char direct_conn_num[256];
+  char direct_conn_num[256];
 } x_config;
 
 typedef struct dce_config {
   int is_ip232;
-  unsigned char tty[256];
+  char tty[256];
   int first_char;
   int fd;
   int dp[2][2];
@@ -86,6 +86,20 @@ typedef struct dce_config {
   int ip232_iac;
 } dce_config;
 
+enum {
+  SRegisterBreak = 2,
+  SRegisterCR = 3,
+  SRegisterLF = 4,
+  SRegisterBackspace = 5,
+  SRegisterBlindWait = 6,
+  SRegisterCarrierWait = 7,
+  SRegisterCommaPause = 8,
+  SRegisterCarrierTime = 9,
+  SRegisterCarrierLoss = 10,
+  SRegisterDTMFTime = 11,
+  SRegisterGuardTime = 12,
+};
+
 typedef struct modem_config {
   // master configuration information
 
@@ -93,8 +107,8 @@ typedef struct modem_config {
   dce_config dce_data;
   line_config line_data;
   x_config data;
-  unsigned char config0[1024];
-  unsigned char config1[1024];
+  char config0[1024];
+  char config1[1024];
   int dce_speed;
   int dte_speed;
   int conn_type;
@@ -112,14 +126,14 @@ typedef struct modem_config {
   int found_a;
   int cmd_started;
   int cmd_mode;
-  unsigned char last_cmd[1024];
-  unsigned char cur_line[1024];
+  char last_cmd[1024];
+  char cur_line[1024];
   int cur_line_idx;
   // dailing information
-  unsigned char dialno[256];
-  unsigned char last_dialno[256];
-  unsigned char dial_type;
-  unsigned char last_dial_type;
+  char dialno[256];
+  char last_dialno[256];
+  char dial_type;
+  char last_dial_type;
   int memory_dial;
   // modem config
   int connect_response;
@@ -130,7 +144,9 @@ typedef struct modem_config {
   int s[100];
   int break_len;
   int disconnect_delay;
-  unsigned char crlf[3];
+  char crlf[3];
+  int parity;
+  unsigned char pchars[3];
 } modem_config;
 
 int mdm_init(void);
@@ -139,8 +155,7 @@ int get_new_cts_state(modem_config *cfg, int up);
 int get_new_dsr_state(modem_config *cfg, int up);
 int get_new_dcd_state(modem_config *cfg, int up);
 int mdm_set_control_lines(modem_config *cfg);
-void mdm_write_char(modem_config *cfg,unsigned char data);
-void mdm_write(modem_config *cfg,unsigned char data[], int len);
+void mdm_write(modem_config *cfg, char data[], int len);
 void mdm_send_response(int msg,modem_config *cfg);
 int mdm_off_hook(modem_config *cfg);
 int mdm_answer(modem_config *cfg);
@@ -149,9 +164,9 @@ int mdm_connect(modem_config* cfg);
 int mdm_listen(modem_config *cfg);
 int mdm_disconnect(modem_config* cfg);
 int mdm_parse_cmd(modem_config* cfg);
-int mdm_handle_char(modem_config* cfg, unsigned char ch);
+int mdm_handle_char(modem_config *cfg, char ch);
 int mdm_clear_break(modem_config* cfg);
-int mdm_parse_data(modem_config* cfg,unsigned char* data, int len);
+int mdm_parse_data(modem_config *cfg, char *data, int len);
 int mdm_handle_timeout(modem_config* cfg);
 int mdm_send_ring(modem_config *cfg);
 
