@@ -3,8 +3,9 @@
 
 #include "util.h"
 
-int writePipe(int fd,unsigned char msg) {
-  unsigned char tmp[3];
+int writePipe(int fd, char msg) {
+  char tmp[3];
+
   tmp[0]=msg;
   tmp[1]='\n';
   tmp[2]='\0';
@@ -14,14 +15,14 @@ int writePipe(int fd,unsigned char msg) {
   return write(fd,tmp,2);
 }
 
-int writeFile(unsigned char* name, int fd) {
+int writeFile(char *name, int fd) {
   FILE* file;
-  unsigned char buf[255];
+  char buf[255];
   size_t len;
   size_t size=1;
   size_t max=255;
 
-  if(NULL != (file = fopen((char *)name,"rb"))) {
+  if (NULL != (file = fopen(name, "rb"))) {
     while(0 < (len = fread(buf,size,max,file))) {
       write(fd, buf, len);
     }

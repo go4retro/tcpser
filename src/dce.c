@@ -43,7 +43,7 @@ int dce_set_flow_control(modem_config *cfg,int opts) {
       LOG(LOG_ALL,"Setting RTSCTS flow control");
       status |= CRTSCTS;
     }
-    if((opts && MDM_FC_XON) != 0) {
+    if ((opts & MDM_FC_XON) != 0) {
       status |= (IXON | IXOFF);
       LOG(LOG_ALL,"Setting XON/XOFF flow control");
     }
@@ -124,15 +124,16 @@ int dce_check_control_lines(modem_config *cfg) {
   return new_status;
 }
 
-
-int dce_write(modem_config *cfg,unsigned char data[], int len) {
+int dce_write(modem_config *cfg, char data[], int len)
+{
   if (cfg->dce_data.is_ip232) {
       return ip232_write(cfg,data,len);
   }
   return ser_write(cfg->dce_data.fd,data,len);
 }
 
-int dce_read(modem_config *cfg, unsigned char data[], int len) {
+int dce_read(modem_config *cfg, char data[], int len)
+{
   if (cfg->dce_data.is_ip232) {
       return ip232_read(cfg,data,len);
   }

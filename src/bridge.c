@@ -35,7 +35,7 @@ int accept_connection(modem_config* cfg) {
       mdm_off_hook(cfg);
       cfg->cmd_mode=TRUE;
     } else {
-      //line_write(cfg,(unsigned char*)CONNECT_NOTICE,strlen(CONNECT_NOTICE));
+      //line_write(cfg,(char*)CONNECT_NOTICE,strlen(CONNECT_NOTICE));
       cfg->rings=0;
       mdm_send_ring(cfg);
     }
@@ -51,14 +51,14 @@ int accept_connection(modem_config* cfg) {
 int parse_ip_data(modem_config *cfg, unsigned char* data, int len) {
   // I'm going to cheat and assume it comes in chunks.
   int i=0;
-  unsigned char ch;
-  unsigned char text[1025];
+  int ch;
+  char text[1025];
   int text_len=0;
 
   if(cfg->line_data.first_char==TRUE) {
     cfg->line_data.first_char=FALSE;
     if((data[0] == 0xff) || (data[0] == 0x1a)) {
-      //line_write(cfg,(unsigned char*)TELNET_NOTICE,strlen(TELNET_NOTICE));
+      //line_write(cfg,(char*)TELNET_NOTICE,strlen(TELNET_NOTICE));
       LOG(LOG_INFO,"Detected telnet");
       cfg->line_data.is_telnet=TRUE;
     } 
@@ -77,12 +77,15 @@ int parse_ip_data(modem_config *cfg, unsigned char* data, int len) {
           case NVT_DONT:
             /// again, overflow issues...
             LOG(LOG_INFO,"Parsing nvt command");
-            parse_nvt_command(cfg->line_data.fd, &cfg->line_data.nvt_data,ch,data[i+2]);
+          parse_nvt_command(cfg->line_data.fd, &cfg->line_data.nvt_data, ch,
+			    data[i + 2], cfg->parity);
             i+=3;
             break;
           case NVT_SB:      // sub negotiation
             // again, overflow...
-            i+=parse_nvt_subcommand(cfg->line_data.fd, &cfg->line_data.nvt_data,data + i,len - i);
+          i +=
+            parse_nvt_subcommand(cfg->line_data.fd, &cfg->line_data.nvt_data,
+				 data + i, len - i, cfg->dce_speed);
             break;
           case NVT_IAC:
             if (cfg->line_data.nvt_data.binary_recv)
@@ -108,7 +111,7 @@ int parse_ip_data(modem_config *cfg, unsigned char* data, int len) {
       mdm_write(cfg,text,text_len);
     }
   } else {
-      mdm_write(cfg,data,len);
+    mdm_write(cfg, (char *) data, len);
   }
   return 0;
 }
@@ -120,7 +123,7 @@ void *ip_thread(void *arg) {
   fd_set readfs; 
   int max_fd;
   int res=0;
-  unsigned char buf[256];
+  char buf[256];
   int rc;
 
 
@@ -156,7 +159,7 @@ void *ip_thread(void *arg) {
           LOG(LOG_DEBUG,"Read %d bytes from socket",res);
           buf[res]=0;
           log_trace(TRACE_IP_IN,buf,res);
-          parse_ip_data(cfg,buf,res);
+          parse_ip_data(cfg, (unsigned char *) buf, res);
         }
       }
       if (FD_ISSET(cfg->data.cp[1][0],&readfs)) {  // pipe
@@ -235,7 +238,7 @@ void *run_bridge(void * arg) {
   int max_fd=0;
   fd_set readfs; 
   int res=0;
-  unsigned char buf[256];
+  char buf[256];
   int rc=0;
 
   int last_conn_type;
@@ -261,7 +264,7 @@ void *run_bridge(void * arg) {
   spawn_ip_thread(cfg);
 
   mdm_set_control_lines(cfg);
-  strncpy((char *)cfg->cur_line,(char *)cfg->config0,sizeof(cfg->cur_line));
+  strncpy(cfg->cur_line, cfg->config0, sizeof(cfg->cur_line));
   last_conn_type=cfg->conn_type;
   last_cmd_mode=cfg->cmd_mode;
   cfg->allow_transmit=FALSE;
@@ -270,10 +273,9 @@ void *run_bridge(void * arg) {
   mdm_parse_cmd(cfg);
   // if direct connection, and num length > 0, dial number.
   if (cfg->data.direct_conn == TRUE) {
-    if(strlen((char *)cfg->data.direct_conn_num) > 0 &&
-       cfg->data.direct_conn_num[0] != ':') {
+    if (strlen(cfg->data.direct_conn_num) > 0 && cfg->data.direct_conn_num[0] != ':') {
         // we have a direct number to connect to.
-      strncpy((char *)cfg->dialno,(char *)cfg->data.direct_conn_num,sizeof(cfg->dialno));
+      strncpy(cfg->dialno, cfg->data.direct_conn_num, sizeof(cfg->dialno));
       if(0 != line_connect(cfg)) {
         LOG(LOG_FATAL,"Cannot connect to Direct line address!");
         // probably should exit...
@@ -291,17 +293,17 @@ void *run_bridge(void * arg) {
       //writePipe(cfg->data.mp[0][1],MSG_NOTIFY);
       writePipe(cfg->data.cp[1][1],MSG_NOTIFY);
       if(cfg->conn_type == MDM_CONN_OUTGOING) {
-        if(strlen((char *)cfg->data.local_connect) > 0) {
+        if (strlen(cfg->data.local_connect) > 0) {
           writeFile(cfg->data.local_connect,cfg->line_data.fd);
         } 
-        if(strlen((char *)cfg->data.remote_connect) > 0) {
+        if (strlen(cfg->data.remote_connect) > 0) {
           writeFile(cfg->data.remote_connect,cfg->line_data.fd);
         } 
-      } else if(cfg->conn_type == MDM_CONN_INCOMING) {
-        if(strlen((char *)cfg->data.local_answer) > 0) {
+      } else if (cfg->conn_type == MDM_CONN_INCOMING) {
+        if (strlen(cfg->data.local_answer) > 0) {
           writeFile(cfg->data.local_answer,cfg->line_data.fd);
         } 
-        if(strlen((char *)cfg->data.remote_answer) > 0) {
+        if (strlen(cfg->data.remote_answer) > 0) {
           writeFile(cfg->data.remote_answer,cfg->line_data.fd);
         } 
       }
@@ -324,9 +326,13 @@ void *run_bridge(void * arg) {
     ptimer=NULL;
     if(cfg->cmd_mode == FALSE) {
       if(cfg->pre_break_delay == FALSE || cfg->break_len == 3) {
+	long long usec;
+
+	
         LOG(LOG_ALL,"Setting timer for break delay");
-        timer.tv_sec=0;
-        timer.tv_usec=cfg->s[12] * 20000;
+	usec = cfg->s[SRegisterGuardTime] * 20000;
+        timer.tv_sec = usec / 1000000;
+        timer.tv_usec = usec % 1000000;
         ptimer=&timer;
       } else if(cfg->pre_break_delay == TRUE && cfg->break_len > 0) {
         LOG(LOG_ALL,"Setting timer for inter-break character delay");
@@ -355,8 +361,8 @@ void *run_bridge(void * arg) {
       if(cfg->cmd_mode == TRUE && cfg->conn_type == MDM_CONN_NONE && cfg->line_data.valid_conn == TRUE) {
         if(cfg->s[0] == 0 && cfg->rings==10) {
           // not going to answer, send some data back to IP and disconnect.
-          if(strlen((char *)cfg->data.no_answer) == 0) {
-            line_write(cfg,(unsigned char *)MDM_NO_ANSWER,strlen((char *)MDM_NO_ANSWER));
+          if (strlen(cfg->data.no_answer) == 0) {
+            line_write(cfg, (char *) MDM_NO_ANSWER, strlen(MDM_NO_ANSWER));
           } else {
             writeFile(cfg->data.no_answer,cfg->line_data.fd);
           }

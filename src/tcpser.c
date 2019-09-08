@@ -14,9 +14,8 @@
 #include "phone_book.h"
 #include "util.h"
 #include "debug.h"
-#include "tcpmdm.h"
 
-const unsigned char MDM_BUSY[]="BUSY\n";
+const char MDM_BUSY[] = "BUSY\n";
 
 
 int main(int argc, char *argv[]) {
@@ -25,8 +24,7 @@ int main(int argc, char *argv[]) {
   int port=0;
 
   char *ip_addr = NULL;
-
-  unsigned char all_busy[255];
+  char all_busy[255];
 
   pthread_t thread_id;
   int i;
@@ -38,7 +36,7 @@ int main(int argc, char *argv[]) {
   int accept_pending=FALSE;
 
   int res=0;
-  unsigned char buf[255];
+  char buf[255];
 
   int cSocket;
 
@@ -130,8 +128,8 @@ int main(int argc, char *argv[]) {
           // no connections.., accept and print error
           cSocket=ip_accept(sSocket);
           if(cSocket > -1) {
-            if(strlen((char *)all_busy) < 1) {
-              ip_write(cSocket,(unsigned char *)MDM_BUSY,strlen((char *)MDM_BUSY));
+            if(strlen(all_busy) < 1) {
+              ip_write(cSocket,(char *)MDM_BUSY,strlen(MDM_BUSY));
             } else {
               writeFile(all_busy,cSocket);
             }

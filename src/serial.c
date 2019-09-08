@@ -15,6 +15,9 @@ int ser_get_bps_const(int speed) {
   LOG(LOG_DEBUG,"Checking speed: %d",speed);
 
   switch (speed) {
+  case 230400:
+    bps_rate = B230400;
+    break;
     case 115200:
       bps_rate=B115200;
       break;
@@ -72,7 +75,8 @@ int ser_get_bps_const(int speed) {
 
 }
 
-int ser_init_conn(unsigned char* tty, int speed) {
+int ser_init_conn(char *tty, int speed)
+{
   int fd = -1;
   struct termios tio;
   int bps_rate=0;
@@ -85,7 +89,7 @@ int ser_init_conn(unsigned char* tty, int speed) {
     /* open the device to be non-blocking (read will return immediatly) */
     LOG(LOG_INFO,"Opening serial device");
 
-    fd = open((char *)tty, O_RDWR | O_NOCTTY);
+    fd = open(tty, O_RDWR | O_NOCTTY | O_NONBLOCK);
 
     if (fd <0) {
       ELOG(LOG_FATAL,"TTY %s could not be opened",tty); 
@@ -96,17 +100,17 @@ int ser_init_conn(unsigned char* tty, int speed) {
          O_APPEND and O_NONBLOCK, will work with F_SETFL...) */
       fcntl(fd, F_SETFL, FASYNC);
 
-      tio.c_cflag = bps_rate | CS8 | CLOCAL | CREAD | CRTSCTS;
-
-      tio.c_iflag = (IGNBRK);
+      tio.c_cflag = CS8 | CLOCAL | CREAD | CRTSCTS;
+      tio.c_iflag = IGNBRK;
       tio.c_oflag = 0;
       tio.c_lflag = 0;
+      cfsetispeed(&tio, bps_rate);
+      cfsetospeed(&tio, bps_rate);
+
       tio.c_cc[VMIN]=1;
       tio.c_cc[VTIME]=0;
 
       tcflush(fd, TCIFLUSH);
-      cfsetispeed(&tio, bps_rate);
-      cfsetospeed(&tio, bps_rate);
       tcsetattr(fd,TCSANOW,&tio);
       LOG(LOG_INFO,"serial device configured");
     }
@@ -144,9 +148,9 @@ int ser_get_control_lines(int fd) {
   return status;
 }
 
-
-int ser_set_control_lines(int fd, int state) {
-  unsigned int status;
+int ser_set_control_lines(int fd, int state)
+{
+  int status;
   
 
   if(0 > (status=ser_get_control_lines(fd))) {
@@ -165,12 +169,14 @@ int ser_set_control_lines(int fd, int state) {
   return 0;
 }
 
-int ser_write(int fd, unsigned char* data,int len) {
+int ser_write(int fd, char *data, int len)
+{
   log_trace(TRACE_MODEM_OUT,data,len);
   return write(fd,data,len);
 }
 
-int ser_read(int fd, unsigned char* data, int len) {
+int ser_read(int fd, char *data, int len)
+{
   int res;
 
   res=read(fd,data,len);

@@ -4,14 +4,9 @@
 
 #include "getcmd.h"
 
-int getData(unsigned char line[], 
-            int* index, 
-            int len, 
-            int* data_start,
-            int* data_end,
-            int complex_parse
-           ) {
-
+int getData(char line[], int *index, int len, int *data_start, int *data_end,
+	    int complex_parse)
+{
   int alpha=FALSE;
   int done=FALSE;
 
@@ -65,7 +60,8 @@ int getData(unsigned char line[],
   return 0;
 }
 
-int getNumber(unsigned char line[], int* index, int len ) {
+int getNumber(char line[], int *index, int len)
+{
   int num=0;
   int found=FALSE;
   while(*index <len && 0 != isdigit(line[*index])) {
@@ -77,40 +73,32 @@ int getNumber(unsigned char line[], int* index, int len ) {
   return num;
 }
 
-
-int skip(unsigned char line[], int* index, int len, unsigned char ch) {
+int skip(char line[], int *index, int len, char ch)
+{
   while(*index<len && ch == line[*index])
     (*index)++;
   return 0;
 
 }
 
-int getCommand(unsigned char line[], 
-               int flags, 
-               int* index, 
-               int* num, 
-               int len 
-               ) {
+int getCommand(char line[], int flags, int *index, int *num, int len)
+{
   int cmd=line[(*index)++];
   *num= getNumber(line,index, len);
   return cmd;
 }
 
+int parseCommand(char line[], int flags, int *index, int *num, int len)
+{
+  int cmd = getCommand(line, flags, index, num, len);
 
-int parseCommand(unsigned char line[], 
-               int flags, 
-               int* index, 
-               int* num, 
-               int len 
-               ) {
-  int cmd=getCommand(line,flags,index,num,len);
+
   if(0 < cmd && 0 > *num)
     *num=0;
   return toupper(cmd) | flags;
 }
 
-
-int parseRegister(unsigned char line[], 
+int parseRegister(char line[],
                 int flags, 
                 int* index, 
                 int* num, 
@@ -147,12 +135,8 @@ int parseRegister(unsigned char line[],
   return toupper(cmd) | flags;
 }
 
-int getcmd(unsigned char line[], 
-           int* index, 
-           int* num, 
-           int* data_start, 
-           int* data_end
-          ) {
+int getcmd(char line[], int *index, int *num, int *data_start, int *data_end)
+{
   int len=0;
   int cmd=AT_CMD_END;
 
@@ -162,7 +146,7 @@ int getcmd(unsigned char line[],
 
   if(line == NULL)
     return AT_CMD_NONE;
-  len=strlen((char *)line);
+  len = strlen(line);
   while(*index < len) {
     cmd=toupper(line[*index]);
     switch (cmd) {
@@ -272,8 +256,9 @@ int getcmd(unsigned char line[],
   
 }
 
-int main_getcmd(int argc, char** argv) {
-  unsigned char data[]="DT 555-1212";
+int main_getcmd(int argc, char **argv)
+{
+  char data[] = "DT 555-1212";
   int index=0,num=0,start=0,end=0;
   int cmd=0;
   while(cmd != AT_CMD_END) {

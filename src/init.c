@@ -5,7 +5,8 @@
 #include "phone_book.h"
 #include "init.h"
 
-void print_help(unsigned char* name) {
+void print_help(char *name)
+{
   fprintf(stderr, "Usage: %s <parameters>\n",name);
   fprintf(stderr, "  -p   port to listen on (defaults to 6400)\n");
   fprintf(stderr, "               -- or -- \n");
@@ -15,7 +16,7 @@ void print_help(unsigned char* name) {
   fprintf(stderr, "       's' = modem input\n");
   fprintf(stderr, "       'S' = modem output\n");
   fprintf(stderr, "       'i' = IP input\n");
-  fprintf(stderr, "       'I' = IP input\n");
+  fprintf(stderr, "       'I' = IP output\n");
   fprintf(stderr, "  -l   0 (NONE), 1 (FATAL) - 7 (DEBUG_X) (defaults to 0)\n");
   fprintf(stderr, "  -L   log file (defaults to stderr)\n");
   fprintf(stderr, "\n");
@@ -40,20 +41,14 @@ void print_help(unsigned char* name) {
   exit(1);
 }
 
-int init(int argc, 
-         char** argv, 
-         modem_config cfg[],
-         int max_modem,
-         char **ip_addr, 
-         int* port,
-         unsigned char* all_busy,
-         int all_busy_len
-         ) {
+int init(int argc, char **argv, modem_config cfg[], int max_modem, char **ip_addr,
+	 int *port, char *all_busy, int all_busy_len)
+{
   int i=0;
   int j=0;
   int opt=0;
   int trace_flags=0;
-  unsigned char* tok;
+  char *tok;
   int dce_set=FALSE;
   int tty_set=FALSE;
 
@@ -87,28 +82,28 @@ int init(int argc,
         }
         break;
       case 'a':
-        strncpy((char *)cfg[i].data.local_answer,optarg,sizeof(cfg[i].data.local_answer));
+      strncpy(cfg[i].data.local_answer, optarg, sizeof(cfg[i].data.local_answer));
         break;
       case 'A':
-        strncpy((char *)cfg[i].data.remote_answer,optarg,sizeof(cfg[i].data.remote_answer));
+      strncpy(cfg[i].data.remote_answer, optarg, sizeof(cfg[i].data.remote_answer));
         break;
       case 'c':
-        strncpy((char *)cfg[i].data.local_connect,optarg,sizeof(cfg[i].data.local_connect));
+      strncpy(cfg[i].data.local_connect, optarg, sizeof(cfg[i].data.local_connect));
         break;
       case 'C':
-        strncpy((char *)cfg[i].data.remote_connect,optarg,sizeof(cfg[i].data.remote_connect));
+      strncpy(cfg[i].data.remote_connect, optarg, sizeof(cfg[i].data.remote_connect));
         break;
       case 'B':
-        strncpy((char *)all_busy,optarg,all_busy_len);
+      strncpy(all_busy, optarg, all_busy_len);
         break;
       case 'N':
-        strncpy((char *)cfg[i].data.no_answer,optarg,sizeof(cfg[i].data.no_answer));
+      strncpy(cfg[i].data.no_answer, optarg, sizeof(cfg[i].data.no_answer));
         break;
       case 'T':
-        strncpy((char *)cfg[i].data.inactive,optarg,sizeof(cfg[i].data.inactive));
+      strncpy(cfg[i].data.inactive, optarg, sizeof(cfg[i].data.inactive));
         break;
       case 'i':
-        strncpy((char *)cfg[i].config0,optarg,255);
+      strncpy(cfg[i].config0, optarg, 255);
         break;
       case 'I':
         cfg[i].invert_dcd=TRUE;
@@ -122,8 +117,8 @@ int init(int argc,
         }
         break;
       case 'n':
-        tok = (unsigned char *)strtok((char *)optarg,"=");
-        pb_add(tok,(unsigned char *)strtok(NULL,"="));
+      tok = strtok(optarg, "=");
+      pb_add(tok, strtok(NULL, "="));
         break;
       case 'l':
         log_set_level(atoi(optarg));
@@ -140,7 +135,7 @@ int init(int argc,
         break;
       case '?':
       case 'h':
-        print_help((unsigned char *)argv[0]);
+      print_help(argv[0]);
         break;
       case 'd':
       case 'v':
@@ -151,19 +146,25 @@ int init(int argc,
             cfg[i].dte_speed=cfg[i-1].dte_speed;
             cfg[i].dce_speed=cfg[i-1].dce_speed;
             cfg[i].dce_data.is_ip232=FALSE;
-            strncpy((char *)cfg[i].config0,(char *)cfg[i-1].config0,sizeof((char *)cfg[i].config0));
-            strncpy((char *)cfg[i].data.local_connect,(char *)cfg[i-1].data.local_connect,sizeof((char *)cfg[i].data.local_connect));
-            strncpy((char *)cfg[i].data.remote_connect,(char *)cfg[i-1].data.remote_connect,sizeof((char *)cfg[i].data.remote_connect));
-            strncpy((char *)cfg[i].data.local_answer,(char *)cfg[i-1].data.local_answer,sizeof((char *)cfg[i].data.local_answer));
-            strncpy((char *)cfg[i].data.remote_answer,(char *)cfg[i-1].data.remote_answer,sizeof((char *)cfg[i].data.remote_answer));
-            strncpy((char *)cfg[i].data.no_answer,(char *)cfg[i-1].data.no_answer,sizeof((char *)cfg[i].data.no_answer));
-            strncpy((char *)cfg[i].data.inactive,(char *)cfg[i-1].data.inactive,sizeof((char *)cfg[i].data.inactive));
-          } else {
+          strncpy(cfg[i].config0, cfg[i - 1].config0, sizeof(cfg[i].config0));
+          strncpy(cfg[i].data.local_connect, cfg[i - 1].data.local_connect,
+                  sizeof(cfg[i].data.local_connect));
+          strncpy(cfg[i].data.remote_connect, cfg[i - 1].data.remote_connect,
+                  sizeof(cfg[i].data.remote_connect));
+          strncpy(cfg[i].data.local_answer, cfg[i - 1].data.local_answer,
+                  sizeof(cfg[i].data.local_answer));
+          strncpy(cfg[i].data.remote_answer, cfg[i - 1].data.remote_answer,
+                  sizeof(cfg[i].data.remote_answer));
+          strncpy(cfg[i].data.no_answer, cfg[i - 1].data.no_answer,
+                  sizeof(cfg[i].data.no_answer));
+          strncpy(cfg[i].data.inactive, cfg[i - 1].data.inactive, sizeof(cfg[i].data.inactive));
+        }
+        else {
             LOG(LOG_WARN,"Maximum modems defined - ignoring extra");
             break;
           }
         }
-        strncpy((char *)cfg[i].dce_data.tty,optarg,sizeof(cfg[i].dce_data.tty));
+      strncpy(cfg[i].dce_data.tty, optarg, sizeof(cfg[i].dce_data.tty));
         cfg[i].dce_data.is_ip232=('v'==opt);
         tty_set=TRUE;
         break;
@@ -173,7 +174,7 @@ int init(int argc,
         break;
       case 'D':
         cfg[i].data.direct_conn=TRUE;
-        strncpy((char *)cfg[i].data.direct_conn_num,optarg,sizeof(cfg[i].data.direct_conn_num));
+      strncpy(cfg[i].data.direct_conn_num, optarg, sizeof(cfg[i].data.direct_conn_num));
         break;
     }
   }
@@ -184,7 +185,7 @@ int init(int argc,
   } else {
     // no modems defined
     LOG(LOG_FATAL,"No modems defined");
-    print_help((unsigned char *)argv[0]);
+    print_help(argv[0]);
   }
 
   LOG(LOG_DEBUG,"Read configuration for %i serial port(s)",i);

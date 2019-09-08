@@ -20,9 +20,7 @@ void *ip232_thread(void *arg) {
 
   int accept_pending=FALSE;
   int rc;
-
-  int res=0;
-  unsigned char buf[256];
+  char buf[256];
 
   fd_set readfs; 
   int max_fd=0;
@@ -46,7 +44,7 @@ void *ip232_thread(void *arg) {
       // handle error
     } else {
       if (FD_ISSET(cfg->dce_data.dp[1][0],&readfs)) {  // pipe
-        res = read(cfg->dce_data.dp[1][0],buf,sizeof(buf) - 1);
+        read(cfg->dce_data.dp[1][0], buf, sizeof(buf) - 1);
         LOG(LOG_DEBUG,"ip232 thread notified");
         accept_pending=FALSE;
       }
@@ -92,9 +90,8 @@ int ip232_init_conn(modem_config *cfg) {
   LOG_ENTER();
 
   LOG(LOG_INFO,"Opening ip232 device");
-  port = atoi((char *)cfg->dce_data.tty);
-  rc = ip_init_server_conn("", port);
-
+  port = atoi(cfg->dce_data.tty);
+  rc = ip_init_server_conn(NULL, port);
   if (rc < 0) {
     ELOG(LOG_FATAL,"Could not initialize ip232 server socket");
     exit(-1);
@@ -137,10 +134,11 @@ int ip232_get_control_lines(modem_config *cfg) {
   return status;
 }
 
-
-int ip232_set_control_lines(modem_config *cfg, int state) {
+int ip232_set_control_lines(modem_config *cfg, int state)
+{
   int dcd;
-  unsigned char cmd[2];
+  char cmd[2];
+
 
   if (cfg->dce_data.ip232_is_connected) {
     dcd = (state & TIOCM_DTR) ? TRUE : FALSE;
@@ -155,12 +153,12 @@ int ip232_set_control_lines(modem_config *cfg, int state) {
   return 0;
 }
 
-
-int ip232_write(modem_config *cfg, unsigned char* data,int len) {
+int ip232_write(modem_config *cfg, char *data, int len)
+{
   int retval;
   int i=0;
   int double_iac = FALSE;
-  unsigned char text[1024];
+  char text[1024];
   int text_len=0;
 
   log_trace(TRACE_MODEM_OUT,data,len);
@@ -198,14 +196,13 @@ int ip232_write(modem_config *cfg, unsigned char* data,int len) {
   return retval;
 }
 
-
-int ip232_read(modem_config *cfg, unsigned char* data, int len) {
+int ip232_read(modem_config *cfg, char *data, int len)
+{
   int res;
   int rc;
-  unsigned char buf[256];
-
+  char buf[256];
   int i=0;
-  unsigned char ch;
+  int ch;
   int text_len=0;
 
   LOG_ENTER();

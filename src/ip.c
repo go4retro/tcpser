@@ -80,32 +80,32 @@ int ip_init_server_conn(char *ip_addr, int port) {
   return sSocket;
 }
 
-
-
-int ip_connect(unsigned char addy[]) {
+int ip_connect(char addy[])
+{
 	struct sockaddr_in pin;
   struct in_addr cin_addr;
 	struct hostent *hp;
   int sd=0;
   int port=23;
-  unsigned char* address;
-  unsigned char* tmp;
+  char *address;
+  char *tmp;
+
 
   LOG_ENTER();
 
-  address=(unsigned char*)strtok((char *)addy,":");
-  tmp=(unsigned char*)strtok(NULL, ":");
-  if(tmp != NULL && strlen((char *)tmp) > 0) {
-    port=atoi((char *)tmp);
+  address = (char *) strtok(addy, ":");
+  tmp = (char *) strtok((char *) 0, ":");
+  if (tmp != NULL && strlen(tmp) > 0) {
+    port = atoi(tmp);
   }
 
   LOG(LOG_DEBUG,"Calling %s",addy);
 	memset(&pin, 0, sizeof(pin));
 
 	/* go find out about the desired host machine */
-	if ((hp = gethostbyname((char *)address)) == 0) {
+  if ((hp = gethostbyname(address)) == 0) {
     // well, not a DNS entry... Treat as IP...
-    if(1 != inet_aton((char *)address, &cin_addr)) {
+    if (1 != inet_aton(address, &cin_addr)) {
       ELOG(LOG_ERROR,"Host %s was invalid",addy);
       return -1;
     }
@@ -135,7 +135,7 @@ int ip_connect(unsigned char addy[]) {
 
 int ip_accept(int sSocket) {
   struct sockaddr_in clientName = { 0 };
-  int clientLength = sizeof(clientName);
+  socklen_t clientLength = sizeof(clientName);
   int cSocket=-1;
 
   LOG_ENTER();
@@ -171,12 +171,14 @@ int ip_disconnect(int fd) {
   return 0;
 }
 
-int ip_write(int fd,unsigned char* data,int len) {
+int ip_write(int fd, char *data, int len)
+{
   log_trace(TRACE_IP_OUT,data,len);
   return write(fd,data,len);
 }
 
-int ip_read(int fd, unsigned char* data, int len) {
+int ip_read(int fd, char *data, int len)
+{
   int res;
 
   res = recv(fd,data,len,0);
