@@ -38,3 +38,8 @@
   Added full support for Telnet Binary Transmission (RFC 856)
 1.0rc12
   Added code to hook SIG_IO to SIG_IGN.  Newer versions of Linux are terminating when IO arrives.
+
+1.0fz1 - Chris Osborn <fozztexx@fozztexx.com> 2016-May-24
+  Cleaned up all the warnings about unsigned char strings
+  Strip parity when looking for commands, generate matching parity on modem responses
+  Fixed bug in sending telnet sub-options. Now tcpser can connect to real telnet servers.
