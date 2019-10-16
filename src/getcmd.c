@@ -12,31 +12,31 @@ int getData(unsigned char line[],
             int complex_parse
            ) {
 
-  int alpha=FALSE;
-  int done=FALSE;
+  int alpha = FALSE;
+  int done = FALSE;
 
-  *data_start=*index;
+  *data_start = *index;
 
   while(*index < len && done != TRUE) {
     // I'm going to assume either 
     //    a number
     //    a string with a space
     switch(line[*index]) {
-      case ' ':  
+      case ' ':
         if(!complex_parse && *index != *data_start) {
           // leave space, next call will skip it.
-          done=TRUE;
+          done = TRUE;
         } else if(*index != *data_start) {
           // we are complex, add the space and continue.
           (*index)++;
         } else {
           // we have not started, eat space and continue.
           (*index)++;
-          *data_start=*index;
+          *data_start = *index;
         }
         break;
       case 0:
-        done=TRUE;
+        done = TRUE;
         break;
       case '0':
       case '1':
@@ -51,35 +51,35 @@ int getData(unsigned char line[],
         (*index)++;
         break;
       default:
-        if(!complex_parse && *index != *data_start && 0==alpha ) {
+        if(!complex_parse && *index != *data_start && 0 == alpha ) {
           // we were a number, but we've hit an alpha 'S0=137S...'
-          done=TRUE;
+          done = TRUE;
         } else {
           (*index)++;
-          alpha=TRUE;
+          alpha = TRUE;
         }
         break;
     }
   }
-  *data_end=(*index);
+  *data_end = (*index);
   return 0;
 }
 
-int getNumber(unsigned char line[], int* index, int len ) {
-  int num=0;
-  int found=FALSE;
+int getNumber(unsigned char line[], int *index, int len) {
+  int num = 0;
+  int found = FALSE;
   while(*index <len && 0 != isdigit(line[*index])) {
-    num=num * 10 + line[(*index)++] - '0';
-    found=1;
+    num = num * 10 + line[(*index)++] - '0';
+    found = 1;
   }
-  if(FALSE==found)
+  if(FALSE == found)
     return -1;
   return num;
 }
 
 
-int skip(unsigned char line[], int* index, int len, unsigned char ch) {
-  while(*index<len && ch == line[*index])
+int skip(unsigned char line[], int *index, int len, unsigned char ch) {
+  while(*index < len && ch == line[*index])
     (*index)++;
   return 0;
 
@@ -91,41 +91,41 @@ int getCommand(unsigned char line[],
                int* num, 
                int len 
                ) {
-  int cmd=line[(*index)++];
-  *num= getNumber(line,index, len);
+  int cmd = line[(*index)++];
+  *num = getNumber(line, index, len);
   return cmd;
 }
 
 
 int parseCommand(unsigned char line[], 
-               int flags, 
-               int* index, 
-               int* num, 
-               int len 
-               ) {
-  int cmd=getCommand(line,flags,index,num,len);
+                 int flags, 
+                 int *index, 
+                 int *num, 
+                 int len 
+                ) {
+  int cmd = getCommand(line, flags, index, num, len);
   if(0 < cmd && 0 > *num)
-    *num=0;
+    *num = 0;
   return toupper(cmd) | flags;
 }
 
 
-int parseRegister(unsigned char line[], 
-                int flags, 
-                int* index, 
-                int* num, 
-                int len, 
-                int* data_start, 
-                int* data_end,
-                int complex_parse
-               ) {
+int parseRegister(unsigned char line[],
+                  int flags,
+                  int *index,
+                  int *num, 
+                  int len,
+                  int *data_start, 
+                  int *data_end,
+                  int complex_parse
+                 ) {
   // need to handle S<num>?, which queries that S register.
 
-  int cmd=0;
-  cmd = getCommand(line,flags,index,num,len);
+  int cmd = 0;
+  cmd = getCommand(line, flags, index, num,len);
   if(0 > num)
     return AT_CMD_ERR;
-  skip(line,index,len,' ');
+  skip(line, index,len, ' ');
   if(len == *index)
     return AT_CMD_ERR;
   switch (line[(*index)++]) {
@@ -139,7 +139,7 @@ int parseRegister(unsigned char line[],
       // query a register
       flags |= AT_CMD_FLAG_QUERY;
       if(*num < 0)
-        *num=0;
+        *num = 0;
       break;
     default:
       return AT_CMD_ERR;
@@ -148,23 +148,23 @@ int parseRegister(unsigned char line[],
 }
 
 int getcmd(unsigned char line[], 
-           int* index, 
-           int* num, 
-           int* data_start, 
-           int* data_end
+           int *index, 
+           int *num, 
+           int *data_start, 
+           int *data_end
           ) {
-  int len=0;
-  int cmd=AT_CMD_END;
+  int len = 0;
+  int cmd = AT_CMD_END;
 
-  *num=0;
-  *data_start=0;
-  *data_end=0;
+  *num = 0;
+  *data_start = 0;
+  *data_end = 0;
 
   if(line == NULL)
     return AT_CMD_NONE;
-  len=strlen((char *)line);
+  len = strlen((char *)line);
   while(*index < len) {
-    cmd=toupper(line[*index]);
+    cmd = toupper(line[*index]);
     switch (cmd) {
       case ' ':
         break;
@@ -179,21 +179,21 @@ int getcmd(unsigned char line[],
             case 0:
               return AT_CMD_ERR;
             default:
-              return parseCommand(line,AT_CMD_FLAG_PRO_PCT, index,num,len);
+              return parseCommand(line,AT_CMD_FLAG_PRO_PCT, index, num, len);
           }
           (*index)++;
         }
         break;
       case '\\':
         (*index)++;
-        while(*index<len) {
+        while(*index < len) {
           switch(toupper(line[*index])) {
             case ' ':
               break;
             case 0:
               return AT_CMD_ERR;
             default:
-              return parseCommand(line,AT_CMD_FLAG_PRO_BACK, index,num,len);
+              return parseCommand(line, AT_CMD_FLAG_PRO_BACK, index, num, len);
           }
           (*index)++;
         }
@@ -207,21 +207,21 @@ int getcmd(unsigned char line[],
             case 0:
               return AT_CMD_ERR;
             default:
-              return parseCommand(line,AT_CMD_FLAG_PRO_COLON, index,num,len);
+              return parseCommand(line, AT_CMD_FLAG_PRO_COLON, index, num, len);
           }
           (*index)++;
         }
         break;
       case '-':
         (*index)++;
-        while(*index<len) {
+        while(*index < len) {
           switch(toupper(line[*index])) {
             case ' ':
               break;
             case 0:
               return AT_CMD_ERR;
             default:
-              return parseCommand(line,AT_CMD_FLAG_PRO_MINUS, index,num,len);
+              return parseCommand(line, AT_CMD_FLAG_PRO_MINUS, index, num, len);
           }
           (*index)++;
         }
@@ -235,36 +235,36 @@ int getcmd(unsigned char line[],
             case 0:
               return AT_CMD_ERR;
             case 'Z':
-              return parseRegister(line,AT_CMD_FLAG_EXT,index,num,len,data_start, data_end,TRUE);
+              return parseRegister(line, AT_CMD_FLAG_EXT, index, num, len, data_start, data_end, TRUE);
             default:
-              return parseCommand(line,AT_CMD_FLAG_EXT, index,num,len);
+              return parseCommand(line, AT_CMD_FLAG_EXT, index, num, len);
           }
           (*index)++;
         }
         break;
       case 'D':       // handle Dialing.
         (*index)++;
-        *num=0;
-        while(*index<len) {
+        *num = 0;
+        while(*index < len) {
           switch(toupper(line[*index])) {
             case 0:
                 return cmd;
             case 'T':
             case 'P':
             case 'L':
-              *num=toupper(line[*index]);
+              *num = toupper(line[*index]);
               (*index)++;
             default:
-              getData(line,index,len,data_start,data_end,TRUE);
+              getData(line, index, len, data_start, data_end, TRUE);
               return cmd;
           }
           (*index)++;
         }
         return cmd;
       case 'S':
-        return parseRegister(line,AT_CMD_FLAG_BAS,index,num,len,data_start, data_end,FALSE);
+        return parseRegister(line, AT_CMD_FLAG_BAS, index, num, len, data_start, data_end, FALSE);
       default:
-        return parseCommand(line,AT_CMD_FLAG_BAS, index,num,len);
+        return parseCommand(line, AT_CMD_FLAG_BAS, index, num, len);
     }
     (*index)++;
   }
@@ -272,15 +272,13 @@ int getcmd(unsigned char line[],
   
 }
 
-int main_getcmd(int argc, char** argv) {
-  unsigned char data[]="DT 555-1212";
-  int index=0,num=0,start=0,end=0;
-  int cmd=0;
+int main_getcmd(int argc, char **argv) {
+  unsigned char data[] = "DT 555-1212";
+  int index = 0, num = 0,start = 0,end = 0;
+  int cmd = 0;
   while(cmd != AT_CMD_END) {
-    cmd=getcmd(data,&index,&num,&start,&end);
-    printf("Cmd: %c Index: %d Num: %d Start: %d End: %d\n",cmd, index,num,start,end);
+    cmd = getcmd(data, &index, &num, &start, &end);
+    printf("Cmd: %c Index: %d Num: %d Start: %d End: %d\n", cmd, index, num, start, end);
   }
   return 0;
 }
-
-

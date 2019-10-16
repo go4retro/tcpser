@@ -4,4 +4,3 @@
 int sh_init_config(modem_config *cfg);
 
 #endif
-

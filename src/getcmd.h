@@ -17,38 +17,38 @@
 #endif
 
 int getData(unsigned char line[], 
-            int* index, 
+            int *index, 
             int len, 
-            int* data_start,
-            int* data_end,
+            int *data_start,
+            int *data_end,
             int simple_parse
            );
-int getNumber(unsigned char line[], int* index, int len );
-int skip(unsigned char line[], int* index, int len, unsigned char ch);
+int getNumber(unsigned char line[], int *index, int len );
+int skip(unsigned char line[], int *index, int len, unsigned char ch);
 int getCommand(unsigned char line[], 
                int flags, 
-               int* index, 
-               int* num, 
+               int *index, 
+               int *num, 
                int len 
-               );
+              );
 int parseCommand(unsigned char line[], 
-               int flags, 
-               int* index, 
-               int* num, 
-               int len 
-               );
+                 int flags, 
+                 int *index, 
+                 int *num, 
+                 int len 
+                );
 int parseRegister(unsigned char line[], 
-                int flags, 
-                int* index, 
-                int* num, 
-                int len, 
-                int* data_start, 
-                int* data_end,
-                int simple_parse
-               );
+                  int flags, 
+                  int *index, 
+                  int *num, 
+                  int len, 
+                  int *data_start, 
+                  int *data_end,
+                  int simple_parse
+                 );
 int getcmd(unsigned char line[], 
-           int* index, 
-           int* num, 
-           int* data_start, 
-           int* data_end
+           int *index, 
+           int *num, 
+           int *data_start, 
+           int *data_end
           );
