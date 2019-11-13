@@ -96,18 +96,17 @@ int ser_init_conn(unsigned char *tty, int speed) {
          O_APPEND and O_NONBLOCK, will work with F_SETFL...) */
       fcntl(fd, F_SETFL, FASYNC);
 
-      tio.c_cflag = bps_rate | CS8 | CLOCAL | CREAD | CRTSCTS;
-
+      tio.c_cflag = CS8 | CLOCAL | CREAD | CRTSCTS;
       tio.c_iflag = (IGNBRK);
       tio.c_oflag = 0;
       tio.c_lflag = 0;
+      cfsetispeed(&tio, bps_rate);
+      cfsetospeed(&tio, bps_rate);
 
       tio.c_cc[VMIN] = 1;
       tio.c_cc[VTIME] = 0;
 
       tcflush(fd, TCIFLUSH);
-      cfsetispeed(&tio, bps_rate);
-      cfsetospeed(&tio, bps_rate);
       tcsetattr(fd, TCSANOW, &tio);
       LOG(LOG_INFO, "serial device configured");
     }
@@ -116,7 +115,6 @@ int ser_init_conn(unsigned char *tty, int speed) {
   LOG_EXIT();
   return fd;
 }
-
 
 int ser_set_flow_control(int fd, int status) {
   struct termios tio;
@@ -134,7 +132,6 @@ int ser_set_flow_control(int fd, int status) {
   return 0;
 }
 
-
 int ser_get_control_lines(int fd) {
   int status;
 
@@ -144,7 +141,6 @@ int ser_get_control_lines(int fd) {
   }
   return status;
 }
-
 
 int ser_set_control_lines(int fd, int state) {
   unsigned int status;
