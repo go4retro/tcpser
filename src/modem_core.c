@@ -32,7 +32,6 @@ int mdm_init() {
   return 0;
 }
 
-
 int get_connect_response(int speed, int level) {
   if(level == 0) {
     return MDM_RESP_CONNECT;
@@ -122,7 +121,6 @@ int get_new_cts_state(modem_config *cfg, int up) {
   return MDM_CL_CTS_HIGH;
 }
 
-
 int get_new_dsr_state(modem_config *cfg, int up) {
   if(cfg->dsr_on == TRUE)
     return (cfg->invert_dsr == TRUE ? MDM_CL_DSR_LOW : MDM_CL_DSR_HIGH);
@@ -166,6 +164,7 @@ int mdm_set_control_lines(modem_config *cfg) {
 
 void mdm_write_char(modem_config *cfg, unsigned char data) {
   unsigned char str[2];
+
   str[0] = data;
   mdm_write(cfg, str, 1);
 }
@@ -195,7 +194,6 @@ void mdm_send_response(int msg, modem_config *cfg) {
 }
 
 int mdm_off_hook(modem_config *cfg) {
-
   LOG(LOG_INFO, "taking modem off hook");
   cfg->off_hook = TRUE;
   cfg->cmd_mode = FALSE;
@@ -250,11 +248,9 @@ int mdm_connect(modem_config* cfg) {
   return 0;
 }
 
-
 int mdm_listen(modem_config *cfg) {
   return line_listen(cfg);
 }
-
 
 int mdm_disconnect(modem_config* cfg) {
   int type;
@@ -294,7 +290,6 @@ int mdm_parse_cmd(modem_config* cfg) {
   unsigned char tmp[256];
 
   LOG_ENTER();
-
   LOG(LOG_DEBUG, "Evaluating AT%s", command);
 
   while(TRUE != done ) {

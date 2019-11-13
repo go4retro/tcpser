@@ -9,7 +9,6 @@
 #include "debug.h"
 #include "ip.h"
 
-
 const int BACK_LOG = 5;
 
 int ip_init_server_conn(char *ip_addr, int port) {
@@ -78,8 +77,6 @@ int ip_init_server_conn(char *ip_addr, int port) {
   return sSocket;
 }
 
-
-
 int ip_connect(unsigned char addy[]) {
   struct sockaddr_in pin;
   struct in_addr cin_addr;
@@ -90,7 +87,6 @@ int ip_connect(unsigned char addy[]) {
   unsigned char *tmp;
 
   LOG_ENTER();
-
   address = (unsigned char*)strtok((char *)addy, ":");
   tmp = (unsigned char*)strtok(NULL, ":");
   if(tmp != NULL && strlen((char *)tmp) > 0) {
@@ -137,7 +133,6 @@ int ip_accept(int sSocket) {
   int cSocket = -1;
 
   LOG_ENTER();
-
   (void) memset(&clientName, 0, sizeof(clientName));
 
   cSocket = accept(sSocket,

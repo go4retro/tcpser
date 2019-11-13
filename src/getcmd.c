@@ -11,7 +11,6 @@ int getData(unsigned char line[],
             int* data_end,
             int complex_parse
            ) {
-
   int alpha = FALSE;
   int done = FALSE;
 
@@ -78,7 +77,6 @@ int getNumber(unsigned char line[], int *index, int len) {
   return num;
 }
 
-
 int skip(unsigned char line[], int *index, int len, unsigned char ch) {
   while(*index < len && ch == line[*index])
     (*index)++;
@@ -93,10 +91,10 @@ int getCommand(unsigned char line[],
                int len 
                ) {
   int cmd = line[(*index)++];
+
   *num = getNumber(line, index, len);
   return cmd;
 }
-
 
 int parseCommand(unsigned char line[], 
                  int flags, 
@@ -105,11 +103,11 @@ int parseCommand(unsigned char line[],
                  int len 
                 ) {
   int cmd = getCommand(line, flags, index, num, len);
+
   if(0 < cmd && 0 > *num)
     *num = 0;
   return toupper(cmd) | flags;
 }
-
 
 int parseRegister(unsigned char line[],
                   int flags,
@@ -121,8 +119,8 @@ int parseRegister(unsigned char line[],
                   int complex_parse
                  ) {
   // need to handle S<num>?, which queries that S register.
-
   int cmd = 0;
+
   cmd = getCommand(line, flags, index, num,len);
   if(0 > num)
     return AT_CMD_ERR;

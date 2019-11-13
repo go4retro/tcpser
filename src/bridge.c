@@ -46,7 +46,6 @@ int accept_connection(modem_config *cfg) {
   return 0;
 }
 
-
 int parse_ip_data(modem_config *cfg, unsigned char *data, int len) {
   // I'm going to cheat and assume it comes in chunks.
   int i = 0;
@@ -175,7 +174,6 @@ void *ctrl_thread(void *arg) {
   int new_status;
 
   LOG_ENTER();
-
   status = dce_get_control_lines(cfg);
   while(status > -1) {
     new_status = dce_check_control_lines(cfg);
@@ -197,7 +195,6 @@ void *ctrl_thread(void *arg) {
   // need to quit application, as status cannot be obtained.
   exit(-1);
 }
-
 
 int spawn_ctrl_thread(modem_config *cfg) {
   int rc;

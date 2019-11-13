@@ -12,7 +12,6 @@ unsigned char *trace_type[9];  // cheesy, but I can't think of another o(1) way
 unsigned char *log_desc[LOG_TRACE+1];
 pthread_mutex_t log_mutex;
 
-
 int log_init() {
   log_file = stdout;
   log_level = 0;
@@ -36,26 +35,21 @@ int log_init() {
   return 0;
 }
 
-
 void log_set_file(FILE *a) {
   log_file = a;
 }
-
 
 void log_set_level(int a) {
   log_level = a;
 }
 
-
 void log_set_trace_flags(int a) {
   trace_flags = a;
 }
 
-
 int log_get_trace_flags() {
   return trace_flags;
 }
-
 
 void log_trace(int type, unsigned char *line, int len) {
   int i = 0;

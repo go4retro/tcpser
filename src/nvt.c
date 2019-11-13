@@ -100,6 +100,7 @@ int parse_nvt_subcommand(int fd, nvt_vars *vars, unsigned char *data, int len) {
 
 int send_nvt_command(int fd, nvt_vars *vars, unsigned char action, unsigned char opt) {
   unsigned char cmd[3];
+
   cmd[0] = NVT_IAC;
   cmd[1] = action;
   cmd[2] = opt;
@@ -109,7 +110,6 @@ int send_nvt_command(int fd, nvt_vars *vars, unsigned char action, unsigned char
 
   return 0;
 }
-
 
 int parse_nvt_command(int fd, nvt_vars *vars, unsigned char action, unsigned char opt) {
   unsigned char resp[3];
@@ -140,7 +140,6 @@ int parse_nvt_command(int fd, nvt_vars *vars, unsigned char action, unsigned cha
 
     case NVT_OPT_NAWS:
     case NVT_OPT_TERMINAL_TYPE:
-    case NVT_OPT_TERMINAL_SPEED:
     case NVT_OPT_SUPPRESS_GO_AHEAD:
     case NVT_OPT_ECHO:
     case NVT_OPT_X_DISPLAY_LOCATION:  // should not have to have these
