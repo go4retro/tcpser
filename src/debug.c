@@ -69,20 +69,20 @@ void log_trace(int type, unsigned char *line, int len) {
 
   if((type & trace_flags) != 0) {
     text[16] = 0;
-    for(i = 0;i < len;i++) {
+    for(i = 0; i < len; i++) {
       if((i % 16) == 0) {
         // beginning of line
         dptr = data;
         sprintf((char *)dptr, "%4.4x|", i);
       }
       ch = line[i];
-      sprintf((char *)dptr + 5 + ((i % 16) * 3), "%2.2x",ch);
+      sprintf((char *)dptr + 5 + ((i % 16) * 3), "%2.2x", ch);
       if(ch > 31 && ch < 127) {
         text[i % 16] = ch;
       } else {
         text[i % 16] = '.';
       }
-      if((i %16) == 15) {
+      if((i % 16) == 15) {
         log_start(LOG_TRACE);
         fprintf(log_file, "%s|%s|%s|", trace_type[type], data, text);
         log_end();
@@ -90,9 +90,9 @@ void log_trace(int type, unsigned char *line, int len) {
         sprintf((char *)dptr + 7 + ((i % 16) * 3), " ");
       }
     }
-    i=i % 16;
+    i = i % 16;
     if(i > 0) {
-      for(;i < 16;i++) {
+      for(; i < 16; i++) {
         sprintf((char *)dptr + 5 + ((i % 16) * 3), "  ");
         if((i % 16) != 15) {
           sprintf((char *)dptr + 7 + ((i % 16) * 3), " ");
@@ -100,7 +100,7 @@ void log_trace(int type, unsigned char *line, int len) {
         text[i % 16] = ' ';
       }
       log_start(LOG_TRACE);
-      fprintf(log_file,"%s|%s|%s|", trace_type[type], data, text);
+      fprintf(log_file, "%s|%s|%s|", trace_type[type], data, text);
     }
     log_end();
   }
@@ -114,8 +114,8 @@ void log_start(int level) {
     perror("Could not lock the log mutex");
   } else {
     // we have the lock.
-    now = time(NULL);  
-    strftime((char*)t,22,"%Y-%m-%d %H:%M:%S", localtime(&now));
+    now = time(NULL);
+    strftime((char*)t, 22, "%Y-%m-%d %H:%M:%S", localtime(&now));
     fprintf(log_file, "%s:%5.5d:%s:", t, (int)pthread_self(), log_desc[level]);
     //free(t);
   }

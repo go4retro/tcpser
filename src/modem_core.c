@@ -62,6 +62,7 @@ int get_connect_response(int speed, int level) {
 
 void mdm_init_config(modem_config* cfg) {
   int i = 0;
+
   cfg->send_responses = TRUE;
   cfg->connect_response = 0;
   cfg->response_code_level = 4;
@@ -73,7 +74,7 @@ void mdm_init_config(modem_config* cfg) {
   cfg->line_ringing = FALSE;
   cfg->cur_line_idx = 0;
 
-  for(i = 0;i < 100;i++) {
+  for(i = 0; i < 100; i++) {
     cfg->s[i] = 0;
   }
   cfg->s[2] = 43;
@@ -125,14 +126,13 @@ int get_new_cts_state(modem_config *cfg, int up) {
 int get_new_dsr_state(modem_config *cfg, int up) {
   if(cfg->dsr_on == TRUE)
     return (cfg->invert_dsr == TRUE ? MDM_CL_DSR_LOW : MDM_CL_DSR_HIGH);
-  if((up == TRUE && cfg->invert_dsr == FALSE) 
+  if((up == TRUE && cfg->invert_dsr == FALSE)
      || (up == FALSE && cfg->invert_dsr == TRUE)
     )
     return MDM_CL_DSR_HIGH;
   else
     return MDM_CL_DSR_LOW;
 }
-
 
 int get_new_dcd_state(modem_config *cfg, int up) {
   if(cfg->dcd_on == TRUE)
@@ -163,7 +163,6 @@ int mdm_set_control_lines(modem_config *cfg) {
   dce_set_control_lines(cfg, state);
   return 0;
 }
-
 
 void mdm_write_char(modem_config *cfg, unsigned char data) {
   unsigned char str[2];
@@ -231,7 +230,7 @@ int mdm_print_speed(modem_config *cfg) {
       speed = cfg->dce_speed;
       break;
 
-  } 
+  }
   mdm_send_response(get_connect_response(speed, cfg->response_code_level), cfg);
   return 0;
 }
@@ -296,7 +295,7 @@ int mdm_parse_cmd(modem_config* cfg) {
 
   LOG_ENTER();
 
-  LOG(LOG_DEBUG, "Evaluating AT%s",command);
+  LOG(LOG_DEBUG, "Evaluating AT%s", command);
 
   while(TRUE != done ) {
     if(cmd != AT_CMD_ERR) {
@@ -333,19 +332,19 @@ int mdm_parse_cmd(modem_config* cfg) {
           break;
       case 'B':   // 212A versus V.22 connection
         if(num > 1) {
-          cmd=AT_CMD_ERR;
+          cmd = AT_CMD_ERR;
         } else {
           //cfg->connect_1200 = num;
         }
         break;
       case 'D':
-        if(end>start) {
+        if(end > start) {
           strncpy((char *)cfg->dialno, (char *)command+start, end - start);
-          cfg->dialno[end-start] = '\0';
+          cfg->dialno[end - start] = '\0';
           cfg->dial_type = (unsigned char)num;
           cfg->last_dial_type = (unsigned char)num;
           strncpy((char *)cfg->last_dialno, (char *)command+start, end - start);
-          cfg->last_dialno[end-start] = '\0';
+          cfg->last_dialno[end - start] = '\0';
           cfg->memory_dial = FALSE;
         } else if (num == 'L') {
           strncpy((char *)cfg->dialno, (char *)cfg->last_dialno, strlen((char *)cfg->last_dialno));
@@ -517,7 +516,7 @@ int mdm_parse_cmd(modem_config* cfg) {
       default:
         break;
     }
-  } 
+  }
   cfg->cur_line_idx = 0;
   return cmd;
 }
@@ -559,7 +558,7 @@ int mdm_handle_char(modem_config *cfg, unsigned char ch) {
   } else if(ch == 'a' || ch == 'A') {
     LOG(LOG_ALL, "'A' parsed in serial stream");
     cfg->found_a = TRUE;
-  } 
+  }
   return 0;
 }
 

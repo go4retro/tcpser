@@ -13,7 +13,6 @@ int line_init_config(modem_config *cfg) {
   nvt_init_config(&cfg->line_data.nvt_data);
   return 0;
 }
- 
 
 int line_write(modem_config *cfg, unsigned char* data, int len) {
   int retval;
@@ -60,7 +59,6 @@ int line_off_hook(modem_config *cfg) {
   return 0;
 }
 
-
 int line_connect(modem_config *cfg) {
   unsigned char* addy = cfg->dialno;
   LOG(LOG_INFO, "Connecting");
@@ -76,7 +74,6 @@ int line_connect(modem_config *cfg) {
     return -1;
   }
 }
-
 
 int line_disconnect(modem_config *cfg) {
   LOG(LOG_INFO, "Disconnecting");

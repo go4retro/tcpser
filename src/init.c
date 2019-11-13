@@ -40,8 +40,8 @@ void print_help(unsigned char* name) {
   exit(1);
 }
 
-int init(int argc, 
-         char **argv, 
+int init(int argc,
+         char **argv,
          modem_config cfg[],
          int max_modem,
          char **ip_addr, 
@@ -134,7 +134,7 @@ int init(int argc,
         break;
       case 's':
         cfg[i].dte_speed = atoi(optarg);
-        LOG(LOG_ALL,"Setting DTE speed to %d", cfg[i].dte_speed);
+        LOG(LOG_ALL, "Setting DTE speed to %d", cfg[i].dte_speed);
         if(dce_set == FALSE)
           cfg[i].dce_speed = cfg[i].dte_speed;
         break;
@@ -148,16 +148,16 @@ int init(int argc,
           if (++i < max_modem) {
             dce_set = FALSE;
             mdm_init_config(&cfg[i]);
-            cfg[i].dte_speed = cfg[i-1].dte_speed;
-            cfg[i].dce_speed = cfg[i-1].dce_speed;
+            cfg[i].dte_speed = cfg[i - 1].dte_speed;
+            cfg[i].dce_speed = cfg[i - 1].dce_speed;
             cfg[i].dce_data.is_ip232 = FALSE;
-            strncpy((char *)cfg[i].config0, (char *)cfg[i-1].config0, sizeof((char *)cfg[i].config0));
-            strncpy((char *)cfg[i].data.local_connect, (char *)cfg[i-1].data.local_connect, sizeof((char *)cfg[i].data.local_connect));
-            strncpy((char *)cfg[i].data.remote_connect, (char *)cfg[i-1].data.remote_connect, sizeof((char *)cfg[i].data.remote_connect));
-            strncpy((char *)cfg[i].data.local_answer, (char *)cfg[i-1].data.local_answer, sizeof((char *)cfg[i].data.local_answer));
-            strncpy((char *)cfg[i].data.remote_answer, (char *)cfg[i-1].data.remote_answer, sizeof((char *)cfg[i].data.remote_answer));
-            strncpy((char *)cfg[i].data.no_answer, (char *)cfg[i-1].data.no_answer, sizeof((char *)cfg[i].data.no_answer));
-            strncpy((char *)cfg[i].data.inactive, (char *)cfg[i-1].data.inactive, sizeof((char *)cfg[i].data.inactive));
+            strncpy((char *)cfg[i].config0, (char *)cfg[i - 1].config0, sizeof((char *)cfg[i].config0));
+            strncpy((char *)cfg[i].data.local_connect, (char *)cfg[i - 1].data.local_connect, sizeof((char *)cfg[i].data.local_connect));
+            strncpy((char *)cfg[i].data.remote_connect, (char *)cfg[i - 1].data.remote_connect, sizeof((char *)cfg[i].data.remote_connect));
+            strncpy((char *)cfg[i].data.local_answer, (char *)cfg[i - 1].data.local_answer, sizeof((char *)cfg[i].data.local_answer));
+            strncpy((char *)cfg[i].data.remote_answer, (char *)cfg[i - 1].data.remote_answer, sizeof((char *)cfg[i].data.remote_answer));
+            strncpy((char *)cfg[i].data.no_answer, (char *)cfg[i - 1].data.no_answer, sizeof((char *)cfg[i].data.no_answer));
+            strncpy((char *)cfg[i].data.inactive, (char *)cfg[i - 1].data.inactive, sizeof((char *)cfg[i].data.inactive));
           } else {
             LOG(LOG_WARN, "Maximum modems defined - ignoring extra");
             break;

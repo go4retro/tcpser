@@ -17,7 +17,6 @@
 
 #include "bridge.h"
 
-
 const unsigned char MDM_NO_ANSWER[] = "NO ANSWER\n";
 
 //const unsigned char CONNECT_NOTICE[] = "\r\nCONNECTING...\r\n";
@@ -61,7 +60,7 @@ int parse_ip_data(modem_config *cfg, unsigned char *data, int len) {
       //line_write(cfg, (unsigned char*)TELNET_NOTICE,strlen(TELNET_NOTICE));
       LOG(LOG_INFO, "Detected telnet");
       cfg->line_data.is_telnet = TRUE;
-    } 
+    }
   }
 
   if(cfg->line_data.is_telnet == TRUE) {
@@ -233,7 +232,7 @@ void *run_bridge(void *arg) {
   struct timeval timer;  
   struct timeval *ptimer;  
   int max_fd = 0;
-  fd_set readfs; 
+  fd_set readfs;
   int res = 0;
   unsigned char buf[256];
   int rc = 0;
@@ -281,7 +280,6 @@ void *run_bridge(void *arg) {
       } else {
         cfg->conn_type = MDM_CONN_OUTGOING;
       }
-    
     }
   }
   cfg->allow_transmit = TRUE;
@@ -293,26 +291,26 @@ void *run_bridge(void *arg) {
       if(cfg->conn_type == MDM_CONN_OUTGOING) {
         if(strlen((char *)cfg->data.local_connect) > 0) {
           writeFile(cfg->data.local_connect, cfg->line_data.fd);
-        } 
+        }
         if(strlen((char *)cfg->data.remote_connect) > 0) {
           writeFile(cfg->data.remote_connect, cfg->line_data.fd);
-        } 
+        }
       } else if(cfg->conn_type == MDM_CONN_INCOMING) {
         if(strlen((char *)cfg->data.local_answer) > 0) {
           writeFile(cfg->data.local_answer, cfg->line_data.fd);
-        } 
+        }
         if(strlen((char *)cfg->data.remote_answer) > 0) {
           writeFile(cfg->data.remote_answer, cfg->line_data.fd);
-        } 
+        }
       }
       last_conn_type = cfg->conn_type;
     }
     if(last_cmd_mode != cfg->cmd_mode) {
       writePipe(cfg->data.cp[1][1], MSG_NOTIFY);
-      last_cmd_mode=cfg->cmd_mode;
+      last_cmd_mode = cfg->cmd_mode;
     }
     LOG(LOG_ALL, "Waiting for modem/control line/timer/socket activity");
-    LOG(LOG_ALL, "Command Mode=%d, Connection status=%d",cfg->cmd_mode,cfg->conn_type);
+    LOG(LOG_ALL, "Command Mode=%d, Connection status=%d", cfg->cmd_mode, cfg->conn_type);
     max_fd = MAX(cfg->data.mp[1][0], cfg->dce_data.fd);
     max_fd = MAX(max_fd, cfg->data.wp[0][0]);
     max_fd = MAX(max_fd, cfg->data.cp[0][0]);
@@ -385,7 +383,7 @@ void *run_bridge(void *arg) {
     if (FD_ISSET(cfg->data.wp[0][0], &readfs)) {  // control pipe
       res = read(cfg->data.wp[0][0], buf, sizeof(buf) - 1);
       buf[res] = 0;
-      LOG(LOG_DEBUG, "Received %c from Control line watch task",buf[0]);
+      LOG(LOG_DEBUG, "Received %c from Control line watch task", buf[0]);
       switch (buf[0]) {
         case MSG_DTR_DOWN:
           // DTR drop, close any active connection and put

@@ -46,8 +46,8 @@
                          } \
                        } while(0)
 
-#define LOG_ENTER() LOG(LOG_ENTER_EXIT, "Entering %s function", __func__);
-#define LOG_EXIT() LOG(LOG_ENTER_EXIT, "Exitting %s function", __func__);
+#define LOG_ENTER() LOG(LOG_ENTER_EXIT,"Entering %s function",__func__);
+#define LOG_EXIT() LOG(LOG_ENTER_EXIT,"Exitting %s function",__func__);
 int log_init(void);
 void log_set_file(FILE *a);
 void log_set_level(int a);

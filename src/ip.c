@@ -22,7 +22,7 @@ int ip_init_server_conn(char *ip_addr, int port) {
 
   sSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (-1 == sSocket) {
-      ELOG(LOG_FATAL, "Server socket could not be created");
+    ELOG(LOG_FATAL, "Server socket could not be created");
   } else {
 
     /*
@@ -41,10 +41,10 @@ int ip_init_server_conn(char *ip_addr, int port) {
                     sizeof(on)
                    );
     if (-1 == rc) {
-        ELOG(LOG_ERROR, "bind address checking could not be turned off");
+      ELOG(LOG_ERROR, "bind address checking could not be turned off");
     }
 
-    if (ip_addr != NULL) { /* gwb */
+    if(ip_addr != NULL) { /* gwb */
       serverName.sin_addr.s_addr = inet_addr(ip_addr);
       LOG(LOG_DEBUG, "Using specified ip address %s", ip_addr);
     } else {
@@ -55,7 +55,7 @@ int ip_init_server_conn(char *ip_addr, int port) {
     /* network-order */
     serverName.sin_port = htons(port);
 
-    LOG(LOG_DEBUG,"Binding server socket to port %d", port);
+    LOG(LOG_DEBUG, "Binding server socket to port %d", port);
     rc = bind(sSocket,
               (struct sockaddr *) &serverName,
               sizeof(serverName)
@@ -81,9 +81,9 @@ int ip_init_server_conn(char *ip_addr, int port) {
 
 
 int ip_connect(unsigned char addy[]) {
-	struct sockaddr_in pin;
+  struct sockaddr_in pin;
   struct in_addr cin_addr;
-	struct hostent *hp;
+  struct hostent *hp;
   int sd = 0;
   int port = 23;
   unsigned char *address;
@@ -97,35 +97,35 @@ int ip_connect(unsigned char addy[]) {
     port = atoi((char *)tmp);
   }
 
-  LOG(LOG_DEBUG, "Calling %s",addy);
-	memset(&pin, 0, sizeof(pin));
+  LOG(LOG_DEBUG, "Calling %s", addy);
+  memset(&pin, 0, sizeof(pin));
 
-	/* go find out about the desired host machine */
-	if ((hp = gethostbyname((char *)address)) == 0) {
+  /* go find out about the desired host machine */
+  if ((hp = gethostbyname((char *)address)) == 0) {
     // well, not a DNS entry... Treat as IP...
     if(1 != inet_aton((char *)address, &cin_addr)) {
-      ELOG(LOG_ERROR, "Host %s was invalid",addy);
+      ELOG(LOG_ERROR, "Host %s was invalid", addy);
       return -1;
     }
-	} else {
+  } else {
     cin_addr = *((struct in_addr *)(hp->h_addr));
   }
 
-	pin.sin_family = AF_INET;
-	pin.sin_addr.s_addr = cin_addr.s_addr;
-	pin.sin_port = htons(port);
+  pin.sin_family = AF_INET;
+  pin.sin_addr.s_addr = cin_addr.s_addr;
+  pin.sin_port = htons(port);
 
-	/* grab an Internet domain socket */
-	if ((sd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-		ELOG(LOG_ERROR, "could not create client socket");
+  /* grab an Internet domain socket */
+  if ((sd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+    ELOG(LOG_ERROR, "could not create client socket");
     return -1;
-	}
+  }
 
-	/* connect to PORT on HOST */
-	if (connect(sd, (struct sockaddr *)&pin, sizeof(pin)) == -1) {
-		ELOG(LOG_ERROR, "could not connect to address");
+  /* connect to PORT on HOST */
+  if (connect(sd, (struct sockaddr *)&pin, sizeof(pin)) == -1) {
+    ELOG(LOG_ERROR, "could not connect to address");
     return -1;
-	}
+  }
   LOG(LOG_INFO, "Connection to %s established", addy);
   LOG_EXIT();
   return sd;
@@ -133,7 +133,7 @@ int ip_connect(unsigned char addy[]) {
 
 int ip_accept(int sSocket) {
   struct sockaddr_in clientName = { 0 };
-  int clientLength = sizeof(clientName);
+  socklen_t clientLength = sizeof(clientName);
   int cSocket = -1;
 
   LOG_ENTER();
@@ -149,7 +149,7 @@ int ip_accept(int sSocket) {
     return -1;
   }
 
-  if (-1 == getpeername(cSocket,
+  if(-1 == getpeername(cSocket,
                         (struct sockaddr *)&clientName, 
                         &clientLength
                        )) {

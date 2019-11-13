@@ -155,4 +155,3 @@ int parse_nvt_command(int fd, nvt_vars *vars, unsigned char action, unsigned cha
   ip_write(fd, resp, 3);
   return 0;
 }
-
