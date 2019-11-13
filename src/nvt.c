@@ -67,7 +67,7 @@ int parse_nvt_subcommand(int fd, nvt_vars *vars, unsigned char *data, int len) {
       }
   }
 
-  if (rc > 5 && (NVT_SB_SEND == data[4])) {
+  if (rc > 5 && (NVT_SB_SEND == data[3])) {
     switch(opt) {
       case NVT_OPT_TERMINAL_TYPE:
       case NVT_OPT_X_DISPLAY_LOCATION:  // should not have to have these
@@ -140,6 +140,7 @@ int parse_nvt_command(int fd, nvt_vars *vars, unsigned char action, unsigned cha
 
     case NVT_OPT_NAWS:
     case NVT_OPT_TERMINAL_TYPE:
+    case NVT_OPT_TERMINAL_SPEED:
     case NVT_OPT_SUPPRESS_GO_AHEAD:
     case NVT_OPT_ECHO:
     case NVT_OPT_X_DISPLAY_LOCATION:  // should not have to have these

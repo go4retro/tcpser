@@ -50,7 +50,6 @@ int line_write(modem_config *cfg, unsigned char* data, int len) {
   return ip_write(cfg->line_data.fd, data, len);
 }
 
-
 int line_listen(modem_config *cfg) {
   return 0;
 }
@@ -61,6 +60,7 @@ int line_off_hook(modem_config *cfg) {
 
 int line_connect(modem_config *cfg) {
   unsigned char* addy = cfg->dialno;
+
   LOG(LOG_INFO, "Connecting");
   addy = pb_search(addy);
   cfg->line_data.fd = ip_connect(addy);
