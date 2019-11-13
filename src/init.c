@@ -14,8 +14,8 @@ void print_help(unsigned char* name) {
   fprintf(stderr, "  -t   trace flags: (can be combined)\n");
   fprintf(stderr, "       's' = modem input\n");
   fprintf(stderr, "       'S' = modem output\n");
-  fprintf(stderr, "       'i' = IP input\n");
   fprintf(stderr, "       'I' = IP output\n");
+  fprintf(stderr, "       'i' = IP input\n");
   fprintf(stderr, "  -l   0 (NONE), 1 (FATAL) - 7 (DEBUG_X) (defaults to 0)\n");
   fprintf(stderr, "  -L   log file (defaults to stderr)\n");
   fprintf(stderr, "\n");
