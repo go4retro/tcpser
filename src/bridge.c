@@ -26,9 +26,7 @@ const unsigned char MDM_NO_ANSWER[] = "NO ANSWER\n";
 int accept_connection(modem_config *cfg) {
   LOG_ENTER();
 
-  cfg->line_data.fd = ip_accept(cfg->line_data.sfd);
-  if(cfg->line_data.fd > -1) {
-    cfg->line_data.valid_conn = TRUE;
+  if(-1 != line_accept(cfg)) {
     if(cfg->data.direct_conn == TRUE) {
       cfg->conn_type = MDM_CONN_INCOMING;
       mdm_off_hook(cfg);

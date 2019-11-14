@@ -58,6 +58,20 @@ int line_listen(modem_config *cfg) {
   return 0;
 }
 
+int line_accept(modem_config *cfg) {
+  /* Reset everything we know about the line, it may not be the same as last time. */
+  line_init_config(cfg);
+
+  cfg->line_data.fd = ip_accept(cfg->line_data.sfd);
+  if(cfg->line_data.fd > -1) {
+    LOG(LOG_ALL, "Connection accepted");
+    cfg->line_data.valid_conn = TRUE;
+    return 0;
+  }
+  LOG(LOG_ALL, "Could not accept connection");
+  return -1;
+}
+
 int line_off_hook(modem_config *cfg) {
   return 0;
 }
@@ -88,7 +102,6 @@ int line_connect(modem_config *cfg) {
     return 0;
   } else {
     LOG(LOG_ALL, "Could not connect to %s",addy);
-    cfg->line_data.valid_conn = FALSE;
     return -1;
   }
 }

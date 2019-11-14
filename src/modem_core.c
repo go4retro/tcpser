@@ -116,7 +116,6 @@ void mdm_init_config(modem_config* cfg) {
 
   dce_init_config(&cfg->dce_data);
   sh_init_config(cfg);
-  line_init_config(cfg);  // TODO See if still needed since done in line_connect() now
 }
 
 int get_new_cts_state(modem_config *cfg, int up) {
