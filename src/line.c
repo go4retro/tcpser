@@ -5,15 +5,15 @@
 #include "bridge.h"
 #include "line.h"
 
-void line_init_config(modem_config *cfg) {
-  cfg->line_data.fd = -1;
-  cfg->line_data.is_telnet = FALSE;
-  cfg->line_data.first_char = TRUE;
-  cfg->line_data.valid_conn = FALSE;
-  nvt_init_config(&cfg->line_data.nvt_data);
+void line_init_config(line_config *cfg) {
+  cfg->fd = -1;
+  cfg->is_telnet = FALSE;
+  cfg->first_char = TRUE;
+  cfg->valid_conn = FALSE;
+  nvt_init_config(&cfg->nvt_data);
 }
 
-int line_write(modem_config *cfg, unsigned char* data, int len) {
+int line_write(line_config *cfg, unsigned char* data, int len) {
   int retval;
   int i = 0;
   int double_iac = FALSE;
@@ -21,8 +21,8 @@ int line_write(modem_config *cfg, unsigned char* data, int len) {
   int text_len = 0;
   int mask = 0x7f;
 
-  if(cfg->line_data.is_telnet) {
-    if(cfg->line_data.nvt_data.binary_xmit) {
+  if(cfg->is_telnet) {
+    if(cfg->nvt_data.binary_xmit) {
       mask = 0xff;
     }
     retval = 0;
@@ -40,53 +40,45 @@ int line_write(modem_config *cfg, unsigned char* data, int len) {
         }
       }
       if(text_len == sizeof(text)) {
-        retval = ip_write(cfg->line_data.fd, text, text_len);
+        retval = ip_write(cfg->fd, text, text_len);
         text_len = 0;
       }
     }
     if(text_len) {
-      retval = ip_write(cfg->line_data.fd, text, text_len);
+      retval = ip_write(cfg->fd, text, text_len);
     }
     return retval;
   }
 
-  return ip_write(cfg->line_data.fd, data, len);
+  return ip_write(cfg->fd, data, len);
 }
 
-int line_listen(modem_config *cfg) {
+int line_listen(line_config *cfg) {
   return 0;
 }
 
-int line_accept(modem_config *cfg) {
-  /* Reset everything we know about the line, it may not be the same as last time. */
-  line_init_config(cfg);
-
-  cfg->line_data.fd = ip_accept(cfg->line_data.sfd);
-  if(cfg->line_data.fd > -1) {
+int line_accept(line_config *cfg) {
+  cfg->fd = ip_accept(cfg->sfd);
+  if(cfg->fd > -1) {
     LOG(LOG_ALL, "Connection accepted");
-    cfg->line_data.valid_conn = TRUE;
+    cfg->valid_conn = TRUE;
     return 0;
   }
   LOG(LOG_ALL, "Could not accept connection");
   return -1;
 }
 
-int line_off_hook(modem_config *cfg) {
+int line_off_hook(line_config *cfg) {
   return 0;
 }
 
-int line_connect(modem_config *cfg) {
-  unsigned char* addy = cfg->dialno;
-
-  /* Reset everything we know about the line, it may not be the same as last time. */
-  line_init_config(cfg);
-
+int line_connect(line_config *cfg, char *addy) {
   LOG(LOG_INFO, "Connecting");
   addy = pb_search(addy);
-  cfg->line_data.fd = ip_connect(addy);
-  if(cfg->line_data.fd > -1) {
+  cfg->fd = ip_connect(addy);
+  if(cfg->fd > -1) {
     LOG(LOG_ALL, "Connected to %s", addy);
-    cfg->line_data.valid_conn = TRUE;
+    cfg->valid_conn = TRUE;
 
     /* we need to let the other end know that our end will
      * handle the echo - otherwise "true" telnet clients like
@@ -96,7 +88,7 @@ int line_connect(modem_config *cfg) {
      * - gwb
      */
     // TODO This seems wrong here, in the case that the connection is not TELNET.  Need to review -- JLB
-    //send_nvt_command(cfg->line_data.fd, &cfg->line_data.nvt_data, NVT_WILL, NVT_OPT_ECHO);
+    //send_nvt_command(cfg->fd, &cfg->nvt_data, NVT_WILL, NVT_OPT_ECHO);
 
     return 0;
   } else {
@@ -105,17 +97,17 @@ int line_connect(modem_config *cfg) {
   }
 }
 
-int line_disconnect(modem_config *cfg) {
+int line_disconnect(line_config *cfg, int direct_conn) {
   LOG(LOG_INFO, "Disconnecting");
-  if(cfg->data.direct_conn == TRUE) {
+  if(direct_conn == TRUE) {
     LOG(LOG_INFO, "Direct connection active, maintaining link");
     return -1;
   } else {
-    cfg->line_data.is_telnet = FALSE;
-    cfg->line_data.first_char = TRUE;
-    if(cfg->line_data.valid_conn == TRUE) {
-      ip_disconnect(cfg->line_data.fd);
-      cfg->line_data.valid_conn = FALSE;
+    cfg->is_telnet = FALSE;
+    cfg->first_char = TRUE;
+    if(cfg->valid_conn == TRUE) {
+      ip_disconnect(cfg->fd);
+      cfg->valid_conn = FALSE;
     }
   }
   return 0;

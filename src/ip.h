@@ -8,7 +8,7 @@
 
 int ip_init(void);
 int ip_init_server_conn(char ip_addr[], int port);
-int ip_connect(unsigned char addy[]);
+int ip_connect(char addy[]);
 int ip_accept(int sSocket);
 int ip_disconnect(int fd);
 int ip_write(int fd, unsigned char *data, int len);

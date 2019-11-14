@@ -46,16 +46,8 @@ typedef enum {
 #endif
 
 #include "dce.h"
+#include "line.h"
 #include "nvt.h"
-
-typedef struct line_config {
-  int valid_conn;
-  int fd;
-  int sfd;
-  int is_telnet;
-  int first_char;
-  nvt_vars nvt_data;
-} line_config;
 
 typedef struct x_config {
   int mp[2][2];
@@ -116,8 +108,8 @@ typedef struct modem_config {
   unsigned char cur_line[1024];
   int cur_line_idx;
   // dailing information
-  unsigned char dialno[256];
-  unsigned char last_dialno[256];
+  char dialno[256];
+  char last_dialno[256];
   unsigned char dial_type;
   unsigned char last_dial_type;
   int memory_dial;

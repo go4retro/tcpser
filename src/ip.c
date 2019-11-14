@@ -77,29 +77,29 @@ int ip_init_server_conn(char *ip_addr, int port) {
   return sSocket;
 }
 
-int ip_connect(unsigned char addy[]) {
+int ip_connect(char addy[]) {
   struct sockaddr_in pin;
   struct in_addr cin_addr;
   struct hostent *hp;
   int sd = 0;
   int port = 23;
-  unsigned char *address;
-  unsigned char *tmp;
+  char *address;
+  char *tmp;
 
   LOG_ENTER();
-  address = (unsigned char*)strtok((char *)addy, ":");
-  tmp = (unsigned char*)strtok(NULL, ":");
-  if(tmp != NULL && strlen((char *)tmp) > 0) {
-    port = atoi((char *)tmp);
+  address = strtok(addy, ":");
+  tmp = strtok(NULL, ":");
+  if(tmp != NULL && strlen(tmp) > 0) {
+    port = atoi(tmp);
   }
 
   LOG(LOG_DEBUG, "Calling %s", addy);
   memset(&pin, 0, sizeof(pin));
 
   /* go find out about the desired host machine */
-  if ((hp = gethostbyname((char *)address)) == 0) {
+  if ((hp = gethostbyname(address)) == 0) {
     // well, not a DNS entry... Treat as IP...
-    if(1 != inet_aton((char *)address, &cin_addr)) {
+    if(1 != inet_aton(address, &cin_addr)) {
       ELOG(LOG_ERROR, "Host %s was invalid", addy);
       return -1;
     }

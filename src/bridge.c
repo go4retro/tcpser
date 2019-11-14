@@ -26,7 +26,7 @@ const unsigned char MDM_NO_ANSWER[] = "NO ANSWER\n";
 int accept_connection(modem_config *cfg) {
   LOG_ENTER();
 
-  if(-1 != line_accept(cfg)) {
+  if(-1 != line_accept(&cfg->line_data)) {
     if(cfg->data.direct_conn == TRUE) {
       cfg->conn_type = MDM_CONN_INCOMING;
       mdm_off_hook(cfg);
@@ -262,13 +262,12 @@ void *run_bridge(void *arg) {
   // call some functions behind the scenes
   mdm_disconnect(cfg);
   mdm_parse_cmd(cfg);
-  // if direct connection, and num length > 0, dial number.
   if (cfg->data.direct_conn == TRUE) {
     if(strlen((char *)cfg->data.direct_conn_num) > 0 &&
        cfg->data.direct_conn_num[0] != ':') {
         // we have a direct number to connect to.
       strncpy((char *)cfg->dialno, (char *)cfg->data.direct_conn_num, sizeof(cfg->dialno));
-      if(0 != line_connect(cfg)) {
+      if(0 != line_connect(&cfg->line_data, cfg->dialno)) {
         LOG(LOG_FATAL, "Cannot connect to Direct line address!");
         // probably should exit...
         exit(-1);
@@ -351,7 +350,7 @@ void *run_bridge(void *arg) {
         if(cfg->s[0] == 0 && cfg->rings == 10) {
           // not going to answer, send some data back to IP and disconnect.
           if(strlen((char *)cfg->data.no_answer) == 0) {
-            line_write(cfg, (unsigned char *)MDM_NO_ANSWER, strlen((char *)MDM_NO_ANSWER));
+            line_write(&cfg->line_data, (unsigned char *)MDM_NO_ANSWER, strlen((char *)MDM_NO_ANSWER));
           } else {
             writeFile(cfg->data.no_answer, cfg->line_data.fd);
           }

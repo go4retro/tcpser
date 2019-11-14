@@ -53,7 +53,7 @@ int init(int argc,
   int j = 0;
   int opt = 0;
   int trace_flags = 0;
-  unsigned char* tok;
+  char* tok;
   int dce_set = FALSE;
   int tty_set = FALSE;
 
@@ -122,8 +122,8 @@ int init(int argc,
         }
         break;
       case 'n':
-        tok = (unsigned char *)strtok((char *)optarg, "=");
-        pb_add(tok, (unsigned char *)strtok(NULL, "="));
+        tok = strtok((char *)optarg, "=");
+        pb_add(tok, strtok(NULL, "="));
         break;
       case 'l':
         log_set_level(atoi(optarg));

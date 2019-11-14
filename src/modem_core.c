@@ -116,6 +116,7 @@ void mdm_init_config(modem_config* cfg) {
 
   dce_init_config(&cfg->dce_data);
   sh_init_config(cfg);
+  line_init_config(&cfg->line_data);
 }
 
 int get_new_cts_state(modem_config *cfg, int up) {
@@ -198,7 +199,7 @@ int mdm_off_hook(modem_config *cfg) {
   LOG(LOG_INFO, "taking modem off hook");
   cfg->off_hook = TRUE;
   cfg->cmd_mode = FALSE;
-  line_off_hook(cfg);
+  line_off_hook(&cfg->line_data);
   return 0;
 }
 
@@ -237,7 +238,7 @@ int mdm_print_speed(modem_config *cfg) {
 int mdm_connect(modem_config* cfg) {
   mdm_off_hook(cfg);
   if(cfg->conn_type == MDM_CONN_NONE) {
-    if(line_connect(cfg) == 0) {
+    if(line_connect(&cfg->line_data, cfg->dialno) == 0) {
       cfg->conn_type = MDM_CONN_OUTGOING;
       mdm_set_control_lines(cfg);
       mdm_print_speed(cfg);
@@ -250,7 +251,7 @@ int mdm_connect(modem_config* cfg) {
 }
 
 int mdm_listen(modem_config *cfg) {
-  return line_listen(cfg);
+  return line_listen(&cfg->line_data);
 }
 
 int mdm_disconnect(modem_config* cfg) {
@@ -263,7 +264,7 @@ int mdm_disconnect(modem_config* cfg) {
   cfg->break_len = 0;
   cfg->line_ringing = FALSE;
   cfg->pre_break_delay = FALSE;
-  if(0 == line_disconnect(cfg)) {
+  if(0 == line_disconnect(&cfg->line_data, cfg->data.direct_conn)) {
     type=cfg->conn_type;
     cfg->conn_type = MDM_CONN_NONE;
     mdm_set_control_lines(cfg);
@@ -343,11 +344,11 @@ int mdm_parse_cmd(modem_config* cfg) {
           cfg->last_dialno[end - start] = '\0';
           cfg->memory_dial = FALSE;
         } else if (num == 'L') {
-          strncpy((char *)cfg->dialno, (char *)cfg->last_dialno, strlen((char *)cfg->last_dialno));
+          strncpy(cfg->dialno, cfg->last_dialno, strlen(cfg->last_dialno));
           cfg->dial_type = cfg->dial_type;
           cfg->memory_dial = TRUE;
           mdm_write(cfg, cfg->crlf, 2);
-          mdm_write(cfg, cfg->dialno, strlen((char *)cfg->dialno));
+          mdm_write(cfg, (unsigned char *)cfg->dialno, strlen(cfg->dialno));
         } else {
           cfg->dialno[0] = 0;
           cfg->last_dialno[0] = 0;
@@ -572,7 +573,7 @@ int mdm_parse_data(modem_config *cfg, unsigned char *data, int len) {
       mdm_handle_char(cfg, data[i]);
     }
   } else {
-    line_write(cfg, data, len);
+    line_write(&cfg->line_data, data, len);
     if(cfg->pre_break_delay == TRUE) {
       for(i = 0; i < len; i++) {
         if(data[i] == (unsigned char)cfg->s[S_REG_BREAK]) {
