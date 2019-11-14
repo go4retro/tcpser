@@ -28,7 +28,7 @@ int mdm_init() {
   mdm_responses[MDM_RESP_CONNECT_38400] =  (unsigned char *)"CONNECT 38400";
   mdm_responses[MDM_RESP_CONNECT_57600] =  (unsigned char *)"CONNECT 57600";
   mdm_responses[MDM_RESP_CONNECT_115200] = (unsigned char *)"CONNECT 115200";
-  mdm_responses[MDM_RESP_CONNECT_234000]=  (unsigned char *)"CONNECT 230400";
+  mdm_responses[MDM_RESP_CONNECT_230400]=  (unsigned char *)"CONNECT 230400";
   return 0;
 }
 
@@ -37,6 +37,8 @@ int get_connect_response(int speed, int level) {
     return MDM_RESP_CONNECT;
   }
   switch (speed) {
+    case 230400:
+      return MDM_RESP_CONNECT_230400;
     case 115200:
       return MDM_RESP_CONNECT_115200;
     case 57600:
