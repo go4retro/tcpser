@@ -22,23 +22,17 @@ int main(int argc, char *argv[]) {
   modem_config cfg[64];
   int modem_count;
   int port = 0;
-
   char *ip_addr = NULL;
-
   unsigned char all_busy[255];
-
   pthread_t thread_id;
   int i;
   int rc;
-
   int sSocket = 0;
   fd_set readfs;
   int max_fd = 0;
   int accept_pending = FALSE;
-
   int res = 0;
   unsigned char buf[255];
-
   int cSocket;
 
   log_init();
