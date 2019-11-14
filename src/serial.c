@@ -85,7 +85,7 @@ int ser_init_conn(unsigned char *tty, int speed) {
     /* open the device to be non-blocking (read will return immediatly) */
     LOG(LOG_INFO, "Opening serial device");
 
-    fd = open((char *)tty, O_RDWR | O_NOCTTY);
+    fd = open((char *)tty, O_RDWR | O_NOCTTY | O_NONBLOCK);
 
     if (fd <0) {
       ELOG(LOG_FATAL, "TTY %s could not be opened", tty); 
