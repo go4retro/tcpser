@@ -157,7 +157,7 @@ void *ip_thread(void *arg) {
       }
       if (FD_ISSET(cfg->data.cp[1][0], &readfs)) {  // pipe
 
-        res = read(cfg->data.cp[1][0], buf, sizeof(buf) - 1);
+        read(cfg->data.cp[1][0], buf, sizeof(buf) - 1);
         LOG(LOG_DEBUG, "IP thread notified");
         action_pending = FALSE;
       }
@@ -199,7 +199,7 @@ int spawn_ctrl_thread(modem_config *cfg) {
   pthread_t thread_id;
 
   rc = pthread_create(&thread_id, NULL, ctrl_thread, (void *)cfg);
-  LOG(LOG_ALL, "CTRL thread ID=%d", (int)thread_id);
+  LOG(LOG_ALL, "CTRL thread ID=%ld", (long)thread_id);
 
   if(rc < 0) {
     ELOG(LOG_FATAL, "CTRL thread could not be started");
@@ -213,7 +213,7 @@ int spawn_ip_thread(modem_config *cfg) {
   pthread_t thread_id;
 
   rc = pthread_create(&thread_id, NULL, ip_thread, (void *)cfg);
-  LOG(LOG_ALL, "IP thread ID=%d", (int)thread_id);
+  LOG(LOG_ALL, "IP thread ID=%ld", (long)thread_id);
 
   if(rc < 0) {
     ELOG(LOG_FATAL, "IP thread could not be started");

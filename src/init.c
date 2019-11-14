@@ -151,13 +151,13 @@ int init(int argc,
             cfg[i].dce_data.port_speed = cfg[i - 1].dce_data.port_speed;
             cfg[i].line_speed = cfg[i - 1].line_speed;
             cfg[i].dce_data.is_ip232 = FALSE;
-            strncpy((char *)cfg[i].config0, (char *)cfg[i - 1].config0, sizeof((char *)cfg[i].config0));
-            strncpy((char *)cfg[i].data.local_connect, (char *)cfg[i - 1].data.local_connect, sizeof((char *)cfg[i].data.local_connect));
-            strncpy((char *)cfg[i].data.remote_connect, (char *)cfg[i - 1].data.remote_connect, sizeof((char *)cfg[i].data.remote_connect));
-            strncpy((char *)cfg[i].data.local_answer, (char *)cfg[i - 1].data.local_answer, sizeof((char *)cfg[i].data.local_answer));
-            strncpy((char *)cfg[i].data.remote_answer, (char *)cfg[i - 1].data.remote_answer, sizeof((char *)cfg[i].data.remote_answer));
-            strncpy((char *)cfg[i].data.no_answer, (char *)cfg[i - 1].data.no_answer, sizeof((char *)cfg[i].data.no_answer));
-            strncpy((char *)cfg[i].data.inactive, (char *)cfg[i - 1].data.inactive, sizeof((char *)cfg[i].data.inactive));
+            strncpy((char *)cfg[i].config0, (char *)cfg[i - 1].config0, sizeof(cfg[i].config0));
+            strncpy((char *)cfg[i].data.local_connect, (char *)cfg[i - 1].data.local_connect, sizeof(cfg[i].data.local_connect));
+            strncpy((char *)cfg[i].data.remote_connect, (char *)cfg[i - 1].data.remote_connect, sizeof(cfg[i].data.remote_connect));
+            strncpy((char *)cfg[i].data.local_answer, (char *)cfg[i - 1].data.local_answer, sizeof(cfg[i].data.local_answer));
+            strncpy((char *)cfg[i].data.remote_answer, (char *)cfg[i - 1].data.remote_answer, sizeof(cfg[i].data.remote_answer));
+            strncpy((char *)cfg[i].data.no_answer, (char *)cfg[i - 1].data.no_answer, sizeof(cfg[i].data.no_answer));
+            strncpy((char *)cfg[i].data.inactive, (char *)cfg[i - 1].data.inactive, sizeof(cfg[i].data.inactive));
           } else {
             LOG(LOG_WARN, "Maximum modems defined - ignoring extra");
             break;

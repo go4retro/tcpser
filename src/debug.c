@@ -110,7 +110,7 @@ void log_start(int level) {
     // we have the lock.
     now = time(NULL);
     strftime((char*)t, 22, "%Y-%m-%d %H:%M:%S", localtime(&now));
-    fprintf(log_file, "%s:%5.5d:%s:", t, (int)pthread_self(), log_desc[level]);
+    fprintf(log_file, "%s:%5.5ld:%s:", t, (long)pthread_self(), log_desc[level]);
     //free(t);
   }
 }

@@ -97,6 +97,7 @@ int line_connect(line_config *cfg, char *addy) {
   }
 }
 
+// TODO Need to rationalize where direct_conn flag sits...
 int line_disconnect(line_config *cfg, int direct_conn) {
   LOG(LOG_INFO, "Disconnecting");
   if(direct_conn == TRUE) {

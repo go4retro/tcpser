@@ -19,7 +19,6 @@ void *ip232_thread(void *arg) {
 
   int accept_pending = FALSE;
   int rc;
-  int res = 0;
   unsigned char buf[256];
 
   fd_set readfs;
@@ -42,7 +41,7 @@ void *ip232_thread(void *arg) {
       // handle error
     } else {
       if (FD_ISSET(cfg->dp[1][0], &readfs)) {  // pipe
-        res = read(cfg->dp[1][0], buf, sizeof(buf) - 1);
+        read(cfg->dp[1][0], buf, sizeof(buf) - 1);
         LOG(LOG_DEBUG, "ip232 thread notified");
         accept_pending = FALSE;
       }
@@ -70,7 +69,7 @@ int spawn_ip232_thread(dce_config *cfg) {
   pthread_t thread_id;
 
   rc = pthread_create(&thread_id, NULL, ip232_thread, (void *)cfg);
-  LOG(LOG_ALL, "ip232 thread ID=%d", (int)thread_id);
+  LOG(LOG_ALL, "ip232 thread ID=%ld", (long)thread_id);
 
   if(rc < 0) {
     ELOG(LOG_FATAL, "ip232 thread could not be started");
