@@ -8,26 +8,26 @@
 #include "ip232.h"      // needs modem_core.h
 #include "dce.h"
 
-int dce_init_config(modem_config *cfg) {
+int dce_init_config(dce_config *cfg) {
   return 0;
 }
 
-int dce_init_conn(modem_config* cfg) {
+int dce_init_conn(dce_config *cfg) {
   int rc;
 
   LOG_ENTER();
-  if (cfg->dce_data.is_ip232) {
+  if (cfg->is_ip232) {
     rc = ip232_init_conn(cfg);
   } else {
-    rc = ser_init_conn(cfg->dce_data.tty, cfg->dte_speed);
-    cfg->dce_data.fd = rc;
+    rc = ser_init_conn(cfg->tty, cfg->port_speed);
+    cfg->fd = rc;
   }
 
   LOG_EXIT();
   return rc;
 }
 
-int dce_set_flow_control(modem_config *cfg, int opts) {
+int dce_set_flow_control(dce_config *cfg, int opts) {
   int status = 0;
   int rc = 0;
 
@@ -45,17 +45,17 @@ int dce_set_flow_control(modem_config *cfg, int opts) {
     }
   }
 
-  if (cfg->dce_data.is_ip232) {
+  if (cfg->is_ip232) {
     rc = ip232_set_flow_control(cfg, status);
   } else {
-    rc = ser_set_flow_control(cfg->dce_data.fd, status);
+    rc = ser_set_flow_control(cfg->fd, status);
   }
 
   LOG_EXIT()
   return rc;
 }
 
-int dce_set_control_lines(modem_config *cfg, int state) {
+int dce_set_control_lines(dce_config *cfg, int state) {
   int status = 0;
   int rc;
 
@@ -75,24 +75,24 @@ int dce_set_control_lines(modem_config *cfg, int state) {
     //status &= ~TIOCM_DTR;
   }
 
-  if (cfg->dce_data.is_ip232) {
+  if (cfg->is_ip232) {
     rc = ip232_set_control_lines(cfg, status);
   } else {
-    rc = ser_set_control_lines(cfg->dce_data.fd, status);
+    rc = ser_set_control_lines(cfg->fd, status);
   }
 
   LOG_EXIT();
   return rc;
 }
 
-int dce_get_control_lines(modem_config *cfg) {
+int dce_get_control_lines(dce_config *cfg) {
   int status;
   int rc_status;
 
-  if (cfg->dce_data.is_ip232) {
+  if (cfg->is_ip232) {
     status = ip232_get_control_lines(cfg);
   } else {
-    status = ser_get_control_lines(cfg->dce_data.fd);
+    status = ser_get_control_lines(cfg->fd);
   }
 
   if(status > -1) {
@@ -104,7 +104,7 @@ int dce_get_control_lines(modem_config *cfg) {
   return rc_status;
 }
 
-int dce_check_control_lines(modem_config *cfg) {
+int dce_check_control_lines(dce_config *cfg) {
   int status = 0;
   int new_status = 0;
 
@@ -120,16 +120,16 @@ int dce_check_control_lines(modem_config *cfg) {
   return new_status;
 }
 
-int dce_write(modem_config *cfg, unsigned char data[], int len) {
-  if (cfg->dce_data.is_ip232) {
+int dce_write(dce_config *cfg, unsigned char data[], int len) {
+  if (cfg->is_ip232) {
     return ip232_write(cfg, data, len);
   }
-  return ser_write(cfg->dce_data.fd, data, len);
+  return ser_write(cfg->fd, data, len);
 }
 
-int dce_read(modem_config *cfg, unsigned char data[], int len) {
-  if (cfg->dce_data.is_ip232) {
+int dce_read(dce_config *cfg, unsigned char data[], int len) {
+  if (cfg->is_ip232) {
     return ip232_read(cfg, data, len);
   }
-  return ser_read(cfg->dce_data.fd, data, len);
+  return ser_read(cfg->fd, data, len);
 }

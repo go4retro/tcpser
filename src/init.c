@@ -14,8 +14,8 @@ void print_help(unsigned char* name) {
   fprintf(stderr, "  -t   trace flags: (can be combined)\n");
   fprintf(stderr, "       's' = modem input\n");
   fprintf(stderr, "       'S' = modem output\n");
-  fprintf(stderr, "       'I' = IP output\n");
   fprintf(stderr, "       'i' = IP input\n");
+  fprintf(stderr, "       'I' = IP output\n");
   fprintf(stderr, "  -l   0 (NONE), 1 (FATAL) - 7 (DEBUG_X) (defaults to 0)\n");
   fprintf(stderr, "  -L   log file (defaults to stderr)\n");
   fprintf(stderr, "\n");
@@ -60,8 +60,8 @@ int init(int argc,
   LOG_ENTER();
   *port = 6400;
   mdm_init_config(&cfg[0]);
-  cfg[0].dte_speed = 38400;
-  cfg[0].dce_speed = 38400;
+  cfg[0].dce_data.port_speed = 38400;
+  cfg[0].line_speed = 38400;
 
   while(opt>-1 && i < max_modem) {
     opt=getopt(argc, argv, "p:s:S:d:v:hw:i:Il:L:t:n:a:A:c:C:N:B:T:D:");
@@ -133,10 +133,10 @@ int init(int argc,
         // should check to see if an error occurred...
         break;
       case 's':
-        cfg[i].dte_speed = atoi(optarg);
-        LOG(LOG_ALL, "Setting DTE speed to %d", cfg[i].dte_speed);
+        cfg[i].dce_data.port_speed = atoi(optarg);
+        LOG(LOG_ALL, "Setting DTE speed to %d", cfg[i].dce_data.port_speed);
         if(dce_set == FALSE)
-          cfg[i].dce_speed = cfg[i].dte_speed;
+          cfg[i].line_speed = cfg[i].dce_data.port_speed;
         break;
       case '?':
       case 'h':
@@ -148,8 +148,8 @@ int init(int argc,
           if (++i < max_modem) {
             dce_set = FALSE;
             mdm_init_config(&cfg[i]);
-            cfg[i].dte_speed = cfg[i - 1].dte_speed;
-            cfg[i].dce_speed = cfg[i - 1].dce_speed;
+            cfg[i].dce_data.port_speed = cfg[i - 1].dce_data.port_speed;
+            cfg[i].line_speed = cfg[i - 1].line_speed;
             cfg[i].dce_data.is_ip232 = FALSE;
             strncpy((char *)cfg[i].config0, (char *)cfg[i - 1].config0, sizeof((char *)cfg[i].config0));
             strncpy((char *)cfg[i].data.local_connect, (char *)cfg[i - 1].data.local_connect, sizeof((char *)cfg[i].data.local_connect));
@@ -168,7 +168,7 @@ int init(int argc,
         tty_set = TRUE;
         break;
       case 'S':
-        cfg[i].dce_speed = atoi(optarg);
+        cfg[i].line_speed = atoi(optarg);
         dce_set = TRUE;
         break;
       case 'D':

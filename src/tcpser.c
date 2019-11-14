@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) {
       ELOG(LOG_FATAL, "Bridge task outgoing IPC pipe could not be created");
       exit(-1);
     }
-    if(dce_init_conn(&cfg[i]) < 0) {
+    if(dce_init_conn(&cfg[i].dce_data) < 0) {
       LOG(LOG_FATAL, "Could not open serial port %s",cfg->dce_data.tty);
       exit(-1);
     }

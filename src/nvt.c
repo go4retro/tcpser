@@ -1,7 +1,10 @@
 #include <string.h>
 
+#include "modem_core.h"
 #include "debug.h"
 #include "ip.h"
+#include "modem_core.h"
+
 #include "nvt.h"
 
 int nvt_init_config(nvt_vars *vars) {
@@ -21,42 +24,43 @@ unsigned char get_nvt_cmd_response(unsigned char action, unsigned char type) {
   if(type == TRUE) {
     switch (action) {
       case NVT_DO:
-        rc=NVT_WILL_RESP;
+        rc = NVT_WILL_RESP;
         break;
       case NVT_DONT:
-        rc=NVT_WONT_RESP;
+        rc = NVT_WONT_RESP;
         break;
       case NVT_WILL:
-        rc=NVT_DO_RESP;
+        rc = NVT_DO_RESP;
         break;
       case NVT_WONT:
-        rc=NVT_DONT_RESP;
+        rc = NVT_DONT_RESP;
         break;
     }
   } else {
     switch (action) {
       case NVT_DO:
       case NVT_DONT:
-        rc=NVT_WONT_RESP;
+        rc = NVT_WONT_RESP;
         break;
       case NVT_WILL:
       case NVT_WONT:
-        rc=NVT_DONT_RESP;
+        rc = NVT_DONT_RESP;
         break;
     }
   }
   return rc;
 }
 
-int parse_nvt_subcommand(int fd, nvt_vars *vars, unsigned char *data, int len) {
+int parse_nvt_subcommand(dce_config *cfg, int fd, nvt_vars *vars, unsigned char *data, int len) {
   // overflow issue, again...
   int opt = data[2];
   unsigned char resp[100];
   unsigned char *response = resp + 3;
   int resp_len = 0;
   int response_len = 0;
-  unsigned char tty_type[] = "VT100";
+  char tty_type[] = "VT100";
   int rc;
+  char buf[50];
   int slen = 0;
 
   for (rc = 2; rc < len - 1; rc++) {
@@ -77,8 +81,14 @@ int parse_nvt_subcommand(int fd, nvt_vars *vars, unsigned char *data, int len) {
         response[response_len++] = NVT_SB_IS;
         switch(opt) {
           case NVT_OPT_TERMINAL_TYPE:
-            slen = strlen((char *)tty_type);
-            strncpy((char *)response + response_len, (char *)tty_type, slen);
+            slen = strlen(tty_type);
+            strncpy((char *)response + response_len, tty_type, slen);
+            response_len += slen;
+            break;
+          case NVT_OPT_TERMINAL_SPEED:
+            sprintf(buf, "%i,%i", cfg->port_speed, cfg->port_speed);
+            slen = strlen(buf);
+            strncpy((char *)response + response_len, buf, slen);
             response_len += slen;
             break;
         }

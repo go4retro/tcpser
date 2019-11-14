@@ -43,11 +43,8 @@
 #define FALSE 0
 #endif
 
+#include "dce.h"
 #include "nvt.h"
-
-#ifndef MAX
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
 
 typedef struct line_config {
   int valid_conn;
@@ -72,19 +69,6 @@ typedef struct x_config {
   unsigned char direct_conn_num[256];
 } x_config;
 
-typedef struct dce_config {
-  int is_ip232;
-  unsigned char tty[256];
-  int first_char;
-  int fd;
-  int dp[2][2];
-  int sSocket;
-  int ip232_is_connected;
-  int ip232_dtr;
-  int ip232_dcd;
-  int ip232_iac;
-} dce_config;
-
 typedef struct modem_config {
   // master configuration information
 
@@ -94,8 +78,7 @@ typedef struct modem_config {
   x_config data;
   unsigned char config0[1024];
   unsigned char config1[1024];
-  int dce_speed;
-  int dte_speed;
+  int line_speed;
   int conn_type;
   int line_ringing;
   int off_hook;

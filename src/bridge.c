@@ -75,12 +75,12 @@ int parse_ip_data(modem_config *cfg, unsigned char *data, int len) {
           case NVT_DONT:
             /// again, overflow issues...
             LOG(LOG_INFO, "Parsing nvt command");
-            parse_nvt_command(cfg->line_data.fd, &cfg->line_data.nvt_data, ch, data[i+2]);
+            parse_nvt_command(cfg->line_data.fd, &cfg->line_data.nvt_data, ch, data[i + 2]);
             i+=3;
             break;
           case NVT_SB:      // sub negotiation
             // again, overflow...
-            i += parse_nvt_subcommand(cfg->line_data.fd, &cfg->line_data.nvt_data, data + i, len - i);
+            i += parse_nvt_subcommand(&cfg->dce_data, cfg->line_data.fd, &cfg->line_data.nvt_data, data + i, len - i);
             break;
           case NVT_IAC:
             if (cfg->line_data.nvt_data.binary_recv)
@@ -174,9 +174,9 @@ void *ctrl_thread(void *arg) {
   int new_status;
 
   LOG_ENTER();
-  status = dce_get_control_lines(cfg);
+  status = dce_get_control_lines(&cfg->dce_data);
   while(status > -1) {
-    new_status = dce_check_control_lines(cfg);
+    new_status = dce_check_control_lines(&cfg->dce_data);
     if(new_status > -1 && status != new_status) {
       // something changed
       if((status & MDM_CL_DTR_HIGH) != (new_status & MDM_CL_DTR_HIGH)) {
@@ -364,7 +364,7 @@ void *run_bridge(void *arg) {
     }
     if (FD_ISSET(cfg->dce_data.fd, &readfs)) {  // serial port
       LOG(LOG_DEBUG, "Data available on serial port");
-      res = dce_read(cfg, buf, sizeof(buf));
+      res = dce_read(&cfg->dce_data, buf, sizeof(buf));
       LOG(LOG_DEBUG, "Read %d bytes from serial port", res);
       if(res > 0) {
         if(cfg->conn_type == MDM_CONN_NONE && cfg->off_hook == TRUE) {

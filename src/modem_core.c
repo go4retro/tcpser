@@ -112,7 +112,7 @@ void mdm_init_config(modem_config* cfg) {
   cfg->config0[0] = '\0';
   cfg->config1[0] = '\0';
 
-  dce_init_config(cfg);
+  dce_init_config(&cfg->dce_data);
   sh_init_config(cfg);
   line_init_config(cfg);
 }
@@ -158,7 +158,7 @@ int mdm_set_control_lines(modem_config *cfg) {
       ((state & MDM_CL_CTS_HIGH) != 0 ? 1 : 0)
      );
 
-  dce_set_control_lines(cfg, state);
+  dce_set_control_lines(&cfg->dce_data, state);
   return 0;
 }
 
@@ -171,7 +171,7 @@ void mdm_write_char(modem_config *cfg, unsigned char data) {
 
 void mdm_write(modem_config *cfg, unsigned char data[], int len) {
   if(cfg->allow_transmit == TRUE) {
-    dce_write(cfg, data, len);
+    dce_write(&cfg->dce_data, data, len);
   }
 }
 
@@ -222,10 +222,10 @@ int mdm_print_speed(modem_config *cfg) {
 
   switch(cfg->connect_response) {
     case 2:
-      speed = cfg->dte_speed;
+      speed = cfg->dce_data.port_speed;
       break;
     default:
-      speed = cfg->dce_speed;
+      speed = cfg->line_speed;
       break;
 
   }
@@ -488,20 +488,20 @@ int mdm_parse_cmd(modem_config* cfg) {
         // flow control.
         switch (num) {
           case 0:
-            dce_set_flow_control(cfg, 0);
+            dce_set_flow_control(&cfg->dce_data, 0);
             break;
           case 3:
-            dce_set_flow_control(cfg, MDM_FC_RTS);
+            dce_set_flow_control(&cfg->dce_data, MDM_FC_RTS);
             break;
           case 4:
-            dce_set_flow_control(cfg, MDM_FC_XON);
+            dce_set_flow_control(&cfg->dce_data, MDM_FC_XON);
             break;
           case 5:
-            dce_set_flow_control(cfg, MDM_FC_XON);
+            dce_set_flow_control(&cfg->dce_data, MDM_FC_XON);
             // need to add passthrough..  Not sure how.
             break;
           case 6:
-            dce_set_flow_control(cfg, MDM_FC_XON | MDM_FC_RTS);
+            dce_set_flow_control(&cfg->dce_data, MDM_FC_XON | MDM_FC_RTS);
             break;
           default:
             cmd=AT_CMD_ERR;
