@@ -320,8 +320,10 @@ void *run_bridge(void *arg) {
     if(cfg->cmd_mode == FALSE) {
       if(cfg->pre_break_delay == FALSE || cfg->break_len == 3) {
         LOG(LOG_ALL, "Setting timer for break delay");
-        timer.tv_sec = 0;
-        timer.tv_usec = cfg->s[S_REG_GUARD_TIME] * 20000;
+        long long usec;
+        usec = cfg->s[S_REG_GUARD_TIME] * 20000;
+        timer.tv_sec = usec / 1000000;
+        timer.tv_usec = usec % 1000000;
         ptimer = &timer;
       } else if(cfg->pre_break_delay == TRUE && cfg->break_len > 0) {
         LOG(LOG_ALL, "Setting timer for inter-break character delay");
@@ -330,7 +332,7 @@ void *run_bridge(void *arg) {
         ptimer = &timer;
       } else if (cfg->s[30] != 0) {
         LOG(LOG_ALL, "Setting timer for inactivity delay");
-        timer.tv_sec = cfg->s[30] * 10;
+        timer.tv_sec = cfg->s[S_REG_INACTIVITY_TIME] * 10;
         timer.tv_usec = 0;
         ptimer = &timer;
       }
