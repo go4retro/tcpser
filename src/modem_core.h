@@ -1,7 +1,7 @@
 #ifndef MODEM_CORE_H
 #define MODEM_CORE_H 1
 
-enum {
+typedef enum {
   MDM_RESP_OK = 0,
   MDM_RESP_CONNECT = 1,
   MDM_RESP_RING = 2,
@@ -23,7 +23,7 @@ enum {
   MDM_RESP_CONNECT_57600 = 18,
   MDM_RESP_CONNECT_115200 = 19,
   MDM_RESP_CONNECT_230400 = 20
-};
+} modem_response;
 
 #define MDM_CL_DSR_LOW 0
 #define MDM_CL_DSR_HIGH 1

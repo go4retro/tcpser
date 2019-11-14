@@ -32,7 +32,7 @@ int mdm_init() {
   return 0;
 }
 
-int get_connect_response(int speed, int level) {
+modem_response get_connect_response(int speed, int level) {
   if(level == 0) {
     return MDM_RESP_CONNECT;
   }
