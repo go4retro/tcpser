@@ -50,10 +50,10 @@ typedef struct nvt_vars {
   unsigned char term[256];
 } nvt_vars;
 
+void nvt_init_config(nvt_vars *vars);
 unsigned char get_nvt_cmd_response(unsigned char action, unsigned char type);
 int parse_nvt_subcommand(dce_config *cfg, int fd, nvt_vars *vars , unsigned char *data, int len);
 int parse_nvt_command(int fd, nvt_vars *vars, nvt_command action, nvt_option opt);
-int nvt_init_config(nvt_vars *vars);
 int send_nvt_command(int fd, nvt_vars *vars, nvt_command action, nvt_option opt);
 
 #endif

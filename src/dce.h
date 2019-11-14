@@ -19,8 +19,7 @@ typedef struct dce_config {
   int ip232_iac;
 } dce_config;
 
-int dce_init(void);
-int dce_init_config(dce_config *cfg);
+void dce_init_config(dce_config *cfg);
 int dce_init_conn(dce_config *cfg);
 int dce_set_flow_control(dce_config *cfg, int opts);
 int dce_set_control_lines(dce_config *cfg, int state);

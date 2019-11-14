@@ -8,8 +8,7 @@
 #include "ip232.h"      // needs modem_core.h
 #include "dce.h"
 
-int dce_init_config(dce_config *cfg) {
-  return 0;
+void dce_init_config(dce_config *cfg) {
 }
 
 int dce_init_conn(dce_config *cfg) {

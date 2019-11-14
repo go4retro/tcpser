@@ -7,15 +7,13 @@
 
 #include "nvt.h"
 
-int nvt_init_config(nvt_vars *vars) {
+void nvt_init_config(nvt_vars *vars) {
   int i; 
 
   vars->binary_xmit = FALSE;
   vars->binary_recv = FALSE;
   for (i = 0; i < 256; i++)
     vars->term[i] = 0;
-
-  return 0;
 }
 
 unsigned char get_nvt_cmd_response(unsigned char action, unsigned char type) {

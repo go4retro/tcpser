@@ -5,13 +5,12 @@
 #include "bridge.h"
 #include "line.h"
 
-int line_init_config(modem_config *cfg) {
+void line_init_config(modem_config *cfg) {
   cfg->line_data.fd = -1;
   cfg->line_data.is_telnet = FALSE;
   cfg->line_data.first_char = TRUE;
   cfg->line_data.valid_conn = FALSE;
   nvt_init_config(&cfg->line_data.nvt_data);
-  return 0;
 }
 
 int line_write(modem_config *cfg, unsigned char* data, int len) {
