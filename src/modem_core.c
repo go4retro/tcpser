@@ -76,20 +76,20 @@ void mdm_init_config(modem_config* cfg) {
   for(i = 0; i < 100; i++) {
     cfg->s[i] = 0;
   }
-  cfg->s[2] = 43;
-  cfg->s[3] = 13;
-  cfg->s[4] = 10;
-  cfg->s[5] = 8;
-  cfg->s[6] = 2;
-  cfg->s[7] = 50;
-  cfg->s[8] = 2;
-  cfg->s[9] = 6;
-  cfg->s[10] = 14;
-  cfg->s[11] = 95;
-  cfg->s[12] = 50;
+  cfg->s[S_REG_BREAK] = 43;
+  cfg->s[S_REG_CR] = 13;
+  cfg->s[S_REG_LF] = 10;
+  cfg->s[S_REG_BS] = 8;
+  cfg->s[S_REG_BLIND_WAIT] = 2;
+  cfg->s[S_REG_CARRIER_WAIT] = 50;
+  cfg->s[S_REG_COMMA_PAUSE] = 2;
+  cfg->s[S_REG_CARRIER_TIME] = 6;
+  cfg->s[S_REG_CARRIER_LOSS] = 14;
+  cfg->s[S_REG_DTMF_TIME] = 95;
+  cfg->s[S_REG_GUARD_TIME] = 50;
 
-  cfg->crlf[0] = cfg->s[3];
-  cfg->crlf[1] = cfg->s[4];
+  cfg->crlf[0] = cfg->s[S_REG_CR];
+  cfg->crlf[1] = cfg->s[S_REG_LF];
   cfg->crlf[2] = 0;
 
   cfg->dial_type = 0;
@@ -420,10 +420,10 @@ int mdm_parse_cmd(modem_config* cfg) {
         cfg->s[num] = atoi((char *)tmp);
         switch(num) {
           case 3:
-            cfg->crlf[0] = cfg->s[3];
+            cfg->crlf[0] = cfg->s[S_REG_CR];
             break;
           case 4:
-            cfg->crlf[1] = cfg->s[4];
+            cfg->crlf[1] = cfg->s[S_REG_LF];
             break;
         }
         break;
@@ -521,13 +521,13 @@ int mdm_handle_char(modem_config *cfg, unsigned char ch) {
   if(cfg->echo == TRUE)
     mdm_write_char(cfg, ch);
   if(cfg->cmd_started == TRUE) {
-    if(ch == (unsigned char)(cfg->s[5])) {
+    if(ch == (unsigned char)(cfg->s[S_REG_BS])) {
       if(cfg->cur_line_idx == 0 && cfg->echo == TRUE) {
         mdm_write_char(cfg, 'T');
       } else {
         cfg->cur_line_idx--;
       }
-    } else if(ch == (unsigned char)(cfg->s[3])) {
+    } else if(ch == (unsigned char)(cfg->s[S_REG_CR])) {
       // we have a line, process.
       cfg->cur_line[cfg->cur_line_idx] = 0;
       strncpy((char *)cfg->last_cmd, (char *)cfg->cur_line, sizeof(cfg->last_cmd) - 1);
@@ -574,7 +574,7 @@ int mdm_parse_data(modem_config *cfg, unsigned char *data, int len) {
     line_write(cfg, data, len);
     if(cfg->pre_break_delay == TRUE) {
       for(i = 0; i < len; i++) {
-        if(data[i] == (unsigned char)cfg->s[2]) {
+        if(data[i] == (unsigned char)cfg->s[S_REG_BREAK]) {
           LOG(LOG_DEBUG, "Break character received");
           cfg->break_len++;
           if(cfg->break_len > 3) {  // more than 3, considered invalid
@@ -606,7 +606,7 @@ int mdm_handle_timeout(modem_config *cfg) {
   } else if(cfg->pre_break_delay == TRUE && cfg->break_len > 0) {
     LOG(LOG_ALL, "Inter-break-char delay time exceeded");
     mdm_clear_break(cfg);
-  } else if(cfg->s[30] != 0) {
+  } else if(cfg->s[S_REG_INACTIVITY_TIME] != 0) {
     // timeout...
     LOG(LOG_INFO, "DTE communication inactivity timeout");
     mdm_disconnect(cfg);
@@ -620,7 +620,7 @@ int mdm_send_ring(modem_config *cfg) {
   mdm_send_response(MDM_RESP_RING, cfg);
   cfg->rings++;
   LOG(LOG_ALL,"Sent #%d ring", cfg->rings);
-  if(cfg->cmd_mode == FALSE || (cfg->s[0] != 0 && cfg->rings >= cfg->s[0])) {
+  if(cfg->cmd_mode == FALSE || (cfg->s[S_REG_RINGS] != 0 && cfg->rings >= cfg->s[S_REG_RINGS])) {
     mdm_answer(cfg);
   }
   return 0;

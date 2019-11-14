@@ -53,7 +53,7 @@ unsigned char get_nvt_cmd_response(unsigned char action, unsigned char type) {
 
 int parse_nvt_subcommand(dce_config *cfg, int fd, nvt_vars *vars, unsigned char *data, int len) {
   // overflow issue, again...
-  int opt = data[2];
+  nvt_option opt = data[2];
   unsigned char resp[100];
   unsigned char *response = resp + 3;
   int resp_len = 0;
@@ -91,7 +91,11 @@ int parse_nvt_subcommand(dce_config *cfg, int fd, nvt_vars *vars, unsigned char 
             strncpy((char *)response + response_len, buf, slen);
             response_len += slen;
             break;
+          default:
+            break;
         }
+        break;
+      default:
         break;
     }
   }
@@ -108,7 +112,7 @@ int parse_nvt_subcommand(dce_config *cfg, int fd, nvt_vars *vars, unsigned char 
   return rc;
 }
 
-int send_nvt_command(int fd, nvt_vars *vars, unsigned char action, unsigned char opt) {
+int send_nvt_command(int fd, nvt_vars *vars, nvt_command action, nvt_option opt) {
   unsigned char cmd[3];
 
   cmd[0] = NVT_IAC;
@@ -121,8 +125,10 @@ int send_nvt_command(int fd, nvt_vars *vars, unsigned char action, unsigned char
   return 0;
 }
 
-int parse_nvt_command(int fd, nvt_vars *vars, unsigned char action, unsigned char opt) {
+int parse_nvt_command(int fd, nvt_vars *vars, nvt_command action, nvt_option opt) {
   unsigned char resp[3];
+  int accept = FALSE;
+
   resp[0] = NVT_IAC;
   resp[2] = opt;
 
@@ -132,22 +138,28 @@ int parse_nvt_command(int fd, nvt_vars *vars, unsigned char action, unsigned cha
         case NVT_DO:
           LOG(LOG_INFO, "Enabling telnet binary xmit");
           vars->binary_xmit = TRUE;
+          accept = TRUE;
           break;
         case NVT_DONT:
           LOG(LOG_INFO, "Disabling telnet binary xmit");
           vars->binary_xmit = FALSE;
+          accept = TRUE;
           break;
         case NVT_WILL:
           LOG(LOG_INFO, "Enabling telnet binary recv");
           vars->binary_recv = TRUE;
+          accept = TRUE;
           break;
         case NVT_WONT:
           LOG(LOG_INFO, "Disabling telnet binary recv");
           vars->binary_recv = FALSE;
+          accept = TRUE;
+          break;
+        default:
           break;
       }
-      // fall through to get response
-
+      resp[1] = get_nvt_cmd_response(action, accept);
+      break;
     case NVT_OPT_NAWS:
     case NVT_OPT_TERMINAL_TYPE:
     case NVT_OPT_SUPPRESS_GO_AHEAD:

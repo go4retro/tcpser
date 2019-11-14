@@ -69,6 +69,22 @@ typedef struct x_config {
   unsigned char direct_conn_num[256];
 } x_config;
 
+enum {
+  S_REG_RINGS = 0,
+  S_REG_BREAK = 2,
+  S_REG_CR = 3,
+  S_REG_LF = 4,
+  S_REG_BS = 5,
+  S_REG_BLIND_WAIT = 6,
+  S_REG_CARRIER_WAIT = 7,
+  S_REG_COMMA_PAUSE = 8,
+  S_REG_CARRIER_TIME = 9,
+  S_REG_CARRIER_LOSS = 10,
+  S_REG_DTMF_TIME = 11,
+  S_REG_GUARD_TIME = 12,
+  S_REG_INACTIVITY_TIME = 30
+};
+
 typedef struct modem_config {
   // master configuration information
 
