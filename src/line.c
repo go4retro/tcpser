@@ -87,8 +87,10 @@ int line_connect(line_config *cfg, char *addy) {
      * host is echoing as well...
      * - gwb
      */
-    // TODO This seems wrong here, in the case that the connection is not TELNET.  Need to review -- JLB
-    //send_nvt_command(cfg->fd, &cfg->nvt_data, NVT_WILL, NVT_OPT_ECHO);
+    // Make sure that we've got a telnet session before we send out
+    // the negotiation sequence to turn off remote echo.
+    if (cfg->is_telnet)
+      send_nvt_command(cfg->fd, &cfg->nvt_data, NVT_WILL, NVT_OPT_ECHO);
 
     return 0;
   } else {
