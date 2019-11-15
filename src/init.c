@@ -5,7 +5,7 @@
 #include "phone_book.h"
 #include "init.h"
 
-void print_help(unsigned char* name) {
+void print_help(char* name) {
   fprintf(stderr, "Usage: %s <parameters>\n", name);
   fprintf(stderr, "  -p   port to listen on (defaults to 6400)\n");
   fprintf(stderr, "               -- or -- \n");
@@ -46,14 +46,14 @@ int init(int argc,
          int max_modem,
          char **ip_addr, 
          int *port,
-         unsigned char *all_busy,
+         char *all_busy,
          int all_busy_len
          ) {
   int i = 0;
   int j = 0;
   int opt = 0;
   int trace_flags = 0;
-  char* tok;
+  char *tok;
   int dce_set = FALSE;
   int tty_set = FALSE;
 
@@ -87,28 +87,28 @@ int init(int argc,
         }
         break;
       case 'a':
-        strncpy((char *)cfg[i].data.local_answer, optarg, sizeof(cfg[i].data.local_answer));
+        strncpy(cfg[i].data.local_answer, optarg, sizeof(cfg[i].data.local_answer));
         break;
       case 'A':
-        strncpy((char *)cfg[i].data.remote_answer, optarg, sizeof(cfg[i].data.remote_answer));
+        strncpy(cfg[i].data.remote_answer, optarg, sizeof(cfg[i].data.remote_answer));
         break;
       case 'c':
-        strncpy((char *)cfg[i].data.local_connect, optarg, sizeof(cfg[i].data.local_connect));
+        strncpy(cfg[i].data.local_connect, optarg, sizeof(cfg[i].data.local_connect));
         break;
       case 'C':
-        strncpy((char *)cfg[i].data.remote_connect, optarg, sizeof(cfg[i].data.remote_connect));
+        strncpy(cfg[i].data.remote_connect, optarg, sizeof(cfg[i].data.remote_connect));
         break;
       case 'B':
-        strncpy((char *)all_busy, optarg, all_busy_len);
+        strncpy(all_busy, optarg, all_busy_len);
         break;
       case 'N':
-        strncpy((char *)cfg[i].data.no_answer, optarg, sizeof(cfg[i].data.no_answer));
+        strncpy(cfg[i].data.no_answer, optarg, sizeof(cfg[i].data.no_answer));
         break;
       case 'T':
-        strncpy((char *)cfg[i].data.inactive, optarg, sizeof(cfg[i].data.inactive));
+        strncpy(cfg[i].data.inactive, optarg, sizeof(cfg[i].data.inactive));
         break;
       case 'i':
-        strncpy((char *)cfg[i].config0, optarg, 255);
+        strncpy(cfg[i].config0, optarg, 255);
         break;
       case 'I':
         cfg[i].invert_dcd = TRUE;
@@ -140,7 +140,7 @@ int init(int argc,
         break;
       case '?':
       case 'h':
-        print_help((unsigned char *)argv[0]);
+        print_help(argv[0]);
         break;
       case 'd':
       case 'v':
@@ -180,11 +180,11 @@ int init(int argc,
 
   if (tty_set) {
     if (i < max_modem)
-      ++i;
+      i++;
   } else {
     // no modems defined
     LOG(LOG_FATAL, "No modems defined");
-    print_help((unsigned char *)argv[0]);
+    print_help(argv[0]);
   }
 
   LOG(LOG_DEBUG, "Read configuration for %i serial port(s)", i);

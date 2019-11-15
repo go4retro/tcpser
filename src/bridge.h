@@ -1,3 +1,8 @@
+#ifndef BRIDGE_H
+#define BRIDGE_H
+
+#include "modem_core.h"
+
 #define MSG_NOT_ACTIVE 'a'
 #define MSG_ACTIVE 'A'
 #define MSG_NOT_LISTENING 'l'
@@ -18,3 +23,5 @@
 int accept_connection(modem_config *);
 int parse_ip_data(modem_config *cfg, unsigned char *data, int len);
 void *run_bridge(void *arg);
+
+#endif

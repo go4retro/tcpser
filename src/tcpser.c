@@ -7,23 +7,24 @@
 #include <sys/param.h>
 #include <pthread.h>
 
+#include "bridge.h"
+#include "debug.h"
 #include "init.h"
 #include "ip.h"
 #include "modem_core.h"
-#include "bridge.h"
 #include "phone_book.h"
 #include "util.h"
-#include "debug.h"
-#include "tcpmdm.h"
 
-const unsigned char MDM_BUSY[] = "BUSY\n";
+const char MDM_BUSY[] = "BUSY\n";
+
+#define MAX_MODEMS 16
 
 int main(int argc, char *argv[]) {
-  modem_config cfg[64];
+  modem_config cfg[MAX_MODEMS];
   int modem_count;
   int port = 0;
   char *ip_addr = NULL;
-  unsigned char all_busy[255];
+  char all_busy[255];
   pthread_t thread_id;
   int i;
   int rc;
@@ -47,10 +48,10 @@ int main(int argc, char *argv[]) {
   
   signal(SIGIO, SIG_IGN); /* Some Linux variant term on SIGIO by default */
 
-  modem_count = init(argc, argv, cfg, 64, &ip_addr, &port, all_busy, sizeof(all_busy));
+  modem_count = init(argc, argv, cfg, MAX_MODEMS, &ip_addr, &port, all_busy, sizeof(all_busy));
   sSocket = ip_init_server_conn(ip_addr, port);
 
-  for(i=0;i<modem_count;i++) {
+  for(i = 0; i < modem_count; i++) {
     if( -1 == pipe(cfg[i].data.mp[0])) {
       ELOG(LOG_FATAL, "Bridge task incoming IPC pipe could not be created");
       exit(-1);
@@ -65,7 +66,7 @@ int main(int argc, char *argv[]) {
     }
     cfg[i].line_data.sfd = sSocket;
 
-    rc=pthread_create(&thread_id, NULL, *run_bridge,(void *)&cfg[i]);
+    rc=pthread_create(&thread_id, NULL, *run_bridge, (void *)&cfg[i]);
     if(rc < 0) {
         ELOG(LOG_FATAL, "IP thread could not be started");
         exit(-1);
@@ -124,7 +125,7 @@ int main(int argc, char *argv[]) {
           cSocket = ip_accept(sSocket);
           if(cSocket > -1) {
             if(strlen((char *)all_busy) < 1) {
-              ip_write(cSocket, (unsigned char *)MDM_BUSY, strlen((char *)MDM_BUSY));
+              ip_write(cSocket, (unsigned char *)MDM_BUSY, strlen(MDM_BUSY));
             } else {
               writeFile(all_busy, cSocket);
             }

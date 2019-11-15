@@ -22,7 +22,8 @@ typedef enum {
   MDM_RESP_CONNECT_38400 = 17,
   MDM_RESP_CONNECT_57600 = 18,
   MDM_RESP_CONNECT_115200 = 19,
-  MDM_RESP_CONNECT_230400 = 20
+  MDM_RESP_CONNECT_230400 = 20,
+  MDM_RESP_END_OF_LIST
 } modem_response;
 
 #define MDM_CL_DSR_LOW 0
@@ -53,14 +54,14 @@ typedef struct x_config {
   int mp[2][2];
   int cp[2][2];
   int wp[2][2];
-  unsigned char no_answer[256];
-  unsigned char local_connect[256];
-  unsigned char remote_connect[256];
-  unsigned char local_answer[256];
-  unsigned char remote_answer[256];
-  unsigned char inactive[256];
-  unsigned int direct_conn;
-  unsigned char direct_conn_num[256];
+  char no_answer[256];
+  char local_connect[256];
+  char remote_connect[256];
+  char local_answer[256];
+  char remote_answer[256];
+  char inactive[256];
+  int direct_conn;
+  char direct_conn_num[256];
 } x_config;
 
 enum {
@@ -86,8 +87,7 @@ typedef struct modem_config {
   dce_config dce_data;
   line_config line_data;
   x_config data;
-  unsigned char config0[1024];
-  unsigned char config1[1024];
+  char config0[1024];
   int line_speed;
   int conn_type;
   int line_ringing;
@@ -104,8 +104,8 @@ typedef struct modem_config {
   int found_a;
   int cmd_started;
   int cmd_mode;
-  unsigned char last_cmd[1024];
-  unsigned char cur_line[1024];
+  char last_cmd[1024];
+  char cur_line[1024];
   int cur_line_idx;
   // dailing information
   char dialno[256];
@@ -125,7 +125,7 @@ typedef struct modem_config {
   unsigned char crlf[3];
 } modem_config;
 
-int mdm_init(void);
+void mdm_init(void);
 void mdm_init_config(modem_config *cfg);
 int get_new_cts_state(modem_config *cfg, int up);
 int get_new_dsr_state(modem_config *cfg, int up);

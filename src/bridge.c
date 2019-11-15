@@ -17,11 +17,11 @@
 
 #include "bridge.h"
 
-const unsigned char MDM_NO_ANSWER[] = "NO ANSWER\n";
+const char MDM_NO_ANSWER[] = "NO ANSWER\n";
 
-//const unsigned char CONNECT_NOTICE[] = "\r\nCONNECTING...\r\n";
+//const char CONNECT_NOTICE[] = "\r\nCONNECTING...\r\n";
 
-//const unsigned char TELNET_NOTICE[] = "TELNET MODE ENABLED\r\n";
+//const char TELNET_NOTICE[] = "TELNET MODE ENABLED\r\n";
 
 int accept_connection(modem_config *cfg) {
   LOG_ENTER();
@@ -54,7 +54,7 @@ int parse_ip_data(modem_config *cfg, unsigned char *data, int len) {
   if(cfg->line_data.first_char == TRUE) {
     cfg->line_data.first_char = FALSE;
     if((data[0] == 0xff) || (data[0] == 0x1a)) {
-      //line_write(cfg, (unsigned char*)TELNET_NOTICE,strlen(TELNET_NOTICE));
+      //line_write(cfg, (char*)TELNET_NOTICE,strlen(TELNET_NOTICE));
       LOG(LOG_INFO, "Detected telnet");
       cfg->line_data.is_telnet = TRUE;
     }
@@ -238,15 +238,15 @@ void *run_bridge(void *arg) {
 
   LOG_ENTER();
 
-  if( -1 == pipe(cfg->data.wp[0])) {
+  if(-1 == pipe(cfg->data.wp[0])) {
     ELOG(LOG_FATAL, "Control line watch task incoming IPC pipe could not be created");
     exit(-1);
   }
-  if( -1 == pipe(cfg->data.cp[0])) {
+  if(-1 == pipe(cfg->data.cp[0])) {
     ELOG(LOG_FATAL, "IP thread incoming IPC pipe could not be created");
     exit(-1);
   }
-  if( -1 == pipe(cfg->data.cp[1])) {
+  if(-1 == pipe(cfg->data.cp[1])) {
     ELOG(LOG_FATAL, "IP thread outgoing IPC pipe could not be created");
     exit(-1);
   }
@@ -255,7 +255,7 @@ void *run_bridge(void *arg) {
   spawn_ip_thread(cfg);
 
   mdm_set_control_lines(cfg);
-  strncpy((char *)cfg->cur_line, (char *)cfg->config0, sizeof(cfg->cur_line));
+  strncpy(cfg->cur_line, cfg->config0, sizeof(cfg->cur_line));
   last_conn_type = cfg->conn_type;
   last_cmd_mode = cfg->cmd_mode;
   cfg->allow_transmit = FALSE;

@@ -5,14 +5,14 @@
 
 #include "modem_core.h"
 
-void print_help(unsigned char *name);
+void print_help(char *name);
 int init(int argc,
          char **argv,
          modem_config cfg[], 
          int max_modem, 
          char **ip_addr,
          int *port,
-         unsigned char *all_busy,
+         char *all_busy,
          int all_busy_len
         );
 

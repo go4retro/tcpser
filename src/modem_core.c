@@ -5,31 +5,30 @@
 #include "debug.h"
 #include "modem_core.h"
 
-unsigned char* mdm_responses[37];
+char* mdm_responses[MDM_RESP_END_OF_LIST - 1];
 
-int mdm_init() {
-  mdm_responses[MDM_RESP_OK] =             (unsigned char *)"OK";
-  mdm_responses[MDM_RESP_RING] =           (unsigned char *)"RING";
-  mdm_responses[MDM_RESP_ERROR] =          (unsigned char *)"ERROR";
-  mdm_responses[MDM_RESP_CONNECT] =        (unsigned char *)"CONNECT";
-  mdm_responses[MDM_RESP_NO_CARRIER] =     (unsigned char *)"NO CARRIER";
-  mdm_responses[MDM_RESP_CONNECT_1200] =   (unsigned char *)"CONNECT 1200";
-  mdm_responses[MDM_RESP_NO_DIALTONE] =    (unsigned char *)"NO DIALTONE";
-  mdm_responses[MDM_RESP_BUSY] =           (unsigned char *)"BUSY";
-  mdm_responses[MDM_RESP_NO_ANSWER] =      (unsigned char *)"NO ANSWER";
-  mdm_responses[MDM_RESP_CONNECT_0600] =   (unsigned char *)"CONNECT 0600";
-  mdm_responses[MDM_RESP_CONNECT_2400] =   (unsigned char *)"CONNECT 2400";
-  mdm_responses[MDM_RESP_CONNECT_4800] =   (unsigned char *)"CONNECT 4800";
-  mdm_responses[MDM_RESP_CONNECT_9600] =   (unsigned char *)"CONNECT 9600";
-  mdm_responses[MDM_RESP_CONNECT_7200] =   (unsigned char *)"CONNECT 7200";
-  mdm_responses[MDM_RESP_CONNECT_12000] =  (unsigned char *)"CONNECT 12000";
-  mdm_responses[MDM_RESP_CONNECT_14400] =  (unsigned char *)"CONNECT 14400";
-  mdm_responses[MDM_RESP_CONNECT_19200] =  (unsigned char *)"CONNECT 19200";
-  mdm_responses[MDM_RESP_CONNECT_38400] =  (unsigned char *)"CONNECT 38400";
-  mdm_responses[MDM_RESP_CONNECT_57600] =  (unsigned char *)"CONNECT 57600";
-  mdm_responses[MDM_RESP_CONNECT_115200] = (unsigned char *)"CONNECT 115200";
-  mdm_responses[MDM_RESP_CONNECT_230400]=  (unsigned char *)"CONNECT 230400";
-  return 0;
+void mdm_init(void) {
+  mdm_responses[MDM_RESP_OK] =             "OK";
+  mdm_responses[MDM_RESP_RING] =           "RING";
+  mdm_responses[MDM_RESP_ERROR] =          "ERROR";
+  mdm_responses[MDM_RESP_CONNECT] =        "CONNECT";
+  mdm_responses[MDM_RESP_NO_CARRIER] =     "NO CARRIER";
+  mdm_responses[MDM_RESP_CONNECT_1200] =   "CONNECT 1200";
+  mdm_responses[MDM_RESP_NO_DIALTONE] =    "NO DIALTONE";
+  mdm_responses[MDM_RESP_BUSY] =           "BUSY";
+  mdm_responses[MDM_RESP_NO_ANSWER] =      "NO ANSWER";
+  mdm_responses[MDM_RESP_CONNECT_0600] =   "CONNECT 0600";
+  mdm_responses[MDM_RESP_CONNECT_2400] =   "CONNECT 2400";
+  mdm_responses[MDM_RESP_CONNECT_4800] =   "CONNECT 4800";
+  mdm_responses[MDM_RESP_CONNECT_9600] =   "CONNECT 9600";
+  mdm_responses[MDM_RESP_CONNECT_7200] =   "CONNECT 7200";
+  mdm_responses[MDM_RESP_CONNECT_12000] =  "CONNECT 12000";
+  mdm_responses[MDM_RESP_CONNECT_14400] =  "CONNECT 14400";
+  mdm_responses[MDM_RESP_CONNECT_19200] =  "CONNECT 19200";
+  mdm_responses[MDM_RESP_CONNECT_38400] =  "CONNECT 38400";
+  mdm_responses[MDM_RESP_CONNECT_57600] =  "CONNECT 57600";
+  mdm_responses[MDM_RESP_CONNECT_115200] = "CONNECT 115200";
+  mdm_responses[MDM_RESP_CONNECT_230400]=  "CONNECT 230400";
 }
 
 modem_response get_connect_response(int speed, int level) {
@@ -61,7 +60,7 @@ modem_response get_connect_response(int speed, int level) {
   return MDM_RESP_CONNECT;
 }
 
-void mdm_init_config(modem_config* cfg) {
+void mdm_init_config(modem_config *cfg) {
   int i = 0;
 
   cfg->send_responses = TRUE;
@@ -112,7 +111,6 @@ void mdm_init_config(modem_config* cfg) {
   cfg->invert_dcd = FALSE;
 
   cfg->config0[0] = '\0';
-  cfg->config1[0] = '\0';
 
   dce_init_config(&cfg->dce_data);
   sh_init_config(cfg);
@@ -185,7 +183,7 @@ void mdm_send_response(int msg, modem_config *cfg) {
     mdm_write(cfg, cfg->crlf, 2);
     if(cfg->text_responses == TRUE) {
       LOG(LOG_ALL, "Sending text response");
-      mdm_write(cfg, mdm_responses[msg], strlen((char *)mdm_responses[msg]));
+      mdm_write(cfg, (unsigned char *)mdm_responses[msg], strlen(mdm_responses[msg]));
     } else {
       LOG(LOG_ALL, "Sending numeric response");
       sprintf((char *)msgID, "%d", msg);
@@ -235,7 +233,7 @@ int mdm_print_speed(modem_config *cfg) {
   return 0;
 }
 
-int mdm_connect(modem_config* cfg) {
+int mdm_connect(modem_config *cfg) {
   mdm_off_hook(cfg);
   if(cfg->conn_type == MDM_CONN_NONE) {
     if(line_connect(&cfg->line_data, cfg->dialno) == 0) {
@@ -288,7 +286,7 @@ int mdm_parse_cmd(modem_config* cfg) {
   int start = 0;
   int end = 0;
   int cmd = AT_CMD_NONE;
-  unsigned char* command = cfg->cur_line;
+  char *command = cfg->cur_line;
   unsigned char tmp[256];
 
   LOG_ENTER();
@@ -296,7 +294,7 @@ int mdm_parse_cmd(modem_config* cfg) {
 
   while(TRUE != done ) {
     if(cmd != AT_CMD_ERR) {
-      cmd=getcmd(command, &index, &num, &start, &end);
+      cmd = getcmd(command, &index, &num, &start, &end);
           LOG(LOG_DEBUG, 
               "Command: %c (%d), Flags: %d, index=%d, num=%d, data=%d-%d",
               (cmd > -1 ? cmd & 0xff : ' '),

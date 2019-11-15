@@ -16,28 +16,28 @@
 #define FALSE 0
 #endif
 
-int getData(unsigned char line[], 
+int getData(char line[],
             int *index, 
             int len, 
             int *data_start,
             int *data_end,
             int simple_parse
            );
-int getNumber(unsigned char line[], int *index, int len );
-int skip(unsigned char line[], int *index, int len, unsigned char ch);
-int getCommand(unsigned char line[], 
+int getNumber(char line[], int *index, int len );
+int skip(char line[], int *index, int len, unsigned char ch);
+int getCommand(char line[],
                int flags, 
                int *index, 
                int *num, 
                int len 
               );
-int parseCommand(unsigned char line[], 
+int parseCommand(char line[],
                  int flags, 
                  int *index, 
                  int *num, 
                  int len 
                 );
-int parseRegister(unsigned char line[], 
+int parseRegister(char line[],
                   int flags, 
                   int *index, 
                   int *num, 
@@ -46,7 +46,7 @@ int parseRegister(unsigned char line[],
                   int *data_end,
                   int simple_parse
                  );
-int getcmd(unsigned char line[], 
+int getcmd(char line[],
            int *index, 
            int *num, 
            int *data_start, 
