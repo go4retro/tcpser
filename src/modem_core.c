@@ -516,6 +516,28 @@ int mdm_parse_cmd(modem_config* cfg) {
   return cmd;
 }
 
+/*
+ * interestingly, at least the hayes modem I have has the following behavior
+ * concerning the AT command:
+ *
+ * AaaaaaT works (rule is that the first A found is considered the A char, and the
+ * trailing T has the same case, so this works
+ *
+ * abcdefat also works (first 'a' starts the sequence, next letters starts over,
+ * and then the last 'a' is paired up with the 't'
+ *
+ * At and aT will not work (the modem uses AT to determine parity, but mixed case
+ * messes with the algorithm
+ *
+ * If a sequence is started (AT sent) but then the user backspaces, the backspace
+ * is echoed to the sender, but then a 'T' is sent if the user has erased all of the
+ * command
+ *
+ * A real modem will complain about incorrect data in the command string.  TCPSER
+ * will silently ignore such issues, as it creates more compatibility to ignore
+ * unknown commands.
+ */
+
 int mdm_handle_char(modem_config *cfg, unsigned char ch) {
   char ch_raw = ch & 0x7f;
 
