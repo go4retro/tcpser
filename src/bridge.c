@@ -67,12 +67,31 @@ int parse_ip_data(modem_config *cfg, unsigned char *data, int len) {
   if(cfg->line_data.is_telnet == TRUE) {
     // once the serial port has seen a bit of data and telnet is active,
     // we can decide on binary transmit, not before
-    if((cfg->is_binary_negotiated == FALSE)
-        && !dce_is_parity(&cfg->dce_data)) {
-      send_nvt_command(cfg->line_data.fd, &cfg->line_data.nvt_data,
-           NVT_WILL, NVT_OPT_TRANSMIT_BINARY);
-      send_nvt_command(cfg->line_data.fd, &cfg->line_data.nvt_data,
-           NVT_DO, NVT_OPT_TRANSMIT_BINARY);
+    if(cfg->is_binary_negotiated == FALSE) {
+      if(dce_is_parity(&cfg->dce_data)) {
+        // send explicit notice this connection is not 8 bit clean
+        send_nvt_command(cfg->line_data.fd,
+                         &cfg->line_data.nvt_data,
+                         NVT_WONT,
+                         NVT_OPT_TRANSMIT_BINARY
+                        );
+        send_nvt_command(cfg->line_data.fd,
+                         &cfg->line_data.nvt_data,
+                         NVT_DONT,
+                         NVT_OPT_TRANSMIT_BINARY
+                        );
+      } else {
+        send_nvt_command(cfg->line_data.fd,
+                         &cfg->line_data.nvt_data,
+                         NVT_WILL,
+                         NVT_OPT_TRANSMIT_BINARY
+                        );
+        send_nvt_command(cfg->line_data.fd,
+                         &cfg->line_data.nvt_data,
+                         NVT_DO,
+                         NVT_OPT_TRANSMIT_BINARY
+                        );
+      }
       cfg->is_binary_negotiated = TRUE;
     }
     while(i < len) {

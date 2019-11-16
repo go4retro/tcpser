@@ -75,7 +75,7 @@ void mdm_init_config(modem_config *cfg) {
   cfg->connect_response = 0;
   cfg->response_code_level = 4;
   cfg->text_responses = TRUE;
-  cfg->echo = TRUE;
+  cfg->is_echo = TRUE;
   cfg->is_cmd_mode = TRUE;
   cfg->conn_type = MDM_CONN_NONE;
   cfg->is_off_hook = FALSE;
@@ -303,16 +303,16 @@ int mdm_parse_cmd(modem_config* cfg) {
   while(TRUE != done ) {
     if(cmd != AT_CMD_ERR) {
       cmd = getcmd(command, &index, &num, &start, &end);
-          LOG(LOG_DEBUG, 
-              "Command: %c (%d), Flags: %d, index=%d, num=%d, data=%d-%d",
-              (cmd > -1 ? cmd & 0xff : ' '),
-              cmd,
-              cmd  >> 8,
-              index,
-              num,
-              start,
-              end
-             );
+      LOG(LOG_DEBUG,
+          "Command: %c (%d), Flags: %d, index=%d, num=%d, data=%d-%d",
+          (cmd > -1 ? cmd & 0xff : ' '),
+          cmd,
+          cmd  >> 8,
+          index,
+          num,
+          start,
+          end
+         );
     }
     switch(cmd) {
       case AT_CMD_ERR:
@@ -370,9 +370,9 @@ int mdm_parse_cmd(modem_config* cfg) {
         break;
       case 'E':   // still need to define #2
         if(num == 0)
-          cfg->echo = FALSE;
+          cfg->is_echo = FALSE;
         else if(num == 1)
-          cfg->echo = TRUE;
+          cfg->is_echo = TRUE;
         else {
           cmd = AT_CMD_ERR;
         }
@@ -549,16 +549,16 @@ int mdm_parse_cmd(modem_config* cfg) {
 int mdm_handle_char(modem_config *cfg, unsigned char ch) {
   char ch_raw = ch & 0x7f;
 
-  if(cfg->echo == TRUE)
+  if(cfg->is_echo == TRUE)
     dce_write_char_raw(&cfg->dce_data, ch);
   if(cfg->is_cmd_started == TRUE) { // we previously got an 'AT'
     if(ch_raw == (cfg->s[S_REG_BS])) {
-      if(cfg->cur_line_idx == 0 && cfg->echo == TRUE) {
+      if(cfg->cur_line_idx == 0 && cfg->is_echo == TRUE) {
         mdm_write_char(cfg, 'T');
       } else {
         cfg->cur_line_idx--;
       }
-    } else if(ch == (unsigned char)(cfg->s[S_REG_CR])) {
+    } else if(ch_raw == (unsigned char)(cfg->s[S_REG_CR])) {
       // we have a line, process.
       cfg->cur_line[cfg->cur_line_idx] = 0;
       strncpy(cfg->last_cmd, cfg->cur_line, sizeof(cfg->last_cmd) - 1);
