@@ -38,8 +38,11 @@
   Added full support for Telnet Binary Transmission (RFC 856)
 1.0rc12
   Added code to hook SIG_IO to SIG_IGN.  Newer versions of Linux are terminating when IO arrives.
-
-1.0fz1 - Chris Osborn <fozztexx@fozztexx.com> 2016-May-24
-  Cleaned up all the warnings about unsigned char strings
-  Strip parity when looking for commands, generate matching parity on modem responses
-  Fixed bug in sending telnet sub-options. Now tcpser can connect to real telnet servers.
+1.1rc1
+  Rationalized data types for binary versus textual data
+  Merged in Gene Buckle's change to allow binding to a specific IP address
+  Merged in (or re-implemented) Chris Osborn changes (https://github.com/FozzTexx/tcpser) 
+    Strip parity when looking for commands, generate matching parity on modem responses
+    Fixed bug in sending telnet sub-options. Now tcpser can connect to real telnet servers.  
+  Added in support for raw rs232 data tracing, while retaining serial port tracing
+  Cleaned up lots of bad decisions around variable names, where functions should live, etc.

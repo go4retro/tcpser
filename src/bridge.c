@@ -200,7 +200,7 @@ void *ip_thread(void *arg) {
       }
       if (FD_ISSET(cfg->cp[1][0], &readfs)) {  // pipe
 
-        res = readPipe(cfg->cp[1][0], buf, sizeof(buf) - 1);
+        res = read(cfg->cp[1][0], buf, sizeof(buf) - 1);
         LOG(LOG_DEBUG, "IP thread notified");
         action_pending = FALSE;
       }
