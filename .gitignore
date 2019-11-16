@@ -177,3 +177,6 @@ obj-*
 archive
 *.err
 _xmsgs
+
+tcpser
+src/*.o
