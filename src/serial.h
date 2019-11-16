@@ -7,7 +7,7 @@
 #endif
 
 int ser_get_bps_const(int speed);
-int ser_init_conn(unsigned char *tty, int speed);
+int ser_init_conn(char *tty, int speed);
 int ser_set_flow_control(int fd, int status);
 int ser_get_control_lines(int fd);
 int ser_set_control_lines(int fd, int state);

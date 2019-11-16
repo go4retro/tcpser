@@ -11,10 +11,6 @@ typedef enum {
   NVT_DO = 253,
   NVT_DONT = 254,
   NVT_IAC = 255,
-  NVT_WILL_RESP = 251,
-  NVT_WONT_RESP = 252,
-  NVT_DO_RESP = 253,
-  NVT_DONT_RESP = 254,
 } nvt_command;
 
 typedef enum {
@@ -47,7 +43,7 @@ typedef enum {
 typedef struct nvt_vars {
   int binary_xmit;
   int binary_recv;
-  unsigned char term[256];
+  char term[256];
 } nvt_vars;
 
 void nvt_init_config(nvt_vars *vars);

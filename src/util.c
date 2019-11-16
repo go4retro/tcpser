@@ -3,8 +3,9 @@
 
 #include "util.h"
 
-int writePipe(int fd, unsigned char msg) {
-  unsigned char tmp[3];
+int writePipe(int fd, char msg) {
+  char tmp[3];
+
   tmp[0] = msg;
   tmp[1] = '\n';
   tmp[2] = '\0';

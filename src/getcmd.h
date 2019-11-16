@@ -24,7 +24,7 @@ int getData(char line[],
             int simple_parse
            );
 int getNumber(char line[], int *index, int len );
-int skip(char line[], int *index, int len, unsigned char ch);
+int skip(char line[], int *index, int len, char ch);
 int getCommand(char line[],
                int flags, 
                int *index, 

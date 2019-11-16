@@ -21,27 +21,27 @@ unsigned char get_nvt_cmd_response(unsigned char action, unsigned char type) {
   if(type == TRUE) {
     switch (action) {
       case NVT_DO:
-        rc = NVT_WILL_RESP;
+        rc = NVT_WILL;
         break;
       case NVT_DONT:
-        rc = NVT_WONT_RESP;
+        rc = NVT_WONT;
         break;
       case NVT_WILL:
-        rc = NVT_DO_RESP;
+        rc = NVT_DO;
         break;
       case NVT_WONT:
-        rc = NVT_DONT_RESP;
+        rc = NVT_DONT;
         break;
     }
   } else {
     switch (action) {
       case NVT_DO:
       case NVT_DONT:
-        rc = NVT_WONT_RESP;
+        rc = NVT_WONT;
         break;
       case NVT_WILL:
       case NVT_WONT:
-        rc = NVT_DONT_RESP;
+        rc = NVT_DONT;
         break;
     }
   }
@@ -109,9 +109,32 @@ int parse_nvt_subcommand(dce_config *cfg, int fd, nvt_vars *vars, unsigned char 
   return rc;
 }
 
+void get_action(char *txt, nvt_command action) {
+  switch (action) {
+  case NVT_WILL:
+    strcpy(txt, "WILL");
+    break;
+  case NVT_WONT:
+    strcpy(txt, "WONT");
+    break;
+  case NVT_DO:
+    strcpy(txt, "DO");
+    break;
+  case NVT_DONT:
+    strcpy(txt, "DONT");
+    break;
+  default:
+    strcpy(txt, "UNKNOWN");
+    break;
+  }
+}
+
 int send_nvt_command(int fd, nvt_vars *vars, nvt_command action, nvt_option opt) {
   unsigned char cmd[3];
+  char txt[20];
 
+  get_action(txt, action);
+  LOG(LOG_DEBUG, "Sending NVT command: %s %d", txt, opt);
   cmd[0] = NVT_IAC;
   cmd[1] = action;
   cmd[2] = opt;
@@ -123,12 +146,12 @@ int send_nvt_command(int fd, nvt_vars *vars, nvt_command action, nvt_option opt)
 }
 
 int parse_nvt_command(dce_config *cfg, int fd, nvt_vars *vars, nvt_command action, nvt_option opt) {
-  unsigned char resp[3];
   int accept = FALSE;
+  char txt[20];
+  int resp;
 
-  resp[0] = NVT_IAC;
-  resp[2] = opt;
-
+  get_action(txt, action);
+  LOG(LOG_DEBUG, "Received NVT command: %s %d", txt, opt);
   switch (opt) {
     case NVT_OPT_TRANSMIT_BINARY :
       switch (action) {
@@ -159,7 +182,7 @@ int parse_nvt_command(dce_config *cfg, int fd, nvt_vars *vars, nvt_command actio
         default:
           break;
       }
-      resp[1] = get_nvt_cmd_response(action, accept);
+      resp = get_nvt_cmd_response(action, accept);
       break;
     case NVT_OPT_NAWS:
     case NVT_OPT_TERMINAL_TYPE:
@@ -169,12 +192,12 @@ int parse_nvt_command(dce_config *cfg, int fd, nvt_vars *vars, nvt_command actio
     case NVT_OPT_ENVIRON:             // but telnet seems to expect.
     case NVT_OPT_NEW_ENVIRON:         // them.
     case NVT_OPT_TERMINAL_SPEED:
-      resp[1] = get_nvt_cmd_response(action, TRUE);
+      resp = get_nvt_cmd_response(action, TRUE);
       break;
     default:
-      resp[1] = get_nvt_cmd_response(action, FALSE);
+      resp = get_nvt_cmd_response(action, FALSE);
       break;
   }
-  ip_write(fd, resp, 3);
+  send_nvt_command(fd, vars, resp, opt);
   return 0;
 }

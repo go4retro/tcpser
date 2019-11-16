@@ -9,6 +9,10 @@
 #include "ip232.h"      // needs modem_core.h
 #include "dce.h"
 
+void dce_init_config(dce_config *cfg) {
+  cfg->parity = -1;  // parity not yet checked.
+}
+
 int detect_parity (int charA, int charT) {
   int parity, eobits;
 
@@ -22,9 +26,6 @@ int detect_parity (int charA, int charT) {
       return PARITY_ODD;
   } else
       return parity;
-}
-
-void dce_init_config(dce_config *cfg) {
 }
 
 int dce_init_conn(dce_config *cfg) {
@@ -205,7 +206,6 @@ int dce_read_char_raw(dce_config *cfg) {
   }
   LOG(LOG_DEBUG, "Read %d raw bytes from serial port", res);
   if(-1 < res) {
-    printf("Parity = %d\n", cfg->parity);
     if(cfg->parity) {
       parity = data[0] & 0x80;
       data[0] &= 0x7f;

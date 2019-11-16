@@ -130,7 +130,7 @@ int init(int argc,
         }
         break;
       case 'n':
-        tok = strtok((char *)optarg, "=");
+        tok = strtok(optarg, "=");
         pb_add(tok, strtok(NULL, "="));
         break;
       case 'l':
@@ -181,7 +181,7 @@ int init(int argc,
         break;
       case 'D':
         cfg[i].data.direct_conn = TRUE;
-        strncpy((char *)cfg[i].data.direct_conn_num, optarg, sizeof(cfg[i].data.direct_conn_num));
+        strncpy(cfg[i].data.direct_conn_num, optarg, sizeof(cfg[i].data.direct_conn_num));
         break;
     }
   }

@@ -5,12 +5,16 @@
 #include "bridge.h"
 #include "line.h"
 
-void line_init_config(line_config *cfg) {
+void reset_config(line_config *cfg) {
   cfg->fd = -1;
   cfg->is_telnet = FALSE;
   cfg->first_char = TRUE;
   cfg->valid_conn = FALSE;
   nvt_init_config(&cfg->nvt_data);
+}
+
+void line_init_config(line_config *cfg) {
+  reset_config(cfg);
 }
 
 int line_write(line_config *cfg, unsigned char* data, int len) {
@@ -79,19 +83,6 @@ int line_connect(line_config *cfg, char *addy) {
   if(cfg->fd > -1) {
     LOG(LOG_ALL, "Connected to %s", addy);
     cfg->valid_conn = TRUE;
-
-    /* we need to let the other end know that our end will
-     * handle the echo - otherwise "true" telnet clients like
-     * those that come with Linux & Windows will echo characters
-     * typed and you'll end up with doubled characters if the remote
-     * host is echoing as well...
-     * - gwb
-     */
-    // Make sure that we've got a telnet session before we send out
-    // the negotiation sequence to turn off remote echo.
-    if (cfg->is_telnet)
-      send_nvt_command(cfg->fd, &cfg->nvt_data, NVT_WILL, NVT_OPT_ECHO);
-
     return 0;
   } else {
     LOG(LOG_ALL, "Could not connect to %s",addy);
@@ -106,12 +97,10 @@ int line_disconnect(line_config *cfg, int direct_conn) {
     LOG(LOG_INFO, "Direct connection active, maintaining link");
     return -1;
   } else {
-    cfg->is_telnet = FALSE;
-    cfg->first_char = TRUE;
     if(cfg->valid_conn == TRUE) {
       ip_disconnect(cfg->fd);
-      cfg->valid_conn = FALSE;
     }
+    reset_config(cfg);
   }
   return 0;
 }

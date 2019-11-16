@@ -84,7 +84,7 @@ int ip232_init_conn(dce_config *cfg) {
 
   LOG_ENTER();
   LOG(LOG_INFO, "Opening ip232 device");
-  port = atoi((char *)cfg->tty);
+  port = atoi(cfg->tty);
   rc = ip_init_server_conn(NULL, port);
 
   if (rc < 0) {

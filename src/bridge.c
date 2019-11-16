@@ -56,11 +56,30 @@ int parse_ip_data(modem_config *cfg, unsigned char *data, int len) {
     if((data[0] == 0xff) || (data[0] == 0x1a)) {
       //line_write(cfg, (char*)TELNET_NOTICE,strlen(TELNET_NOTICE));
       LOG(LOG_INFO, "Detected telnet");
+      // TODO add in telnet stuff
       cfg->line_data.is_telnet = TRUE;
+      /* we need to let the other end know that our end will
+       * handle the echo - otherwise "true" telnet clients like
+       * those that come with Linux & Windows will echo characters
+       * typed and you'll end up with doubled characters if the remote
+       * host is echoing as well...
+       * - gwb
+       */
+      send_nvt_command(cfg->line_data.fd, &cfg->line_data.nvt_data, NVT_WILL, NVT_OPT_ECHO);
     }
   }
 
   if(cfg->line_data.is_telnet == TRUE) {
+    // once the serial port has seen a bit of data and telnet is active,
+    // we can decide on binary transmit, not before
+    if((cfg->binary_negotiated == FALSE)
+        && !dce_is_parity(&cfg->dce_data)) {
+      send_nvt_command(cfg->line_data.fd, &cfg->line_data.nvt_data,
+           NVT_WILL, NVT_OPT_TRANSMIT_BINARY);
+      send_nvt_command(cfg->line_data.fd, &cfg->line_data.nvt_data,
+           NVT_DO, NVT_OPT_TRANSMIT_BINARY);
+      cfg->binary_negotiated = TRUE;
+    }
     while(i < len) {
       ch = data[i];
       if(NVT_IAC == ch) {
@@ -74,11 +93,16 @@ int parse_ip_data(modem_config *cfg, unsigned char *data, int len) {
             /// again, overflow issues...
             LOG(LOG_INFO, "Parsing nvt command");
             parse_nvt_command(&cfg->dce_data, cfg->line_data.fd, &cfg->line_data.nvt_data, ch, data[i + 2]);
-            i+=3;
+            i += 3;
             break;
           case NVT_SB:      // sub negotiation
             // again, overflow...
-            i += parse_nvt_subcommand(&cfg->dce_data, cfg->line_data.fd, &cfg->line_data.nvt_data, data + i, len - i);
+            i += parse_nvt_subcommand(&cfg->dce_data, 
+                                      cfg->line_data.fd, 
+                                      &cfg->line_data.nvt_data, 
+                                      data + i, 
+                                      len - i
+                                     );
             break;
           case NVT_IAC:
             if (cfg->line_data.nvt_data.binary_recv)
@@ -222,6 +246,11 @@ int spawn_ip_thread(modem_config *cfg) {
   return 0;
 }
 
+void disconnect(modem_config *cfg) {
+  mdm_disconnect(cfg);
+  cfg->binary_negotiated = FALSE;
+}
+
 void *run_bridge(void *arg) {
   modem_config *cfg = (modem_config *)arg;
   struct timeval timer;  
@@ -255,18 +284,20 @@ void *run_bridge(void *arg) {
   spawn_ip_thread(cfg);
 
   mdm_set_control_lines(cfg);
-  strncpy(cfg->cur_line, cfg->config0, sizeof(cfg->cur_line));
   last_conn_type = cfg->conn_type;
   last_cmd_mode = cfg->cmd_mode;
   cfg->allow_transmit = FALSE;
   // call some functions behind the scenes
-  mdm_disconnect(cfg);
-  mdm_parse_cmd(cfg);
+  disconnect(cfg);
+  if(strlen(cfg->config0)) {
+    strncpy(cfg->cur_line, cfg->config0, sizeof(cfg->cur_line));
+    mdm_parse_cmd(cfg);
+  }
   if (cfg->data.direct_conn == TRUE) {
     if(strlen((char *)cfg->data.direct_conn_num) > 0 &&
        cfg->data.direct_conn_num[0] != ':') {
         // we have a direct number to connect to.
-      strncpy((char *)cfg->dialno, (char *)cfg->data.direct_conn_num, sizeof(cfg->dialno));
+      strncpy(cfg->dialno, cfg->data.direct_conn_num, sizeof(cfg->dialno));
       if(0 != line_connect(&cfg->line_data, cfg->dialno)) {
         LOG(LOG_FATAL, "Cannot connect to Direct line address!");
         // probably should exit...
@@ -283,17 +314,17 @@ void *run_bridge(void *arg) {
       //writePipe(cfg->data.mp[0][1],MSG_NOTIFY);
       writePipe(cfg->data.cp[1][1], MSG_NOTIFY);
       if(cfg->conn_type == MDM_CONN_OUTGOING) {
-        if(strlen((char *)cfg->data.local_connect) > 0) {
+        if(strlen(cfg->data.local_connect) > 0) {
           writeFile(cfg->data.local_connect, cfg->line_data.fd);
         }
-        if(strlen((char *)cfg->data.remote_connect) > 0) {
+        if(strlen(cfg->data.remote_connect) > 0) {
           writeFile(cfg->data.remote_connect, cfg->line_data.fd);
         }
       } else if(cfg->conn_type == MDM_CONN_INCOMING) {
-        if(strlen((char *)cfg->data.local_answer) > 0) {
+        if(strlen(cfg->data.local_answer) > 0) {
           writeFile(cfg->data.local_answer, cfg->line_data.fd);
         }
-        if(strlen((char *)cfg->data.remote_answer) > 0) {
+        if(strlen(cfg->data.remote_answer) > 0) {
           writeFile(cfg->data.remote_answer, cfg->line_data.fd);
         }
       }
@@ -333,7 +364,10 @@ void *run_bridge(void *arg) {
         timer.tv_usec = 0;
         ptimer = &timer;
       }
-    } else if(cfg->cmd_mode == TRUE && cfg->conn_type== MDM_CONN_NONE && cfg->line_data.valid_conn == TRUE) {
+    } else if(cfg->cmd_mode == TRUE
+              && cfg->conn_type == MDM_CONN_NONE
+              && cfg->line_data.valid_conn == TRUE
+             ) {
         LOG(LOG_ALL, "Setting timer for rings");
         timer.tv_sec = 4;
         timer.tv_usec = 0;
@@ -346,15 +380,18 @@ void *run_bridge(void *arg) {
       // handle error
     } else if(rc == 0) {
       // timer popped.
-      if(cfg->cmd_mode == TRUE && cfg->conn_type == MDM_CONN_NONE && cfg->line_data.valid_conn == TRUE) {
-        if(cfg->s[0] == 0 && cfg->rings == 10) {
+      if(cfg->cmd_mode == TRUE
+         && cfg->conn_type == MDM_CONN_NONE
+         && cfg->line_data.valid_conn == TRUE
+        ) {
+        if(cfg->s[0] == 0 && cfg->rings == 10) { // TODO should be configurable number of rings
           // not going to answer, send some data back to IP and disconnect.
-          if(strlen((char *)cfg->data.no_answer) == 0) {
-            line_write(&cfg->line_data, (unsigned char *)MDM_NO_ANSWER, strlen((char *)MDM_NO_ANSWER));
+          if(strlen(cfg->data.no_answer) == 0) {
+            line_write(&cfg->line_data, (unsigned char *)MDM_NO_ANSWER, strlen(MDM_NO_ANSWER));
           } else {
             writeFile(cfg->data.no_answer, cfg->line_data.fd);
           }
-          mdm_disconnect(cfg);
+          disconnect(cfg);
         } else
           mdm_send_ring(cfg);
       } else 
@@ -367,7 +404,7 @@ void *run_bridge(void *arg) {
         if(cfg->conn_type == MDM_CONN_NONE && cfg->off_hook == TRUE) {
           // this handles the case where atdt goes off hook, but no
           // connection
-          mdm_disconnect(cfg);
+          disconnect(cfg);
           mdm_send_response(MDM_RESP_OK, cfg);
         } else {
           mdm_parse_data(cfg, buf, res);
@@ -381,7 +418,8 @@ void *run_bridge(void *arg) {
         case MSG_DTR_DOWN:
           // DTR drop, close any active connection and put
           // in cmd_mode
-          mdm_disconnect(cfg);
+          disconnect(cfg);
+          // When remote side disconnects, is there a msg to local side?
           break;
         case MSG_DTR_UP:
           break;

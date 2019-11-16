@@ -98,6 +98,7 @@ typedef struct modem_config {
   int invert_dsr;
   int invert_dcd;
   int allow_transmit;
+  int binary_negotiated;
   int rings;
   // command information
   int pre_break_delay;
@@ -110,8 +111,8 @@ typedef struct modem_config {
   // dailing information
   char dialno[256];
   char last_dialno[256];
-  unsigned char dial_type;
-  unsigned char last_dial_type;
+  char dial_type;
+  char last_dial_type;
   int memory_dial;
   // modem config
   int connect_response;
@@ -122,7 +123,7 @@ typedef struct modem_config {
   int s[100];
   int break_len;
   int disconnect_delay;
-  unsigned char crlf[3];
+  char crlf[3];
 } modem_config;
 
 void mdm_init(void);
