@@ -5,6 +5,7 @@
 #include "bridge.h"
 #include "line.h"
 
+
 void reset_config(line_config *cfg) {
   cfg->fd = -1;
   cfg->is_telnet = FALSE;
@@ -83,6 +84,15 @@ int line_connect(line_config *cfg, char *addy) {
   if(cfg->fd > -1) {
     LOG(LOG_ALL, "Connected to %s", addy);
     cfg->valid_conn = TRUE;
+
+    /* If space parity is detected treat it as 8 bit and try to enable binary mode */
+    // TODO add this in.  Not sure how
+    //if (!cfg->parity) {
+    //  send_nvt_command(cfg->line_data.fd, &cfg->line_data.nvt_data,
+		//       NVT_WILL, NVT_OPT_TRANSMIT_BINARY);
+    //  send_nvt_command(cfg->line_data.fd, &cfg->line_data.nvt_data,
+		//       NVT_DO, NVT_OPT_TRANSMIT_BINARY);
+    //}
     return 0;
   } else {
     LOG(LOG_ALL, "Could not connect to %s",addy);
