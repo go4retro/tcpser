@@ -74,11 +74,16 @@ int parse_ip_data(modem_config *cfg, unsigned char *data, int len) {
             /// again, overflow issues...
             LOG(LOG_INFO, "Parsing nvt command");
             parse_nvt_command(&cfg->dce_data, cfg->line_data.fd, &cfg->line_data.nvt_data, ch, data[i + 2]);
-            i+=3;
+            i += 3;
             break;
           case NVT_SB:      // sub negotiation
             // again, overflow...
-            i += parse_nvt_subcommand(&cfg->dce_data, cfg->line_data.fd, &cfg->line_data.nvt_data, data + i, len - i);
+            i += parse_nvt_subcommand(&cfg->dce_data, 
+                                      cfg->line_data.fd, 
+                                      &cfg->line_data.nvt_data, 
+                                      data + i, 
+                                      len - i
+                                     );
             break;
           case NVT_IAC:
             if (cfg->line_data.nvt_data.binary_recv)
@@ -266,7 +271,7 @@ void *run_bridge(void *arg) {
     if(strlen((char *)cfg->data.direct_conn_num) > 0 &&
        cfg->data.direct_conn_num[0] != ':') {
         // we have a direct number to connect to.
-      strncpy((char *)cfg->dialno, (char *)cfg->data.direct_conn_num, sizeof(cfg->dialno));
+      strncpy(cfg->dialno, cfg->data.direct_conn_num, sizeof(cfg->dialno));
       if(0 != line_connect(&cfg->line_data, cfg->dialno)) {
         LOG(LOG_FATAL, "Cannot connect to Direct line address!");
         // probably should exit...
@@ -283,17 +288,17 @@ void *run_bridge(void *arg) {
       //writePipe(cfg->data.mp[0][1],MSG_NOTIFY);
       writePipe(cfg->data.cp[1][1], MSG_NOTIFY);
       if(cfg->conn_type == MDM_CONN_OUTGOING) {
-        if(strlen((char *)cfg->data.local_connect) > 0) {
+        if(strlen(cfg->data.local_connect) > 0) {
           writeFile(cfg->data.local_connect, cfg->line_data.fd);
         }
-        if(strlen((char *)cfg->data.remote_connect) > 0) {
+        if(strlen(cfg->data.remote_connect) > 0) {
           writeFile(cfg->data.remote_connect, cfg->line_data.fd);
         }
       } else if(cfg->conn_type == MDM_CONN_INCOMING) {
-        if(strlen((char *)cfg->data.local_answer) > 0) {
+        if(strlen(cfg->data.local_answer) > 0) {
           writeFile(cfg->data.local_answer, cfg->line_data.fd);
         }
-        if(strlen((char *)cfg->data.remote_answer) > 0) {
+        if(strlen(cfg->data.remote_answer) > 0) {
           writeFile(cfg->data.remote_answer, cfg->line_data.fd);
         }
       }
@@ -349,8 +354,8 @@ void *run_bridge(void *arg) {
       if(cfg->cmd_mode == TRUE && cfg->conn_type == MDM_CONN_NONE && cfg->line_data.valid_conn == TRUE) {
         if(cfg->s[0] == 0 && cfg->rings == 10) {
           // not going to answer, send some data back to IP and disconnect.
-          if(strlen((char *)cfg->data.no_answer) == 0) {
-            line_write(&cfg->line_data, (unsigned char *)MDM_NO_ANSWER, strlen((char *)MDM_NO_ANSWER));
+          if(strlen(cfg->data.no_answer) == 0) {
+            line_write(&cfg->line_data, (unsigned char *)MDM_NO_ANSWER, strlen(MDM_NO_ANSWER));
           } else {
             writeFile(cfg->data.no_answer, cfg->line_data.fd);
           }

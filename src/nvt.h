@@ -47,7 +47,7 @@ typedef enum {
 typedef struct nvt_vars {
   int binary_xmit;
   int binary_recv;
-  unsigned char term[256];
+  char term[256];
 } nvt_vars;
 
 void nvt_init_config(nvt_vars *vars);

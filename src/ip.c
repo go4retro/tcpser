@@ -97,7 +97,7 @@ int ip_connect(char addy[]) {
   memset(&pin, 0, sizeof(pin));
 
   /* go find out about the desired host machine */
-  if ((hp = gethostbyname(address)) == 0) {
+  if((hp = gethostbyname(address)) == 0) {
     // well, not a DNS entry... Treat as IP...
     if(1 != inet_aton(address, &cin_addr)) {
       ELOG(LOG_ERROR, "Host %s was invalid", addy);
