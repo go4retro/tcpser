@@ -1,5 +1,6 @@
 #include <termios.h>
 #include <sys/ioctl.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "debug.h"
@@ -7,6 +8,21 @@
 #include "modem_core.h"
 #include "ip232.h"      // needs modem_core.h
 #include "dce.h"
+
+int detect_parity (int charA, int charT) {
+  int parity, eobits;
+
+  parity = ((charA >> 6) & 2)  | (charT >> 7);
+  eobits = gen_parity(charA & 0x7f) << 1 | gen_parity(charT & 0x7f);
+
+  if((parity == 1) || (parity == 2)) {
+    if(parity == eobits)
+      return PARITY_EVEN;
+    else
+      return PARITY_ODD;
+  } else
+      return parity;
+}
 
 void dce_init_config(dce_config *cfg) {
 }
@@ -120,15 +136,96 @@ int dce_check_control_lines(dce_config *cfg) {
 }
 
 int dce_write(dce_config *cfg, unsigned char data[], int len) {
+  unsigned char *buf;
+  int rc;
+  int i;
+
+  log_trace(TRACE_SERIAL_OUT, data, len);
   if (cfg->is_ip232) {
     return ip232_write(cfg, data, len);
+  } else if(cfg->parity) {
+    buf = malloc(len);  // TODO what if malloc fails?
+    memcpy(buf, data, len);
+
+    for (i = 0; i < len; i++) {
+      buf[i] = apply_parity(data[i], cfg->parity);
+    }
+  } else {
+    buf = data;
   }
-  return ser_write(cfg->fd, data, len);
+  rc = ser_write(cfg->fd, buf, len);
+  if(cfg->parity)
+    free(buf);
+  return rc;
+}
+
+int dce_write_char_raw(dce_config *cfg, unsigned char data) {
+  int rc;
+
+  if (cfg->is_ip232) {
+    rc = ip232_write(cfg, &data, 1);
+  } else {
+    rc = ser_write(cfg->fd, &data, 1);
+  }
+  data &= 0x7f;
+  log_trace(TRACE_SERIAL_OUT, &data, 1);
+  return rc;
 }
 
 int dce_read(dce_config *cfg, unsigned char data[], int len) {
+  int res;
+  int i;
+
   if (cfg->is_ip232) {
-    return ip232_read(cfg, data, len);
+    res = ip232_read(cfg, data, len);
+  } else {
+    res = ser_read(cfg->fd, data, len);
   }
-  return ser_read(cfg->fd, data, len);
+  LOG(LOG_DEBUG, "Read %d bytes from serial port", res);
+  if(-1 < res) {
+    if(cfg->parity) {
+      for (i = 0; i < res; i++) {
+        data[i] &= 0x7f;  // strip parity from returned data
+      }
+    }
+    log_trace(TRACE_SERIAL_OUT, data, res);
+  }
+  return res;
 }
+
+int dce_read_char_raw(dce_config *cfg) {
+  int res;
+  unsigned char data[1];
+  unsigned char parity = 0;
+
+  if (cfg->is_ip232) {
+    res = ip232_read(cfg, data, 1);
+  } else {
+    res = ser_read(cfg->fd, data, 1);
+  }
+  LOG(LOG_DEBUG, "Read %d raw bytes from serial port", res);
+  if(-1 < res) {
+    printf("Parity = %d\n", cfg->parity);
+    if(cfg->parity) {
+      parity = data[0] & 0x80;
+      data[0] &= 0x7f;
+    }
+    log_trace(TRACE_SERIAL_IN, data, 1);
+    if(cfg->parity)
+      data[0] |= parity;  // put parity back on
+  }
+  return (int)data[0];
+}
+
+void dce_detect_parity(dce_config *cfg, unsigned char a, unsigned char t) {
+  cfg->parity = detect_parity(a, t);
+}
+
+int dce_strip_parity(dce_config *cfg, unsigned char data) {
+  return (cfg->parity ? data & 0x7f : data);
+}
+
+int dce_is_parity(dce_config *cfg) {
+  return cfg->parity;
+}
+

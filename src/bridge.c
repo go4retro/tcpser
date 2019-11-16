@@ -73,7 +73,7 @@ int parse_ip_data(modem_config *cfg, unsigned char *data, int len) {
           case NVT_DONT:
             /// again, overflow issues...
             LOG(LOG_INFO, "Parsing nvt command");
-            parse_nvt_command(cfg->line_data.fd, &cfg->line_data.nvt_data, ch, data[i + 2]);
+            parse_nvt_command(&cfg->dce_data, cfg->line_data.fd, &cfg->line_data.nvt_data, ch, data[i + 2]);
             i+=3;
             break;
           case NVT_SB:      // sub negotiation
@@ -362,8 +362,7 @@ void *run_bridge(void *arg) {
     }
     if (FD_ISSET(cfg->dce_data.fd, &readfs)) {  // serial port
       LOG(LOG_DEBUG, "Data available on serial port");
-      res = dce_read(&cfg->dce_data, buf, sizeof(buf));
-      LOG(LOG_DEBUG, "Read %d bytes from serial port", res);
+      res = mdm_read(cfg, buf, sizeof(buf));
       if(res > 0) {
         if(cfg->conn_type == MDM_CONN_NONE && cfg->off_hook == TRUE) {
           // this handles the case where atdt goes off hook, but no
@@ -373,8 +372,7 @@ void *run_bridge(void *arg) {
         } else {
           mdm_parse_data(cfg, buf, res);
         }
-      }
-    }
+      }    }
     if (FD_ISSET(cfg->data.wp[0][0], &readfs)) {  // control pipe
       res = read(cfg->data.wp[0][0], buf, sizeof(buf) - 1);
       buf[res] = 0;

@@ -1,6 +1,5 @@
 #include <string.h>
 
-#include "modem_core.h"
 #include "debug.h"
 #include "ip.h"
 #include "modem_core.h"
@@ -123,7 +122,7 @@ int send_nvt_command(int fd, nvt_vars *vars, nvt_command action, nvt_option opt)
   return 0;
 }
 
-int parse_nvt_command(int fd, nvt_vars *vars, nvt_command action, nvt_option opt) {
+int parse_nvt_command(dce_config *cfg, int fd, nvt_vars *vars, nvt_command action, nvt_option opt) {
   unsigned char resp[3];
   int accept = FALSE;
 
@@ -134,9 +133,11 @@ int parse_nvt_command(int fd, nvt_vars *vars, nvt_command action, nvt_option opt
     case NVT_OPT_TRANSMIT_BINARY :
       switch (action) {
         case NVT_DO:
-          LOG(LOG_INFO, "Enabling telnet binary xmit");
-          vars->binary_xmit = TRUE;
-          accept = TRUE;
+          if(!dce_is_parity(cfg)) {
+            LOG(LOG_INFO, "Enabling telnet binary xmit");
+            vars->binary_xmit = TRUE;
+            accept = TRUE;
+          }
           break;
         case NVT_DONT:
           LOG(LOG_INFO, "Disabling telnet binary xmit");
@@ -144,9 +145,11 @@ int parse_nvt_command(int fd, nvt_vars *vars, nvt_command action, nvt_option opt
           accept = TRUE;
           break;
         case NVT_WILL:
-          LOG(LOG_INFO, "Enabling telnet binary recv");
-          vars->binary_recv = TRUE;
-          accept = TRUE;
+          if(!dce_is_parity(cfg)) {
+            LOG(LOG_INFO, "Enabling telnet binary recv");
+            vars->binary_recv = TRUE;
+            accept = TRUE;
+          }
           break;
         case NVT_WONT:
           LOG(LOG_INFO, "Disabling telnet binary recv");

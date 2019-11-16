@@ -11,10 +11,12 @@
 #define LOG_FATAL 1
 #define LOG_NONE 0
 
-#define TRACE_MODEM_IN 1
-#define TRACE_MODEM_OUT 2
-#define TRACE_IP_IN 4
-#define TRACE_IP_OUT 8
+#define TRACE_MODEM_IN    1
+#define TRACE_MODEM_OUT   2
+#define TRACE_SERIAL_IN   4
+#define TRACE_SERIAL_OUT  8
+#define TRACE_IP_IN       16
+#define TRACE_IP_OUT      32
 
 #include <stdio.h>   // needed for strerror
 #include <string.h>  // needed for strerror

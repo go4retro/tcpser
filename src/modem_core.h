@@ -101,7 +101,7 @@ typedef struct modem_config {
   int rings;
   // command information
   int pre_break_delay;
-  int found_a;
+  unsigned char first_ch;
   int cmd_started;
   int cmd_mode;
   char last_cmd[1024];
@@ -132,7 +132,7 @@ int get_new_dsr_state(modem_config *cfg, int up);
 int get_new_dcd_state(modem_config *cfg, int up);
 int mdm_set_control_lines(modem_config *cfg);
 void mdm_write_char(modem_config *cfg, unsigned char data);
-void mdm_write(modem_config *cfg, unsigned char data[], int len);
+void mdm_write(modem_config *cfg, unsigned char *data, int len);
 void mdm_send_response(int msg, modem_config *cfg);
 int mdm_off_hook(modem_config *cfg);
 int mdm_answer(modem_config *cfg);
@@ -143,9 +143,10 @@ int mdm_disconnect(modem_config *cfg);
 int mdm_parse_cmd(modem_config *cfg);
 int mdm_handle_char(modem_config *cfg, unsigned char ch);
 int mdm_clear_break(modem_config *cfg);
-int mdm_parse_data(modem_config *cfg,unsigned char *data, int len);
+int mdm_parse_data(modem_config *cfg, unsigned char *data, int len);
 int mdm_handle_timeout(modem_config *cfg);
 int mdm_send_ring(modem_config *cfg);
+int mdm_read(modem_config *cfg, unsigned char *data, int len);
 
 #include "line.h"
 #include "shared.h"

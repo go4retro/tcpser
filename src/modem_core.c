@@ -104,7 +104,7 @@ void mdm_init_config(modem_config *cfg) {
   cfg->dsr_active = FALSE;
   cfg->dsr_on = TRUE;
   cfg->dcd_on = FALSE;
-  cfg->found_a = FALSE;
+  cfg->first_ch = 0;
   cfg->cmd_started = FALSE;
   cfg->allow_transmit = TRUE;
   cfg->invert_dsr = FALSE;
@@ -163,7 +163,7 @@ int mdm_set_control_lines(modem_config *cfg) {
 }
 
 void mdm_write_char(modem_config *cfg, unsigned char data) {
-  unsigned char str[2];
+  unsigned char str[1];
 
   str[0] = data;
   mdm_write(cfg, str, 1);
@@ -334,7 +334,7 @@ int mdm_parse_cmd(modem_config* cfg) {
         break;
       case 'D':
         if(end > start) {
-          strncpy((char *)cfg->dialno, (char *)command+start, end - start);
+          strncpy(cfg->dialno, (char *)command + start, end - start);
           cfg->dialno[end - start] = '\0';
           cfg->dial_type = (unsigned char)num;
           cfg->last_dial_type = (unsigned char)num;
@@ -343,7 +343,7 @@ int mdm_parse_cmd(modem_config* cfg) {
           cfg->memory_dial = FALSE;
         } else if (num == 'L') {
           strncpy(cfg->dialno, cfg->last_dialno, strlen(cfg->last_dialno));
-          cfg->dial_type = cfg->dial_type;
+          cfg->dial_type = cfg->last_dial_type;
           cfg->memory_dial = TRUE;
           mdm_write(cfg, cfg->crlf, 2);
           mdm_write(cfg, (unsigned char *)cfg->dialno, strlen(cfg->dialno));
@@ -516,12 +516,13 @@ int mdm_parse_cmd(modem_config* cfg) {
   return cmd;
 }
 
-
 int mdm_handle_char(modem_config *cfg, unsigned char ch) {
+  char ch_raw = ch & 0x7f;
+
   if(cfg->echo == TRUE)
-    mdm_write_char(cfg, ch);
-  if(cfg->cmd_started == TRUE) {
-    if(ch == (unsigned char)(cfg->s[S_REG_BS])) {
+    dce_write_char_raw(&cfg->dce_data, ch);
+  if(cfg->cmd_started == TRUE) { // we previously got an 'AT'
+    if(ch_raw == (cfg->s[S_REG_BS])) {
       if(cfg->cur_line_idx == 0 && cfg->echo == TRUE) {
         mdm_write_char(cfg, 'T');
       } else {
@@ -532,27 +533,29 @@ int mdm_handle_char(modem_config *cfg, unsigned char ch) {
       cfg->cur_line[cfg->cur_line_idx] = 0;
       strncpy((char *)cfg->last_cmd, (char *)cfg->cur_line, sizeof(cfg->last_cmd) - 1);
       mdm_parse_cmd(cfg);
-      cfg->found_a = FALSE;
+      cfg->first_ch = 0;
       cfg->cmd_started = FALSE;
     } else {
-      cfg->cur_line[cfg->cur_line_idx++ % sizeof(cfg->cur_line)] = ch;
+      cfg->cur_line[cfg->cur_line_idx++ % sizeof(cfg->cur_line)] = ch_raw;
     }
-  } else if(cfg->found_a == TRUE) {
-    if(ch == 't' || ch == 'T') {
+  } else if(cfg->first_ch) { // we already got our first char
+    // if we received a 't' and the case of both chars is the same, start
+    if(((ch_raw & 0x5f) == 'T') && ((cfg->first_ch & 0x20) == (ch_raw & 0x20))) {
       cfg->cmd_started = TRUE;
+      dce_detect_parity(&cfg->dce_data, cfg->first_ch, ch);
       LOG(LOG_ALL,"'T' parsed in serial stream, switching to command parse mode");
-    } else if(ch == '/') {
+    } else if(ch_raw == '/') {
       LOG(LOG_ALL,"'/' parsed in the serial stream, replaying last command");
-      cfg->cur_line_idx = strlen((char *)cfg->last_cmd);
-      strncpy((char *)cfg->cur_line, (char *)cfg->last_cmd, cfg->cur_line_idx);
+      cfg->cur_line_idx = strlen(cfg->last_cmd);
+      strncpy(cfg->cur_line, cfg->last_cmd, cfg->cur_line_idx);
       mdm_parse_cmd(cfg);
       cfg->cmd_started = FALSE;
-    } else if(ch != 'a' && ch != 'A') {
-      cfg->found_a = FALSE;
+    } else if((ch_raw & 0x5f) != 'A') {
+      cfg->first_ch = 0;
     }
-  } else if(ch == 'a' || ch == 'A') {
+  } else if((ch_raw & 0x5f) == 'A') {
     LOG(LOG_ALL, "'A' parsed in serial stream");
-    cfg->found_a = TRUE;
+    cfg->first_ch = ch;
   }
   return 0;
 }
@@ -560,35 +563,6 @@ int mdm_handle_char(modem_config *cfg, unsigned char ch) {
 int mdm_clear_break(modem_config* cfg) {
   cfg->break_len = 0;
   cfg->pre_break_delay = FALSE;
-  return 0;
-}
-
-int mdm_parse_data(modem_config *cfg, unsigned char *data, int len) {
-  int i;
-
-  if(cfg->cmd_mode == TRUE) {
-    for(i = 0; i < len; i++) {
-      mdm_handle_char(cfg, data[i]);
-    }
-  } else {
-    line_write(&cfg->line_data, data, len);
-    if(cfg->pre_break_delay == TRUE) {
-      for(i = 0; i < len; i++) {
-        if(data[i] == (unsigned char)cfg->s[S_REG_BREAK]) {
-          LOG(LOG_DEBUG, "Break character received");
-          cfg->break_len++;
-          if(cfg->break_len > 3) {  // more than 3, considered invalid
-            cfg->pre_break_delay = FALSE;
-            cfg->break_len = 0;
-          }
-        } else {
-          LOG(LOG_ALL, "Found non-break character, cancelling break");
-          // chars past +++
-          mdm_clear_break(cfg);
-        }
-      }
-    }
-  }
   return 0;
 }
 
@@ -624,4 +598,49 @@ int mdm_send_ring(modem_config *cfg) {
     mdm_answer(cfg);
   }
   return 0;
+}
+
+int mdm_parse_data(modem_config *cfg, unsigned char *data, int len) {
+  int i;
+
+  if(cfg->cmd_mode == TRUE) {
+    for(i = 0; i < len; i++) {
+      mdm_handle_char(cfg, data[i]);
+    }
+  } else {
+    line_write(&cfg->line_data, data, len);
+    if(cfg->pre_break_delay == TRUE) {
+      for(i = 0; i < len; i++) {
+        if(dce_strip_parity(&cfg->dce_data, data[i])  == (unsigned char)cfg->s[S_REG_BREAK]) {
+          LOG(LOG_DEBUG, "Break character received");
+          cfg->break_len++;
+          if(cfg->break_len > 3) {  // more than 3, considered invalid
+            cfg->pre_break_delay = FALSE;
+            cfg->break_len = 0;
+          }
+        } else {
+          LOG(LOG_ALL, "Found non-break character, cancelling break");
+          // chars past +++
+          mdm_clear_break(cfg);
+        }
+      }
+    }
+  }
+  return 0;
+}
+
+int mdm_read(modem_config *cfg, unsigned char *data, int len) {
+  int res;
+
+  if(cfg->cmd_mode == TRUE) {
+    // read one char in raw mode
+    res = dce_read_char_raw(&cfg->dce_data);
+    if(res > 0) { // we have a character
+      data[0] = (unsigned char)res; // fixup
+      res = 1;
+    }
+  } else {
+    res = dce_read(&cfg->dce_data, data, sizeof(data));
+  }
+  return res;
 }

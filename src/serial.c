@@ -173,7 +173,7 @@ int ser_write(int fd, unsigned char* data, int len) {
 int ser_read(int fd, unsigned char* data, int len) {
   int res;
 
-  res=read(fd, data, len);
+  res = read(fd, data, len);
   log_trace(TRACE_MODEM_IN, data, res);
   return res;
 }

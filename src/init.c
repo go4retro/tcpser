@@ -12,8 +12,10 @@ void print_help(char* name) {
   fprintf(stderr, "  -p  ip_address:port to specify which ip address and port to listen on.\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  -t   trace flags: (can be combined)\n");
-  fprintf(stderr, "       's' = modem input\n");
-  fprintf(stderr, "       'S' = modem output\n");
+  fprintf(stderr, "       'm' = modem input\n");
+  fprintf(stderr, "       'M' = modem output\n");
+  fprintf(stderr, "       's' = serial input\n");
+  fprintf(stderr, "       'S' = serial output\n");
   fprintf(stderr, "       'i' = IP input\n");
   fprintf(stderr, "       'I' = IP output\n");
   fprintf(stderr, "  -l   0 (NONE), 1 (FATAL) - 7 (DEBUG_X) (defaults to 0)\n");
@@ -70,11 +72,17 @@ int init(int argc,
         trace_flags = log_get_trace_flags();
         for(j = 0; j < strlen(optarg); j++) {
           switch(optarg[j]) {
-            case 's':
+            case 'm':
               trace_flags |= TRACE_MODEM_IN;
               break;
-            case 'S':
+            case 'M':
               trace_flags |= TRACE_MODEM_OUT;
+              break;
+            case 's':
+              trace_flags |= TRACE_SERIAL_IN;
+              break;
+            case 'S':
+              trace_flags |= TRACE_SERIAL_OUT;
               break;
             case 'i':
               trace_flags |= TRACE_IP_IN;
