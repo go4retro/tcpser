@@ -41,7 +41,7 @@ void *ip232_thread(void *arg) {
       // handle error
     } else {
       if (FD_ISSET(cfg->dp[1][0], &readfs)) {  // pipe
-        read(cfg->dp[1][0], buf, sizeof(buf) - 1);
+        rc = readPipe(cfg->dp[1][0], buf, sizeof(buf) - 1);
         LOG(LOG_DEBUG, "ip232 thread notified");
         accept_pending = FALSE;
       }

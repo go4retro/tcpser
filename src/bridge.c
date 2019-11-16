@@ -200,7 +200,7 @@ void *ip_thread(void *arg) {
       }
       if (FD_ISSET(cfg->cp[1][0], &readfs)) {  // pipe
 
-        read(cfg->cp[1][0], buf, sizeof(buf) - 1);
+        res = readPipe(cfg->cp[1][0], buf, sizeof(buf) - 1);
         LOG(LOG_DEBUG, "IP thread notified");
         action_pending = FALSE;
       }
@@ -430,7 +430,7 @@ void *run_bridge(void *arg) {
         }
       }    }
     if (FD_ISSET(cfg->wp[0][0], &readfs)) {  // control pipe
-      res = read(cfg->wp[0][0], buf, sizeof(buf) - 1);
+      res = readPipe(cfg->wp[0][0], buf, sizeof(buf) - 1);
       buf[res] = 0;
       LOG(LOG_DEBUG, "Received %c from Control line watch task", buf[0]);
       switch (buf[0]) {

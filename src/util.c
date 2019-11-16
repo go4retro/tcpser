@@ -15,17 +15,23 @@ int writePipe(int fd, char msg) {
   return write(fd, tmp, 2);
 }
 
+int readPipe(int fd, unsigned char *buf, int len) {
+  return read(fd, buf, len);
+}
+
 int writeFile(char *name, int fd) {
   FILE *file;
   unsigned char buf[255];
-  size_t len;
+  size_t res;
   size_t size = 1;
-  size_t max = 255;
+  size_t max = sizeof(buf);
 
   if(NULL != (file = fopen(name, "rb"))) {
-    while(0 < (len = fread(buf, size, max, file))) {
-      write(fd, buf, len);
-    }
+    do {
+      res = fread(buf, size, max, file);
+      if(res > 0)
+        res = write(fd, buf, res);
+    } while (res > 0);
     fclose(file);
     return 0;
   }
