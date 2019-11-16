@@ -95,25 +95,25 @@ int init(int argc,
         }
         break;
       case 'a':
-        strncpy(cfg[i].data.local_answer, optarg, sizeof(cfg[i].data.local_answer));
+        strncpy(cfg[i].local_answer, optarg, sizeof(cfg[i].local_answer));
         break;
       case 'A':
-        strncpy(cfg[i].data.remote_answer, optarg, sizeof(cfg[i].data.remote_answer));
+        strncpy(cfg[i].remote_answer, optarg, sizeof(cfg[i].remote_answer));
         break;
       case 'c':
-        strncpy(cfg[i].data.local_connect, optarg, sizeof(cfg[i].data.local_connect));
+        strncpy(cfg[i].local_connect, optarg, sizeof(cfg[i].local_connect));
         break;
       case 'C':
-        strncpy(cfg[i].data.remote_connect, optarg, sizeof(cfg[i].data.remote_connect));
+        strncpy(cfg[i].remote_connect, optarg, sizeof(cfg[i].remote_connect));
         break;
       case 'B':
         strncpy(all_busy, optarg, all_busy_len);
         break;
       case 'N':
-        strncpy(cfg[i].data.no_answer, optarg, sizeof(cfg[i].data.no_answer));
+        strncpy(cfg[i].no_answer, optarg, sizeof(cfg[i].no_answer));
         break;
       case 'T':
-        strncpy(cfg[i].data.inactive, optarg, sizeof(cfg[i].data.inactive));
+        strncpy(cfg[i].inactive, optarg, sizeof(cfg[i].inactive));
         break;
       case 'i':
         strncpy(cfg[i].config0, optarg, 255);
@@ -160,12 +160,12 @@ int init(int argc,
             cfg[i].line_speed = cfg[i - 1].line_speed;
             cfg[i].dce_data.is_ip232 = FALSE;
             strncpy((char *)cfg[i].config0, (char *)cfg[i - 1].config0, sizeof(cfg[i].config0));
-            strncpy((char *)cfg[i].data.local_connect, (char *)cfg[i - 1].data.local_connect, sizeof(cfg[i].data.local_connect));
-            strncpy((char *)cfg[i].data.remote_connect, (char *)cfg[i - 1].data.remote_connect, sizeof(cfg[i].data.remote_connect));
-            strncpy((char *)cfg[i].data.local_answer, (char *)cfg[i - 1].data.local_answer, sizeof(cfg[i].data.local_answer));
-            strncpy((char *)cfg[i].data.remote_answer, (char *)cfg[i - 1].data.remote_answer, sizeof(cfg[i].data.remote_answer));
-            strncpy((char *)cfg[i].data.no_answer, (char *)cfg[i - 1].data.no_answer, sizeof(cfg[i].data.no_answer));
-            strncpy((char *)cfg[i].data.inactive, (char *)cfg[i - 1].data.inactive, sizeof(cfg[i].data.inactive));
+            strncpy((char *)cfg[i].local_connect, (char *)cfg[i - 1].local_connect, sizeof(cfg[i].local_connect));
+            strncpy((char *)cfg[i].remote_connect, (char *)cfg[i - 1].remote_connect, sizeof(cfg[i].remote_connect));
+            strncpy((char *)cfg[i].local_answer, (char *)cfg[i - 1].local_answer, sizeof(cfg[i].local_answer));
+            strncpy((char *)cfg[i].remote_answer, (char *)cfg[i - 1].remote_answer, sizeof(cfg[i].remote_answer));
+            strncpy((char *)cfg[i].no_answer, (char *)cfg[i - 1].no_answer, sizeof(cfg[i].no_answer));
+            strncpy((char *)cfg[i].inactive, (char *)cfg[i - 1].inactive, sizeof(cfg[i].inactive));
           } else {
             LOG(LOG_WARN, "Maximum modems defined - ignoring extra");
             break;
@@ -180,8 +180,8 @@ int init(int argc,
         dce_set = TRUE;
         break;
       case 'D':
-        cfg[i].data.direct_conn = TRUE;
-        strncpy(cfg[i].data.direct_conn_num, optarg, sizeof(cfg[i].data.direct_conn_num));
+        cfg[i].direct_conn = TRUE;
+        strncpy(cfg[i].direct_conn_num, optarg, sizeof(cfg[i].direct_conn_num));
         break;
     }
   }

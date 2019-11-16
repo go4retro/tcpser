@@ -8,20 +8,31 @@
 int log_level = 0;
 FILE *log_file;
 int trace_flags = 0;
-char *trace_type[33];  // cheesy, but I can't think of another o(1) way
 char *log_desc[LOG_TRACE + 1];
 pthread_mutex_t log_mutex;
+
+char *get_trace_type(int type) {
+  switch(type) {
+  case TRACE_MODEM_IN:
+    return "RS<-";
+  case TRACE_MODEM_OUT:
+    return "RS->";
+  case TRACE_SERIAL_IN:
+    return "SR<-";
+  case TRACE_SERIAL_OUT:
+    return "SR->";
+  case TRACE_IP_IN:
+    return "IP<-";
+  case TRACE_IP_OUT:
+    return "IP->";
+  }
+  return "NONE";
+}
 
 int log_init() {
   log_file = stdout;
   log_level = 0;
   trace_flags = 0;
-  trace_type[TRACE_MODEM_IN] =    "RS<-";
-  trace_type[TRACE_MODEM_OUT] =   "RS->";
-  trace_type[TRACE_SERIAL_IN] =   "SR<-";
-  trace_type[TRACE_SERIAL_OUT] =  "SR->";
-  trace_type[TRACE_IP_IN] =       "IP<-";
-  trace_type[TRACE_IP_OUT] =      "IP->";
   log_desc[LOG_FATAL] =           "FATAL";
   log_desc[LOG_ERROR] =           "ERROR";
   log_desc[LOG_WARN] =            "WARN";
@@ -80,7 +91,7 @@ void log_trace(int type, unsigned char *line, int len) {
       }
       if((i % 16) == 15) {
         log_start(LOG_TRACE);
-        fprintf(log_file, "%s|%s|%s|", trace_type[type], data, text);
+        fprintf(log_file, "%s|%s|%s|", get_trace_type(type), data, text);
         log_end();
       } else {
         sprintf(dptr + 7 + ((i % 16) * 3), " ");
@@ -96,7 +107,7 @@ void log_trace(int type, unsigned char *line, int len) {
         text[i % 16] = ' ';
       }
       log_start(LOG_TRACE);
-      fprintf(log_file, "%s|%s|%s|", trace_type[type], data, text);
+      fprintf(log_file, "%s|%s|%s|", get_trace_type(type), data, text);
     }
     log_end();
   }

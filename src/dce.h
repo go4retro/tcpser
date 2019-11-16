@@ -33,7 +33,6 @@ typedef struct dce_config {
   int parity;
   int is_ip232;
   char tty[256];
-  int first_char;
   int fd;
   int dp[2][2];
   int sSocket;
@@ -44,7 +43,7 @@ typedef struct dce_config {
 } dce_config;
 
 void dce_init_config(dce_config *cfg);
-int dce_init_conn(dce_config *cfg);
+int dce_connect(dce_config *cfg);
 int dce_set_flow_control(dce_config *cfg, int opts);
 int dce_set_control_lines(dce_config *cfg, int state);
 int dce_get_control_lines(dce_config *cfg);

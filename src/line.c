@@ -9,8 +9,8 @@
 void reset_config(line_config *cfg) {
   cfg->fd = -1;
   cfg->is_telnet = FALSE;
-  cfg->first_char = TRUE;
-  cfg->valid_conn = FALSE;
+  cfg->is_data_received = FALSE;
+  cfg->is_connected = FALSE;
   nvt_init_config(&cfg->nvt_data);
 }
 
@@ -66,7 +66,7 @@ int line_accept(line_config *cfg) {
   cfg->fd = ip_accept(cfg->sfd);
   if(cfg->fd > -1) {
     LOG(LOG_ALL, "Connection accepted");
-    cfg->valid_conn = TRUE;
+    cfg->is_connected = TRUE;
     return 0;
   }
   LOG(LOG_ALL, "Could not accept connection");
@@ -83,16 +83,7 @@ int line_connect(line_config *cfg, char *addy) {
   cfg->fd = ip_connect(addy);
   if(cfg->fd > -1) {
     LOG(LOG_ALL, "Connected to %s", addy);
-    cfg->valid_conn = TRUE;
-
-    /* If space parity is detected treat it as 8 bit and try to enable binary mode */
-    // TODO add this in.  Not sure how
-    //if (!cfg->parity) {
-    //  send_nvt_command(cfg->line_data.fd, &cfg->line_data.nvt_data,
-		//       NVT_WILL, NVT_OPT_TRANSMIT_BINARY);
-    //  send_nvt_command(cfg->line_data.fd, &cfg->line_data.nvt_data,
-		//       NVT_DO, NVT_OPT_TRANSMIT_BINARY);
-    //}
+    cfg->is_connected = TRUE;
     return 0;
   } else {
     LOG(LOG_ALL, "Could not connect to %s",addy);
@@ -107,7 +98,7 @@ int line_disconnect(line_config *cfg, int direct_conn) {
     LOG(LOG_INFO, "Direct connection active, maintaining link");
     return -1;
   } else {
-    if(cfg->valid_conn == TRUE) {
+    if(cfg->is_connected == TRUE) {
       ip_disconnect(cfg->fd);
     }
     reset_config(cfg);

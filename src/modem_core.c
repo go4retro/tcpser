@@ -62,16 +62,24 @@ modem_response get_connect_response(int speed, int level) {
 
 void mdm_init_config(modem_config *cfg) {
   int i = 0;
+  cfg->local_connect[0] = 0;
+  cfg->remote_connect[0] = 0;
+  cfg->local_answer[0] = 0;
+  cfg->remote_answer[0] = 0;
+  cfg->no_answer[0] = 0;
+  cfg->inactive[0] = 0;
+  cfg->direct_conn = FALSE;
+  cfg->direct_conn_num[0] = 0;
 
   cfg->send_responses = TRUE;
   cfg->connect_response = 0;
   cfg->response_code_level = 4;
   cfg->text_responses = TRUE;
   cfg->echo = TRUE;
-  cfg->cmd_mode = TRUE;
+  cfg->is_cmd_mode = TRUE;
   cfg->conn_type = MDM_CONN_NONE;
-  cfg->off_hook = FALSE;
-  cfg->line_ringing = FALSE;
+  cfg->is_off_hook = FALSE;
+  cfg->is_ringing = FALSE;
   cfg->cur_line_idx = 0;
   //cfg->rings = 0;  // TODO should be initialized?
 
@@ -106,7 +114,7 @@ void mdm_init_config(modem_config *cfg) {
   cfg->dsr_on = TRUE;
   cfg->dcd_on = FALSE;
   cfg->first_ch = 0;
-  cfg->cmd_started = FALSE;
+  cfg->is_cmd_started = FALSE;
   cfg->allow_transmit = TRUE;
   cfg->invert_dsr = FALSE;
   cfg->invert_dcd = FALSE;
@@ -114,7 +122,6 @@ void mdm_init_config(modem_config *cfg) {
   cfg->config0[0] = '\0';
 
   dce_init_config(&cfg->dce_data);
-  sh_init_config(cfg);
   line_init_config(&cfg->line_data);
 }
 
@@ -196,14 +203,14 @@ void mdm_send_response(int msg, modem_config *cfg) {
 
 int mdm_off_hook(modem_config *cfg) {
   LOG(LOG_INFO, "taking modem off hook");
-  cfg->off_hook = TRUE;
-  cfg->cmd_mode = FALSE;
+  cfg->is_off_hook = TRUE;
+  cfg->is_cmd_mode = FALSE;
   line_off_hook(&cfg->line_data);
   return 0;
 }
 
 int mdm_answer(modem_config *cfg) {
-  if(cfg->line_ringing == TRUE) {
+  if(cfg->is_ringing == TRUE) {
     cfg->conn_type = MDM_CONN_INCOMING;
     mdm_off_hook(cfg);
     mdm_set_control_lines(cfg);
@@ -258,12 +265,12 @@ int mdm_disconnect(modem_config* cfg) {
 
   LOG_ENTER();
   LOG(LOG_INFO, "Disconnecting modem");
-  cfg->cmd_mode = TRUE;
-  cfg->off_hook = FALSE;
+  cfg->is_cmd_mode = TRUE;
+  cfg->is_off_hook = FALSE;
   cfg->break_len = 0;
-  cfg->line_ringing = FALSE;
+  cfg->is_ringing = FALSE;
   cfg->pre_break_delay = FALSE;
-  if(0 == line_disconnect(&cfg->line_data, cfg->data.direct_conn)) {
+  if(0 == line_disconnect(&cfg->line_data, cfg->direct_conn)) {
     type=cfg->conn_type;
     cfg->conn_type = MDM_CONN_NONE;
     mdm_set_control_lines(cfg);
@@ -313,7 +320,7 @@ int mdm_parse_cmd(modem_config* cfg) {
         done = TRUE;
         break;
       case AT_CMD_END:
-        if(cfg->cmd_mode == TRUE)
+        if(cfg->is_cmd_mode == TRUE)
           mdm_send_response(MDM_RESP_OK, cfg);
         done = TRUE;
         break;
@@ -544,7 +551,7 @@ int mdm_handle_char(modem_config *cfg, unsigned char ch) {
 
   if(cfg->echo == TRUE)
     dce_write_char_raw(&cfg->dce_data, ch);
-  if(cfg->cmd_started == TRUE) { // we previously got an 'AT'
+  if(cfg->is_cmd_started == TRUE) { // we previously got an 'AT'
     if(ch_raw == (cfg->s[S_REG_BS])) {
       if(cfg->cur_line_idx == 0 && cfg->echo == TRUE) {
         mdm_write_char(cfg, 'T');
@@ -558,14 +565,14 @@ int mdm_handle_char(modem_config *cfg, unsigned char ch) {
       strncpy(cfg->last_cmd, cfg->cur_line, sizeof(cfg->last_cmd) - 1);
       mdm_parse_cmd(cfg);
       cfg->first_ch = 0;
-      cfg->cmd_started = FALSE;
+      cfg->is_cmd_started = FALSE;
     } else {
       cfg->cur_line[cfg->cur_line_idx++ % sizeof(cfg->cur_line)] = ch_raw;
     }
   } else if(cfg->first_ch) { // we already got our first char
     // if we received a 't' and the case of both chars is the same, start
     if(((ch_raw & 0x5f) == 'T') && ((cfg->first_ch & 0x20) == (ch_raw & 0x20))) {
-      cfg->cmd_started = TRUE;
+      cfg->is_cmd_started = TRUE;
       dce_detect_parity(&cfg->dce_data, cfg->first_ch, ch);
       LOG(LOG_ALL,"'T' parsed in serial stream, switching to command parse mode");
     } else if(ch_raw == '/') {
@@ -573,7 +580,7 @@ int mdm_handle_char(modem_config *cfg, unsigned char ch) {
       cfg->cur_line_idx = strlen(cfg->last_cmd);
       strncpy(cfg->cur_line, cfg->last_cmd, cfg->cur_line_idx);
       mdm_parse_cmd(cfg);
-      cfg->cmd_started = FALSE;
+      cfg->is_cmd_started = FALSE;
     } else if((ch_raw & 0x5f) != 'A') {
       cfg->first_ch = 0;
     }
@@ -594,7 +601,7 @@ int mdm_handle_timeout(modem_config *cfg) {
   if(cfg->pre_break_delay == TRUE && cfg->break_len == 3) {
     // pre and post break.
     LOG(LOG_INFO, "Break condition detected");
-    cfg->cmd_mode = TRUE;
+    cfg->is_cmd_mode = TRUE;
     mdm_send_response(MDM_RESP_OK, cfg);
     mdm_clear_break(cfg);
   } else if(cfg->pre_break_delay == FALSE) {
@@ -614,11 +621,11 @@ int mdm_handle_timeout(modem_config *cfg) {
 
 int mdm_send_ring(modem_config *cfg) {
   LOG(LOG_DEBUG, "Sending 'RING' to modem");
-  cfg->line_ringing = TRUE;
+  cfg->is_ringing = TRUE;
   mdm_send_response(MDM_RESP_RING, cfg);
   cfg->rings++;
   LOG(LOG_ALL,"Sent #%d ring", cfg->rings);
-  if(cfg->cmd_mode == FALSE || (cfg->s[S_REG_RINGS] != 0 && cfg->rings >= cfg->s[S_REG_RINGS])) {
+  if(cfg->is_cmd_mode == FALSE || (cfg->s[S_REG_RINGS] != 0 && cfg->rings >= cfg->s[S_REG_RINGS])) {
     mdm_answer(cfg);
   }
   return 0;
@@ -627,7 +634,7 @@ int mdm_send_ring(modem_config *cfg) {
 int mdm_parse_data(modem_config *cfg, unsigned char *data, int len) {
   int i;
 
-  if(cfg->cmd_mode == TRUE) {
+  if(cfg->is_cmd_mode == TRUE) {
     for(i = 0; i < len; i++) {
       mdm_handle_char(cfg, data[i]);
     }
@@ -656,7 +663,7 @@ int mdm_parse_data(modem_config *cfg, unsigned char *data, int len) {
 int mdm_read(modem_config *cfg, unsigned char *data, int len) {
   int res;
 
-  if(cfg->cmd_mode == TRUE) {
+  if(cfg->is_cmd_mode == TRUE) {
     // read one char in raw mode
     res = dce_read_char_raw(&cfg->dce_data);
     if(res > 0) { // we have a character

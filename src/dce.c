@@ -28,7 +28,7 @@ int detect_parity (int charA, int charT) {
       return parity;
 }
 
-int dce_init_conn(dce_config *cfg) {
+int dce_connect(dce_config *cfg) {
   int rc;
 
   LOG_ENTER();

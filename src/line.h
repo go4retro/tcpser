@@ -4,11 +4,11 @@
 #include "nvt.h"
 
 typedef struct line_config {
-  int valid_conn;
   int fd;
   int sfd;
+  int is_connected;
   int is_telnet;
-  int first_char;
+  int is_data_received;
   nvt_vars nvt_data;
 } line_config;
 

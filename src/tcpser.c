@@ -52,15 +52,15 @@ int main(int argc, char *argv[]) {
   sSocket = ip_init_server_conn(ip_addr, port);
 
   for(i = 0; i < modem_count; i++) {
-    if( -1 == pipe(cfg[i].data.mp[0])) {
+    if( -1 == pipe(cfg[i].mp[0])) {
       ELOG(LOG_FATAL, "Bridge task incoming IPC pipe could not be created");
       exit(-1);
     }
-    if( -1 == pipe(cfg[i].data.mp[1])) {
+    if( -1 == pipe(cfg[i].mp[1])) {
       ELOG(LOG_FATAL, "Bridge task outgoing IPC pipe could not be created");
       exit(-1);
     }
-    if(dce_init_conn(&cfg[i].dce_data) < 0) {
+    if(dce_connect(&cfg[i].dce_data) < 0) {
       LOG(LOG_FATAL, "Could not open serial port %s",cfg->dce_data.tty);
       exit(-1);
     }
@@ -77,8 +77,8 @@ int main(int argc, char *argv[]) {
     FD_ZERO(&readfs);
     max_fd = 0;
     for(i = 0; i < modem_count; i++) {
-      FD_SET(cfg[i].data.mp[0][0], &readfs); 
-      max_fd=MAX(max_fd, cfg[i].data.mp[0][0]);
+      FD_SET(cfg[i].mp[0][0], &readfs);
+      max_fd=MAX(max_fd, cfg[i].mp[0][0]);
     }
     if(accept_pending == FALSE) {
       max_fd=MAX(max_fd, sSocket);
@@ -87,8 +87,8 @@ int main(int argc, char *argv[]) {
     LOG(LOG_ALL, "Waiting for incoming connections and/or indicators");
     select(max_fd+1, &readfs, NULL, NULL, NULL);
     for(i = 0; i < modem_count; i++) {
-      if (FD_ISSET(cfg[i].data.mp[0][0], &readfs)) {  // child pipe
-        res = read(cfg[i].data.mp[0][0], buf, sizeof(buf) -1);
+      if (FD_ISSET(cfg[i].mp[0][0], &readfs)) {  // child pipe
+        res = read(cfg[i].mp[0][0], buf, sizeof(buf) -1);
         if(res > -1) {
           buf[res] = 0;
           LOG(LOG_DEBUG, "modem core #%d sent response '%c'",i,buf[0]);
@@ -101,20 +101,20 @@ int main(int argc, char *argv[]) {
         LOG(LOG_DEBUG, "Incoming connection pending");
         // first try for a modem that is listening.
         for(i = 0; i < modem_count; i++) {
-          if(cfg[i].s[0] != 0 && cfg[i].off_hook == FALSE) {
+          if(cfg[i].s[0] != 0 && cfg[i].is_off_hook == FALSE) {
             // send signal to pipe saying pick up...
             LOG(LOG_DEBUG, "Sending incoming connection to listening modem #%d", i);
-            writePipe(cfg[i].data.mp[1][1], MSG_ACCEPT);  
+            writePipe(cfg[i].mp[1][1], MSG_ACCEPT);
             accept_pending = TRUE;
             break;
           }
         }
         // now, send to any non-active modem.
         for(i = 0; i < modem_count; i++) {
-          if(cfg[i].off_hook == FALSE) {
+          if(cfg[i].is_off_hook == FALSE) {
             // send signal to pipe saying pick up...
             LOG(LOG_DEBUG, "Sending incoming connection to non-connected modem #%d", i);
-            writePipe(cfg[i].data.mp[1][1], MSG_ACCEPT);  
+            writePipe(cfg[i].mp[1][1], MSG_ACCEPT);
             accept_pending = TRUE;
             break;
           }

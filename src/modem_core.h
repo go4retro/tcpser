@@ -51,17 +51,6 @@ typedef enum {
 #include "nvt.h"
 
 typedef struct x_config {
-  int mp[2][2];
-  int cp[2][2];
-  int wp[2][2];
-  char no_answer[256];
-  char local_connect[256];
-  char remote_connect[256];
-  char local_answer[256];
-  char remote_answer[256];
-  char inactive[256];
-  int direct_conn;
-  char direct_conn_num[256];
 } x_config;
 
 enum {
@@ -82,29 +71,39 @@ enum {
 
 typedef struct modem_config {
   // master configuration information
+  int mp[2][2];
+  int cp[2][2];
+  int wp[2][2];
+  char no_answer[256];
+  char local_connect[256];
+  char remote_connect[256];
+  char local_answer[256];
+  char remote_answer[256];
+  char inactive[256];
+  int direct_conn;
+  char direct_conn_num[256];
 
   // need to eventually change these
   dce_config dce_data;
   line_config line_data;
-  x_config data;
   char config0[1024];
   int line_speed;
   int conn_type;
-  int line_ringing;
-  int off_hook;
+  int is_ringing;
+  int is_off_hook;
   int dsr_active;
   int dsr_on;
   int dcd_on;
   int invert_dsr;
   int invert_dcd;
   int allow_transmit;
-  int binary_negotiated;
+  int is_binary_negotiated;
   int rings;
   // command information
   int pre_break_delay;
   unsigned char first_ch;
-  int cmd_started;
-  int cmd_mode;
+  int is_cmd_started;
+  int is_cmd_mode;
   char last_cmd[1024];
   char cur_line[1024];
   int cur_line_idx;
@@ -150,7 +149,6 @@ int mdm_send_ring(modem_config *cfg);
 int mdm_read(modem_config *cfg, unsigned char *data, int len);
 
 #include "line.h"
-#include "shared.h"
 #include "dce.h"
 
 #endif

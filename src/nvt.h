@@ -1,6 +1,8 @@
 #ifndef NVT_H
 #define NVT_H 1
 
+#include "dce.h"
+
 typedef enum {
   NVT_SE = 240,
   NVT_NOP = 241,
@@ -37,8 +39,6 @@ typedef enum {
 #define TRUE 1
 #define FALSE 0
 #endif
-
-#include "dce.h"
 
 typedef struct nvt_vars {
   int binary_xmit;
