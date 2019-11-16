@@ -16,7 +16,7 @@ $(SRCS):
 	$(CC) $(CFLAGS) -c $*.c
 
 tcpser: $(OBJS)
-	$(CC) -g -o $@ $(OBJS) $(LDFLAGS)
+	$(CC) $(OBJS) $(LDFLAGS) -g -o $@
 
 depend: $(SRCS)
 	$(DEPEND) $(SRCS)
