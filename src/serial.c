@@ -75,7 +75,7 @@ int ser_get_bps_const(int speed) {
 
 }
 
-int ser_init_conn(unsigned char *tty, int speed) {
+int ser_init_conn(char *tty, int speed) {
   int fd = -1;
   struct termios tio;
   int bps_rate = 0;
@@ -88,7 +88,7 @@ int ser_init_conn(unsigned char *tty, int speed) {
     /* open the device to be non-blocking (read will return immediatly) */
     LOG(LOG_INFO, "Opening serial device");
 
-    fd = open((char *)tty, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    fd = open(tty, O_RDWR | O_NOCTTY | O_NONBLOCK);
 
     if (fd <0) {
       ELOG(LOG_FATAL, "TTY %s could not be opened", tty); 
@@ -100,7 +100,7 @@ int ser_init_conn(unsigned char *tty, int speed) {
       fcntl(fd, F_SETFL, FASYNC);
 
       tio.c_cflag = CS8 | CLOCAL | CREAD | CRTSCTS;
-      tio.c_iflag = (IGNBRK);
+      tio.c_iflag = IGNBRK;
       tio.c_oflag = 0;
       tio.c_lflag = 0;
       cfsetispeed(&tio, bps_rate);

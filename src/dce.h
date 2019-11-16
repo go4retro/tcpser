@@ -32,7 +32,7 @@ typedef struct dce_config {
   int port_speed;
   int parity;
   int is_ip232;
-  unsigned char tty[256];
+  char tty[256];
   int first_char;
   int fd;
   int dp[2][2];

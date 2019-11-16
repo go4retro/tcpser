@@ -9,7 +9,7 @@ int log_level = 0;
 FILE *log_file;
 int trace_flags = 0;
 char *trace_type[9];  // cheesy, but I can't think of another o(1) way
-char *log_desc[LOG_TRACE+1];
+char *log_desc[LOG_TRACE + 1];
 pthread_mutex_t log_mutex;
 
 int log_init() {

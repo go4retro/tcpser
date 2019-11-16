@@ -77,7 +77,7 @@ int getNumber(char line[], int *index, int len) {
   return num;
 }
 
-int skip(char line[], int *index, int len, unsigned char ch) {
+int skip(char line[], int *index, int len, char ch) {
   while(*index < len && ch == line[*index])
     (*index)++;
   return 0;
@@ -161,7 +161,7 @@ int getcmd(char line[],
 
   if(line == NULL)
     return AT_CMD_NONE;
-  len = strlen((char *)line);
+  len = strlen(line);
   while(*index < len) {
     cmd = toupper(line[*index]);
     switch (cmd) {
