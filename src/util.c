@@ -4,15 +4,11 @@
 #include "util.h"
 
 int writePipe(int fd, char msg) {
-  char tmp[3];
+  char tmp[1];
 
   tmp[0] = msg;
-  tmp[1] = '\n';
-  tmp[2] = '\0';
 
-  //printf("Writing %c to pipe fd: %d\n",msg,fd);
-  
-  return write(fd, tmp, 2);
+  return write(fd, tmp, 1);
 }
 
 int readPipe(int fd, unsigned char *buf, int len) {

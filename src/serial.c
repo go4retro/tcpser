@@ -1,10 +1,12 @@
 #include <sys/file.h>
-#include <unistd.h> 
+#include <unistd.h>
 #include <termios.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
+#include "dce.h"
 #include "debug.h"
+
 #include "serial.h"
 
 int ser_get_bps_const(int speed) {
@@ -86,7 +88,7 @@ int ser_init_conn(char *tty, int speed) {
 
   if(bps_rate > -1) {
     /* open the device to be non-blocking (read will return immediatly) */
-    LOG(LOG_INFO, "Opening serial device");
+    LOG(LOG_INFO, "Opening serial device %s at speed %d", tty, speed);
 
     fd = open(tty, O_RDWR | O_NOCTTY | O_NONBLOCK);
 
@@ -142,18 +144,23 @@ int ser_get_control_lines(int fd) {
     ELOG(LOG_FATAL, "Could not obtain serial port status");
     return -1;
   }
-  return status;
+  // RS232 link is always up.
+  return (DCE_CL_LE
+          | ((status & TIOCM_DSR) ? DCE_CL_DTR : 0)
+          | ((status & TIOCM_DTR) ? DCE_CL_DCD : 0)
+          | ((status & TIOCM_RTS) ? DCE_CL_CTS : 0)
+         );
 }
 
 int ser_set_control_lines(int fd, int state) {
   int status;
-  
 
   if(0 > (status = ser_get_control_lines(fd))) {
     return status;
   }
   status &= ~(TIOCM_RTS | TIOCM_DTR);
-  status |= state;
+  status |= (state & DCE_CL_DCD ? TIOCM_DTR : 0);
+  status |= (state & DCE_CL_CTS ? TIOCM_RTS : 0);
   if(0 > ioctl(fd, TIOCMSET, &status)) {
 #ifndef WIN32
     ELOG(LOG_FATAL, "Could not set serial port status");

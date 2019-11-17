@@ -156,7 +156,7 @@ int parse_nvt_command(dce_config *cfg, int fd, nvt_vars *vars, nvt_command actio
     case NVT_OPT_TRANSMIT_BINARY :
       switch (action) {
         case NVT_DO:
-          if(!dce_is_parity(cfg)) {
+          if(!dce_get_parity(cfg)) {
             LOG(LOG_INFO, "Enabling telnet binary xmit");
             vars->binary_xmit = TRUE;
             accept = TRUE;
@@ -168,7 +168,7 @@ int parse_nvt_command(dce_config *cfg, int fd, nvt_vars *vars, nvt_command actio
           accept = TRUE;
           break;
         case NVT_WILL:
-          if(!dce_is_parity(cfg)) {
+          if(!dce_get_parity(cfg)) {
             LOG(LOG_INFO, "Enabling telnet binary recv");
             vars->binary_recv = TRUE;
             accept = TRUE;

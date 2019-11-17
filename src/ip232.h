@@ -6,8 +6,8 @@
 #define FALSE 0
 #endif
 
-#define MSG_ACCEPT '+'
-#define MSG_ACCEPTED '+'
+#define MSG_CALLING '+'
+#define MSG_BUSY '+'
 
 int ip232_init_conn(dce_config *);
 int ip232_set_flow_control(dce_config *, int status);

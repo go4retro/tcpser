@@ -26,14 +26,6 @@ typedef enum {
   MDM_RESP_END_OF_LIST
 } modem_response;
 
-#define MDM_CL_DSR_LOW 0
-#define MDM_CL_DSR_HIGH 1
-#define MDM_CL_DCD_LOW 0
-#define MDM_CL_DCD_HIGH 2
-#define MDM_CL_CTS_LOW 0
-#define MDM_CL_CTS_HIGH 4
-#define MDM_CL_DTR_LOW 0
-#define MDM_CL_DTR_HIGH 8
 #define MDM_FC_RTS 1
 #define MDM_FC_XON 2
 
@@ -92,8 +84,8 @@ typedef struct modem_config {
   int is_ringing;
   int is_off_hook;
   int dsr_active;
-  int dsr_on;
-  int dcd_on;
+  int force_dsr;
+  int force_dcd;
   int invert_dsr;
   int invert_dcd;
   int allow_transmit;

@@ -47,7 +47,6 @@ int init(int argc,
          modem_config cfg[],
          int max_modem,
          char **ip_addr, 
-         int *port,
          char *all_busy,
          int all_busy_len
          ) {
@@ -60,7 +59,6 @@ int init(int argc,
   int tty_set = FALSE;
 
   LOG_ENTER();
-  *port = 6400;
   mdm_init_config(&cfg[0]);
   cfg[0].dce_data.port_speed = 38400;
   cfg[0].line_speed = 38400;
@@ -122,12 +120,7 @@ int init(int argc,
         cfg[i].invert_dcd = TRUE;
         break;
       case 'p':
-        if (strstr(optarg, ":") > 0) {
-          *ip_addr = strtok(optarg, ":");
-          *port = (atoi(strtok(NULL, ":")));
-        } else {
-          *port = (atoi(optarg));
-        }
+        *ip_addr = optarg;
         break;
       case 'n':
         tok = strtok(optarg, "=");

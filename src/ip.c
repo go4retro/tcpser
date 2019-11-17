@@ -11,9 +11,19 @@
 
 const int BACK_LOG = 5;
 
-int ip_init_server_conn(char *ip_addr, int port) {
+int ip_init_server_conn(char *ip) {
+  int port;
+  char *ip_addr = NULL;
   int sSocket = 0, on = 0, rc = 0;
   struct sockaddr_in serverName = { 0 };
+
+  if (strstr(ip, ":") > 0) {
+    ip_addr = strtok(ip, ":");
+    port = (atoi(strtok(NULL, ":")));
+  } else {
+    port = (atoi(ip));
+  }
+
 
   LOG_ENTER();
 
@@ -77,7 +87,7 @@ int ip_init_server_conn(char *ip_addr, int port) {
   return sSocket;
 }
 
-int ip_connect(char addy[]) {
+int ip_connect(char *ip) {
   struct sockaddr_in pin;
   struct in_addr cin_addr;
   struct hostent *hp;
@@ -87,20 +97,20 @@ int ip_connect(char addy[]) {
   char *tmp;
 
   LOG_ENTER();
-  address = strtok(addy, ":");
+  address = strtok(ip, ":");
   tmp = strtok(NULL, ":");
   if(tmp != NULL && strlen(tmp) > 0) {
     port = atoi(tmp);
   }
 
-  LOG(LOG_DEBUG, "Calling %s", addy);
+  LOG(LOG_DEBUG, "Calling %s", ip);
   memset(&pin, 0, sizeof(pin));
 
   /* go find out about the desired host machine */
   if((hp = gethostbyname(address)) == 0) {
     // well, not a DNS entry... Treat as IP...
     if(1 != inet_aton(address, &cin_addr)) {
-      ELOG(LOG_ERROR, "Host %s was invalid", addy);
+      ELOG(LOG_ERROR, "Host %s was invalid", ip);
       return -1;
     }
   } else {
@@ -122,7 +132,7 @@ int ip_connect(char addy[]) {
     ELOG(LOG_ERROR, "could not connect to address");
     return -1;
   }
-  LOG(LOG_INFO, "Connection to %s established", addy);
+  LOG(LOG_INFO, "Connection to %s established", ip);
   LOG_EXIT();
   return sd;
 }
@@ -174,6 +184,7 @@ int ip_read(int fd, unsigned char *data, int len) {
   int res;
 
   res = recv(fd, data, len, 0);
-  log_trace(TRACE_IP_IN, data, res);
+  if(0 < res)
+  	log_trace(TRACE_IP_IN, data, res);
   return res;
 }

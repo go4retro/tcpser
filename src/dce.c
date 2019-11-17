@@ -11,6 +11,8 @@
 
 void dce_init_config(dce_config *cfg) {
   cfg->parity = -1;  // parity not yet checked.
+  if(!cfg->is_ip232)
+    cfg->is_connected = TRUE;  // serial link is always up
 }
 
 int detect_parity (int charA, int charT) {
@@ -72,29 +74,24 @@ int dce_set_flow_control(dce_config *cfg, int opts) {
 }
 
 int dce_set_control_lines(dce_config *cfg, int state) {
-  int status = 0;
   int rc;
 
   LOG_ENTER();
-  if((state & MDM_CL_CTS_HIGH) != 0) {
+  if((state & DCE_CL_CTS) != 0) {
     LOG(LOG_ALL, "Setting CTS pin high");
-    status |= TIOCM_RTS;
   } else {
     LOG(LOG_ALL, "Setting CTS pin low");
-    //status &= ~TIOCM_RTS;
   }
-  if((state & MDM_CL_DCD_HIGH) != 0) {
+  if((state & DCE_CL_DCD) != 0) {
     LOG(LOG_ALL, "Setting DCD pin high");
-    status |= TIOCM_DTR;
   } else {
     LOG(LOG_ALL, "Setting DCD pin low");
-    //status &= ~TIOCM_DTR;
   }
 
   if (cfg->is_ip232) {
-    rc = ip232_set_control_lines(cfg, status);
+    rc = ip232_set_control_lines(cfg, state);
   } else {
-    rc = ser_set_control_lines(cfg->fd, status);
+    rc = ser_set_control_lines(cfg->fd, state);
   }
 
   LOG_EXIT();
@@ -102,38 +99,30 @@ int dce_set_control_lines(dce_config *cfg, int state) {
 }
 
 int dce_get_control_lines(dce_config *cfg) {
-  int status;
-  int rc_status;
+  int state;
 
   if (cfg->is_ip232) {
-    status = ip232_get_control_lines(cfg);
+    state = ip232_get_control_lines(cfg);
   } else {
-    status = ser_get_control_lines(cfg->fd);
+    state = ser_get_control_lines(cfg->fd);
   }
-
-  if(status > -1) {
-    rc_status = ((status & TIOCM_DSR) != 0 ? MDM_CL_DTR_HIGH : 0);
-  } else {
-    rc_status = status;
-  }
-
-  return rc_status;
+  return state;
 }
 
 int dce_check_control_lines(dce_config *cfg) {
-  int status = 0;
-  int new_status = 0;
+  int state = 0;
+  int new_state = 0;
 
   LOG_ENTER();
-  status = dce_get_control_lines(cfg);
-  new_status = status;
-  while(new_status > -1 && status == new_status) {
+  state = dce_get_control_lines(cfg);
+  new_state = state;
+  while(new_state > -1 && state == new_state) {
     usleep(100000);
-    new_status = dce_get_control_lines(cfg);
+    new_state = dce_get_control_lines(cfg);
   }
 
   LOG_EXIT();
-  return new_status;
+  return new_state;
 }
 
 int dce_write(dce_config *cfg, unsigned char data[], int len) {
@@ -182,8 +171,8 @@ int dce_read(dce_config *cfg, unsigned char data[], int len) {
   } else {
     res = ser_read(cfg->fd, data, len);
   }
-  LOG(LOG_DEBUG, "Read %d bytes from serial port", res);
-  if(-1 < res) {
+  if(0 < res) {
+    LOG(LOG_DEBUG, "Read %d bytes from serial port", res);
     if(cfg->parity) {
       for (i = 0; i < res; i++) {
         data[i] &= 0x7f;  // strip parity from returned data
@@ -197,24 +186,21 @@ int dce_read(dce_config *cfg, unsigned char data[], int len) {
 int dce_read_char_raw(dce_config *cfg) {
   int res;
   unsigned char data[1];
-  unsigned char parity = 0;
 
   if (cfg->is_ip232) {
     res = ip232_read(cfg, data, 1);
   } else {
     res = ser_read(cfg->fd, data, 1);
   }
-  LOG(LOG_DEBUG, "Read %d raw bytes from serial port", res);
-  if(-1 < res) {
+  if(0 < res) {
+    res = data[0];
+    LOG(LOG_DEBUG, "Read %d raw bytes from serial port", res);
     if(cfg->parity) {
-      parity = data[0] & 0x80;
       data[0] &= 0x7f;
     }
     log_trace(TRACE_SERIAL_IN, data, 1);
-    if(cfg->parity)
-      data[0] |= parity;  // put parity back on
   }
-  return (int)data[0];
+  return res;
 }
 
 void dce_detect_parity(dce_config *cfg, unsigned char a, unsigned char t) {
@@ -225,7 +211,7 @@ int dce_strip_parity(dce_config *cfg, unsigned char data) {
   return (cfg->parity ? data & 0x7f : data);
 }
 
-int dce_is_parity(dce_config *cfg) {
+int dce_get_parity(dce_config *cfg) {
   return cfg->parity;
 }
 

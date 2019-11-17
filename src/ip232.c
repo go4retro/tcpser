@@ -46,7 +46,7 @@ void *ip232_thread(void *arg) {
         accept_pending = FALSE;
       }
       if (FD_ISSET(cfg->sSocket, &readfs)) {  // ip connection
-        if(cfg->ip232_is_connected) {
+        if(cfg->is_connected) {
           LOG(LOG_DEBUG, "Already have ip232 connection, rejecting new");
           // already have a connection... accept and close
           cSocket = ip_accept(cfg->sSocket);
@@ -55,8 +55,14 @@ void *ip232_thread(void *arg) {
           }
         } else {
           LOG(LOG_DEBUG, "Incoming ip232 connection");
-          writePipe(cfg->dp[0][1], MSG_ACCEPT);
-          accept_pending = TRUE;
+          rc = ip_accept(cfg->sSocket);
+          if(rc > -1) {
+            cfg->fd = rc;
+            cfg->is_connected = TRUE;
+            //accept_pending = TRUE;
+            cfg->ip232_dtr = FALSE;
+            cfg->ip232_dcd = FALSE;
+          }
         }
       }
     }
@@ -80,12 +86,10 @@ int spawn_ip232_thread(dce_config *cfg) {
 
 int ip232_init_conn(dce_config *cfg) {
   int rc = -1;
-  int port;
 
   LOG_ENTER();
   LOG(LOG_INFO, "Opening ip232 device");
-  port = atoi(cfg->tty);
-  rc = ip_init_server_conn(NULL, port);
+  rc = ip_init_server_conn(cfg->tty);
 
   if (rc < 0) {
     ELOG(LOG_FATAL, "Could not initialize ip232 server socket");
@@ -102,7 +106,7 @@ int ip232_init_conn(dce_config *cfg) {
   }
 
   cfg->sSocket = rc;
-  cfg->ip232_is_connected = FALSE;
+  cfg->is_connected = FALSE;
   cfg->fd = cfg->dp[0][0];
   spawn_ip232_thread(cfg);
   LOG(LOG_INFO, "ip232 device configured");
@@ -118,8 +122,11 @@ int ip232_set_flow_control(dce_config *cfg, int status) {
 int ip232_get_control_lines(dce_config *cfg) {
   int status = 0;
 
-  if (cfg->ip232_is_connected && cfg->ip232_dtr) {
-    status |= TIOCM_DSR;
+  if (cfg->is_connected && cfg->ip232_dtr) {
+    status |= DCE_CL_DTR;
+  }
+  if(cfg->is_connected) {
+    status |= DCE_CL_LE;
   }
   return status;
 }
@@ -128,13 +135,13 @@ int ip232_set_control_lines(dce_config *cfg, int state) {
   int dcd;
   unsigned char cmd[2];
 
-  if (cfg->ip232_is_connected) {
+  if (cfg->is_connected) {
     dcd = (state & TIOCM_DTR) ? TRUE : FALSE;
     if (dcd != cfg->ip232_dcd) {
       cfg->ip232_dcd = dcd;
       cmd[0] = 255;
       cmd[1] = dcd ? 1 : 0;
-      ip_write(cfg->fd, cmd, sizeof(cmd));
+      write(cfg->fd, cmd, sizeof(cmd));
     }
   }
   return 0;
@@ -149,7 +156,7 @@ int ip232_write(dce_config *cfg, unsigned char* data, int len) {
 
   log_trace(TRACE_MODEM_OUT, data, len);
   retval = len;
-  if (cfg->ip232_is_connected) {
+  if (cfg->is_connected) {
     while(i < len) {
       if (double_iac) {
         text[text_len++] = 255;
@@ -165,12 +172,12 @@ int ip232_write(dce_config *cfg, unsigned char* data, int len) {
       }
 
       if(text_len == sizeof(text)) {
-        retval = ip_write(cfg->fd, text, text_len);
+        retval = write(cfg->fd, text, text_len);
         text_len = 0;
       }
     }
     if(text_len) {
-      retval = ip_write(cfg->fd, text, text_len);
+      retval = write(cfg->fd, text, text_len);
     }
   }
   return retval;
@@ -178,7 +185,7 @@ int ip232_write(dce_config *cfg, unsigned char* data, int len) {
 
 int ip232_read(dce_config *cfg, unsigned char *data, int len) {
   int res;
-  int rc;
+  //int rc;
   unsigned char buf[256];
   int i = 0;
   unsigned char ch;
@@ -190,13 +197,13 @@ int ip232_read(dce_config *cfg, unsigned char *data, int len) {
     exit(-1);
   }
 
-  if (cfg->ip232_is_connected) {
+  if (cfg->is_connected) {
     res = recv(cfg->fd, buf, len, 0);
     if (0 >= res) {
       LOG(LOG_INFO, "No ip232 socket data read, assume closed peer");
       ip_disconnect(cfg->fd);
-      cfg->fd = cfg->dp[0][0];
-      cfg->ip232_is_connected = FALSE;
+      //cfg->fd = cfg->dp[0][0];
+      cfg->is_connected = FALSE;
     } else {
       LOG(LOG_DEBUG, "Read %d bytes from ip232 socket", res);
       log_trace(TRACE_MODEM_IN, buf, res);
@@ -225,23 +232,6 @@ int ip232_read(dce_config *cfg, unsigned char *data, int len) {
         }
         i++;
       }
-    }
-  } else {
-    // not connected
-    res = read(cfg->dp[0][0], buf, sizeof(buf));
-    switch (buf[0]) {
-    case MSG_ACCEPT:       // accept connection.
-
-      LOG(LOG_INFO, "Accepting ip232 connection...");
-      rc = ip_accept(cfg->sSocket);
-      if(res > -1) {
-        cfg->fd = rc;
-        cfg->ip232_is_connected = TRUE;
-        cfg->ip232_dtr = FALSE;
-        cfg->ip232_dcd = FALSE;
-        writePipe(cfg->dp[1][1], MSG_ACCEPTED);
-      }
-      break;
     }
   }
   LOG_EXIT();

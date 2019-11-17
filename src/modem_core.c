@@ -81,7 +81,7 @@ void mdm_init_config(modem_config *cfg) {
   cfg->is_off_hook = FALSE;
   cfg->is_ringing = FALSE;
   cfg->cur_line_idx = 0;
-  //cfg->rings = 0;  // TODO should be initialized?
+  cfg->rings = 0;
 
   for(i = 0; i < 100; i++) {
     cfg->s[i] = 0;
@@ -111,8 +111,8 @@ void mdm_init_config(modem_config *cfg) {
 
   cfg->memory_dial = FALSE;
   cfg->dsr_active = FALSE;
-  cfg->dsr_on = TRUE;
-  cfg->dcd_on = FALSE;
+  cfg->force_dsr = TRUE;
+  cfg->force_dcd = FALSE;
   cfg->first_ch = 0;
   cfg->is_cmd_started = FALSE;
   cfg->allow_transmit = TRUE;
@@ -126,29 +126,21 @@ void mdm_init_config(modem_config *cfg) {
 }
 
 int get_new_cts_state(modem_config *cfg, int up) {
-  return MDM_CL_CTS_HIGH;
+  return DCE_CL_CTS;
 }
 
 int get_new_dsr_state(modem_config *cfg, int up) {
-  if(cfg->dsr_on == TRUE)
-    return (cfg->invert_dsr == TRUE ? MDM_CL_DSR_LOW : MDM_CL_DSR_HIGH);
-  if((up == TRUE && cfg->invert_dsr == FALSE)
-     || (up == FALSE && cfg->invert_dsr == TRUE)
-    )
-    return MDM_CL_DSR_HIGH;
-  else
-    return MDM_CL_DSR_LOW;
+  if(cfg->force_dsr || up) {
+    return (cfg->invert_dsr ? 0 : DCE_CL_DSR);
+  }
+  return (cfg->invert_dsr ? DCE_CL_DSR : 0);
 }
 
 int get_new_dcd_state(modem_config *cfg, int up) {
-  if(cfg->dcd_on == TRUE)
-    return (cfg->invert_dcd == TRUE ? MDM_CL_DCD_LOW : MDM_CL_DCD_HIGH);
-  if((up == TRUE && cfg->invert_dcd == FALSE) 
-     || (up == FALSE && cfg->invert_dcd == TRUE)
-    )
-    return MDM_CL_DCD_HIGH;
-  else
-    return MDM_CL_DCD_LOW;
+  if(cfg->force_dcd || up) {
+    return (cfg->invert_dcd ? 0 : DCE_CL_DCD);
+  }
+  return (cfg->invert_dcd ? DCE_CL_DCD : 0);
 }
 
 int mdm_set_control_lines(modem_config *cfg) {
@@ -161,9 +153,9 @@ int mdm_set_control_lines(modem_config *cfg) {
 
   LOG(LOG_INFO, 
       "Control Lines: DSR:%d DCD:%d CTS:%d",
-      ((state & MDM_CL_DSR_HIGH) != 0 ? 1 : 0),
-      ((state & MDM_CL_DCD_HIGH) != 0 ? 1 : 0),
-      ((state & MDM_CL_CTS_HIGH) != 0 ? 1 : 0)
+      ((state & DCE_CL_DSR) != 0 ? 1 : 0),
+      ((state & DCE_CL_DCD) != 0 ? 1 : 0),
+      ((state & DCE_CL_CTS) != 0 ? 1 : 0)
      );
 
   dce_set_control_lines(&cfg->dce_data, state);
@@ -271,7 +263,7 @@ int mdm_disconnect(modem_config* cfg) {
   cfg->is_ringing = FALSE;
   cfg->pre_break_delay = FALSE;
   if(0 == line_disconnect(&cfg->line_data, cfg->direct_conn)) {
-    type=cfg->conn_type;
+    type = cfg->conn_type;
     cfg->conn_type = MDM_CONN_NONE;
     mdm_set_control_lines(cfg);
     if(type != MDM_CONN_NONE) {
@@ -480,11 +472,11 @@ int mdm_parse_cmd(modem_config* cfg) {
       case AT_CMD_FLAG_EXT + 'C':
         switch(num) {
           case 0:
-            cfg->dcd_on = TRUE;
+            cfg->force_dcd = TRUE;
             mdm_set_control_lines(cfg);
             break;
           case 1:
-            cfg->dcd_on = FALSE;
+            cfg->force_dcd = FALSE;
             mdm_set_control_lines(cfg);
             break;
           default:

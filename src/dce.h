@@ -1,6 +1,12 @@
 #ifndef DCE_H
 #define DCE_H 1
 
+#define DCE_CL_DSR 1
+#define DCE_CL_DCD 2
+#define DCE_CL_CTS 4
+#define DCE_CL_DTR 8
+#define DCE_CL_LE 16
+
 #ifndef MAX
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
@@ -36,7 +42,7 @@ typedef struct dce_config {
   int fd;
   int dp[2][2];
   int sSocket;
-  int ip232_is_connected;
+  int is_connected;
   int ip232_dtr;
   int ip232_dcd;
   int ip232_iac;
@@ -54,7 +60,7 @@ int dce_read(dce_config *cfg, unsigned char *data, int len);
 int dce_read_char_raw(dce_config *cfg);
 void dce_detect_parity(dce_config *cfg, unsigned char a, unsigned char t);
 int dce_strip_parity(dce_config *cfg, unsigned char data);
-int dce_is_parity(dce_config *cfg);
+int dce_get_parity(dce_config *cfg);
 //int dce_check_for_break(dce_config *cfg, char ch, int chars_left);
 
 #endif

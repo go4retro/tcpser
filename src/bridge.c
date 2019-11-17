@@ -33,7 +33,7 @@ int accept_connection(modem_config *cfg) {
     }
     // tell parent I got it.
     LOG(LOG_DEBUG, "Informing parent task that I am busy");
-    writePipe(cfg->mp[0][1], MSG_ACCEPTED);
+    writePipe(cfg->mp[0][1], MSG_BUSY);
   }
   LOG_EXIT();
   return 0;
@@ -68,7 +68,7 @@ int parse_ip_data(modem_config *cfg, unsigned char *data, int len) {
     // once the serial port has seen a bit of data and telnet is active,
     // we can decide on binary transmit, not before
     if(cfg->is_binary_negotiated == FALSE) {
-      if(dce_is_parity(&cfg->dce_data)) {
+      if(dce_get_parity(&cfg->dce_data)) {
         // send explicit notice this connection is not 8 bit clean
         send_nvt_command(cfg->line_data.fd,
                          &cfg->line_data.nvt_data,
@@ -186,7 +186,8 @@ void *ip_thread(void *arg) {
       // we got data
       if (cfg->line_data.is_connected == TRUE && FD_ISSET(cfg->line_data.fd, &readfs)) {  // socket
         LOG(LOG_DEBUG, "Data available on socket");
-        res = recv(cfg->line_data.fd, buf, sizeof(buf), 0);
+        res = line_read(&cfg->line_data, buf, sizeof(buf));
+        //res = recv(cfg->line_data.fd, buf, sizeof(buf), 0);
         if(0 >= res) {
           LOG(LOG_INFO, "No socket data read, assume closed peer");
           writePipe(cfg->cp[0][1], MSG_DISCONNECT);
@@ -219,15 +220,16 @@ void *ctrl_thread(void *arg) {
   while(status > -1) {
     new_status = dce_check_control_lines(&cfg->dce_data);
     if(new_status > -1 && status != new_status) {
-      // something changed
-      if((status & MDM_CL_DTR_HIGH) != (new_status & MDM_CL_DTR_HIGH)) {
-        if((new_status & MDM_CL_DTR_HIGH) == 0) {
-          LOG(LOG_INFO, "DTR has gone low");
-          writePipe(cfg->wp[0][1], MSG_DTR_DOWN);
-        } else {
-          LOG(LOG_INFO, "DTR has gone high");
-          writePipe(cfg->wp[0][1], MSG_DTR_UP);
-        }
+      writePipe(cfg->wp[0][1], MSG_CONTROL_LINES);
+      if((new_status & DCE_CL_DTR)) {
+        LOG(LOG_INFO, "DTR has gone high");
+      } else {
+        LOG(LOG_INFO, "DTR has gone low");
+      }
+      if((new_status & DCE_CL_LE)) {
+        LOG(LOG_INFO, "Link has come up");
+      } else {
+        LOG(LOG_INFO, "Link has gone down");
       }
     }
     status = new_status;
@@ -279,6 +281,7 @@ void *run_bridge(void *arg) {
   int res = 0;
   unsigned char buf[256];
   int rc = 0;
+  int status;
 
   int last_conn_type;
   int last_cmd_mode = cfg->is_cmd_mode;
@@ -330,7 +333,6 @@ void *run_bridge(void *arg) {
   for(;;) {
     if(last_conn_type != cfg->conn_type) {
       LOG(LOG_ALL, "Connection status change, handling");
-      //writePipe(cfg->mp[0][1],MSG_NOTIFY);
       writePipe(cfg->cp[1][1], MSG_NOTIFY);
       if(cfg->conn_type == MDM_CONN_OUTGOING) {
         if(strlen(cfg->local_connect) > 0) {
@@ -355,13 +357,16 @@ void *run_bridge(void *arg) {
     }
     LOG(LOG_ALL, "Waiting for modem/control line/timer/socket activity");
     LOG(LOG_ALL, "Command Mode=%d, Connection status=%d", cfg->is_cmd_mode, cfg->conn_type);
-    max_fd = MAX(cfg->mp[1][0], cfg->dce_data.fd);
-    max_fd = MAX(max_fd, cfg->wp[0][0]);
-    max_fd = MAX(max_fd, cfg->cp[0][0]);
     FD_ZERO(&readfs);
+    max_fd = cfg->mp[1][0];
     FD_SET(cfg->mp[1][0], &readfs);
-    FD_SET(cfg->dce_data.fd, &readfs);
+    if(cfg->dce_data.is_connected) {
+      max_fd = MAX(max_fd, cfg->dce_data.fd);
+      FD_SET(cfg->dce_data.fd, &readfs);
+    }
+    max_fd = MAX(max_fd, cfg->wp[0][0]);
     FD_SET(cfg->wp[0][0], &readfs);
+    max_fd = MAX(max_fd, cfg->cp[0][0]);
     FD_SET(cfg->cp[0][0], &readfs);
     ptimer = NULL;
     if(cfg->is_cmd_mode == FALSE) {
@@ -403,7 +408,7 @@ void *run_bridge(void *arg) {
          && cfg->conn_type == MDM_CONN_NONE
          && cfg->line_data.is_connected == TRUE
         ) {
-        if(cfg->s[0] == 0 && cfg->rings == 10) { // TODO should be configurable number of rings
+        if(cfg->s[0] == 0 && cfg->rings == 10) {
           // not going to answer, send some data back to IP and disconnect.
           if(strlen(cfg->no_answer) == 0) {
             line_write(&cfg->line_data, (unsigned char *)MDM_NO_ANSWER, strlen(MDM_NO_ANSWER));
@@ -428,20 +433,17 @@ void *run_bridge(void *arg) {
         } else {
           mdm_parse_data(cfg, buf, res);
         }
-      }    }
+      }
+    }
     if (FD_ISSET(cfg->wp[0][0], &readfs)) {  // control pipe
       res = readPipe(cfg->wp[0][0], buf, sizeof(buf) - 1);
       buf[res] = 0;
-      LOG(LOG_DEBUG, "Received %c from Control line watch task", buf[0]);
-      switch (buf[0]) {
-        case MSG_DTR_DOWN:
-          // DTR drop, close any active connection and put
-          // in cmd_mode
-          disconnect(cfg);
-          // When remote side disconnects, is there a msg to local side?
-          break;
-        case MSG_DTR_UP:
-          break;
+      LOG(LOG_DEBUG, "Received %s from Control line watch task", buf);
+      status = dce_get_control_lines(&cfg->dce_data);
+      if(!(status & DCE_CL_DTR)) {
+        // DTR drop, close any active connection and put
+        // in cmd_mode
+        disconnect(cfg);
       }
     }
     if (FD_ISSET(cfg->cp[0][0], &readfs)) {  // ip thread pipe
@@ -465,7 +467,7 @@ void *run_bridge(void *arg) {
       LOG(LOG_DEBUG, "Data available on incoming IPC pipe");
       res = read(cfg->mp[1][0], buf, sizeof(buf));
       switch (buf[0]) {
-        case MSG_ACCEPT:       // accept connection.
+        case MSG_CALLING:       // accept connection.
           accept_connection(cfg);
           break;
       }

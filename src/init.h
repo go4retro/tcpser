@@ -11,7 +11,6 @@ int init(int argc,
          modem_config cfg[], 
          int max_modem, 
          char **ip_addr,
-         int *port,
          char *all_busy,
          int all_busy_len
         );
