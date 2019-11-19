@@ -180,7 +180,7 @@ int dce_read(dce_config *cfg, unsigned char data[], int len) {
         data[i] &= 0x7f;  // strip parity from returned data
       }
     }
-    log_trace(TRACE_SERIAL_OUT, data, res);
+    log_trace(TRACE_SERIAL_IN, data, res);
   }
   return res;
 }
