@@ -19,13 +19,9 @@ void line_init_config(line_config *cfg) {
 }
 
 int line_read(line_config *cfg, unsigned char *data, int len) {
-  int retval;
 
   // should do escaping in here, like we do for writes below
-  retval = ip_read(cfg->fd, data, len);
-  if(0 > retval)
-    log_trace(TRACE_IP_IN, data, len);
-  return retval;
+  return ip_read(cfg->fd, data, len);
 }
 
 int line_write(line_config *cfg, unsigned char* data, int len) {

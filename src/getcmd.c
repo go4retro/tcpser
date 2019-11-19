@@ -121,7 +121,7 @@ int parseRegister(char line[],
   // need to handle S<num>?, which queries that S register.
   int cmd = 0;
 
-  cmd = getCommand(line, flags, index, num,len);
+  cmd = getCommand(line, flags, index, num, len);
   if(0 > num)
     return AT_CMD_ERR;
   skip(line, index, len, ' ');
@@ -147,12 +147,12 @@ int parseRegister(char line[],
 }
 
 int getcmd(char line[],
+           int len,
            int *index, 
            int *num, 
            int *data_start, 
            int *data_end
           ) {
-  int len = 0;
   int cmd = AT_CMD_END;
 
   *num = 0;
@@ -161,7 +161,6 @@ int getcmd(char line[],
 
   if(line == NULL)
     return AT_CMD_NONE;
-  len = strlen(line);
   while(*index < len) {
     cmd = toupper(line[*index]);
     switch (cmd) {
@@ -276,7 +275,7 @@ int main_getcmd(int argc, char **argv) {
   int cmd = 0;
 
   while(cmd != AT_CMD_END) {
-    cmd = getcmd(data, &index, &num, &start, &end);
+    cmd = getcmd(data, strlen(data), &index, &num, &start, &end);
     printf("Cmd: %c Index: %d Num: %d Start: %d End: %d\n", cmd, index, num, start, end);
   }
   return 0;

@@ -1,6 +1,9 @@
-#include <unistd.h>
+#include <pthread.h>
+#include <stdlib.h>       // for exit...
 #include <stdio.h>
+#include <unistd.h>
 
+#include "debug.h"
 #include "util.h"
 
 int writePipe(int fd, char msg) {
@@ -32,4 +35,17 @@ int writeFile(char *name, int fd) {
     return 0;
   }
   return -1;
+}
+
+void spawn_thread(void * thread, void *arg, char *name) {
+  int rc;
+  pthread_t thread_id;
+
+  rc = pthread_create(&thread_id, NULL, thread, arg);
+  LOG(LOG_ALL, "%s thread ID = %ld", name, (long)thread_id);
+
+  if(rc < 0) {
+    ELOG(LOG_FATAL, "%s thread could not be started", name);
+    exit(-1);
+  }
 }

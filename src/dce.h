@@ -7,10 +7,6 @@
 #define DCE_CL_DTR 8
 #define DCE_CL_LE 16
 
-#ifndef MAX
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#endif
-
 /* This is a cool piece of code found by Chris Osborn (fozztexx@fozztexx.com) from
  * https://graphics.stanford.edu/~seander/bithacks.html#ParityWith64Bits  that
  * computes even parity for any 8 bit data value

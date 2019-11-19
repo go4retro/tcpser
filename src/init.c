@@ -7,10 +7,7 @@
 
 void print_help(char* name) {
   fprintf(stderr, "Usage: %s <parameters>\n", name);
-  fprintf(stderr, "  -p   port to listen on (defaults to 6400)\n");
-  fprintf(stderr, "               -- or -- \n");
-  fprintf(stderr, "  -p  ip_address:port to specify which ip address and port to listen on.\n");
-  fprintf(stderr, "\n");
+  fprintf(stderr, "  -p   tcp port (or address:port) to listen on (defaults to 6400)\n");
   fprintf(stderr, "  -t   trace flags: (can be combined)\n");
   fprintf(stderr, "       'm' = modem input\n");
   fprintf(stderr, "       'M' = modem output\n");
@@ -25,7 +22,7 @@ void print_help(char* name) {
   fprintf(stderr, "  (-s, -S, and -i will apply to any subsequent device if not set again)\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  -d   serial device (e.g. /dev/ttyS0). Cannot be used with -v\n");
-  fprintf(stderr, "  -v   tcp port for VICE RS232 (e.g. 25232). Cannot be used with -d\n");
+  fprintf(stderr, "  -v   tcp port (or address:port) for virtual RS232. Cannot be used with -d\n");
   fprintf(stderr, "  -s   serial port speed (defaults to 38400)\n");
   fprintf(stderr, "  -S   speed modem will report (defaults to -s value)\n");
   fprintf(stderr, "  -I   invert DCD pin\n");
@@ -114,7 +111,8 @@ int init(int argc,
         strncpy(cfg[i].inactive, optarg, sizeof(cfg[i].inactive));
         break;
       case 'i':
-        strncpy(cfg[i].config0, optarg, 255);
+        strncpy(cfg[i].cur_line, optarg, sizeof(cfg[i].cur_line));
+        cfg[i].cur_line_idx = strlen(cfg->cur_line);
         break;
       case 'I':
         cfg[i].invert_dcd = TRUE;
@@ -152,7 +150,7 @@ int init(int argc,
             cfg[i].dce_data.port_speed = cfg[i - 1].dce_data.port_speed;
             cfg[i].line_speed = cfg[i - 1].line_speed;
             cfg[i].dce_data.is_ip232 = FALSE;
-            strncpy((char *)cfg[i].config0, (char *)cfg[i - 1].config0, sizeof(cfg[i].config0));
+            strncpy((char *)cfg[i].cur_line, (char *)cfg[i - 1].cur_line, sizeof(cfg[i].cur_line));
             strncpy((char *)cfg[i].local_connect, (char *)cfg[i - 1].local_connect, sizeof(cfg[i].local_connect));
             strncpy((char *)cfg[i].remote_connect, (char *)cfg[i - 1].remote_connect, sizeof(cfg[i].remote_connect));
             strncpy((char *)cfg[i].local_answer, (char *)cfg[i - 1].local_answer, sizeof(cfg[i].local_answer));

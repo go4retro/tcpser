@@ -16,24 +16,19 @@
 
 void *ip232_thread(void *arg) {
   dce_config *cfg = (dce_config *)arg;
-
-  int accept_pending = FALSE;
   int rc;
   unsigned char buf[256];
 
   fd_set readfs;
   int max_fd = 0;
-  int cSocket;
 
   LOG_ENTER();
   for (;;) {
     FD_ZERO(&readfs);
     FD_SET(cfg->dp[1][0], &readfs);
     max_fd = cfg->dp[1][0];
-    if (accept_pending == FALSE) {
-      FD_SET(cfg->sSocket, &readfs);
-      max_fd = MAX(max_fd, cfg->sSocket);
-    }
+    FD_SET(cfg->sSocket, &readfs);
+    max_fd = MAX(max_fd, cfg->sSocket);
     LOG(LOG_ALL, "Waiting for incoming ip232 connections");
     rc = select(max_fd + 1, &readfs, NULL, NULL, NULL);
 
@@ -43,15 +38,14 @@ void *ip232_thread(void *arg) {
       if (FD_ISSET(cfg->dp[1][0], &readfs)) {  // pipe
         rc = read(cfg->dp[1][0], buf, sizeof(buf) - 1);
         LOG(LOG_DEBUG, "ip232 thread notified");
-        accept_pending = FALSE;
       }
       if (FD_ISSET(cfg->sSocket, &readfs)) {  // ip connection
         if(cfg->is_connected) {
           LOG(LOG_DEBUG, "Already have ip232 connection, rejecting new");
           // already have a connection... accept and close
-          cSocket = ip_accept(cfg->sSocket);
-          if(cSocket > -1) {
-            close(cSocket);
+          rc = ip_accept(cfg->sSocket);
+          if(rc > -1) {
+            close(rc);
           }
         } else {
           LOG(LOG_DEBUG, "Incoming ip232 connection");
@@ -59,7 +53,6 @@ void *ip232_thread(void *arg) {
           if(rc > -1) {
             cfg->fd = rc;
             cfg->is_connected = TRUE;
-            //accept_pending = TRUE;
             cfg->ip232_dtr = FALSE;
             cfg->ip232_dcd = FALSE;
           }
@@ -107,7 +100,6 @@ int ip232_init_conn(dce_config *cfg) {
 
   cfg->sSocket = rc;
   cfg->is_connected = FALSE;
-  cfg->fd = cfg->dp[0][0];
   spawn_ip232_thread(cfg);
   LOG(LOG_INFO, "ip232 device configured");
   LOG_EXIT();
@@ -135,10 +127,13 @@ int ip232_set_control_lines(dce_config *cfg, int state) {
   int dcd;
   unsigned char cmd[2];
 
-  if (cfg->is_connected) {
-    dcd = (state & TIOCM_DTR) ? TRUE : FALSE;
-    if (dcd != cfg->ip232_dcd) {
-      cfg->ip232_dcd = dcd;
+  dcd = (state & DCE_CL_DCD) ? TRUE : FALSE;
+  LOG(LOG_DEBUG, "ip232 control line state: %x", dcd);
+  if (dcd != cfg->ip232_dcd) {
+    LOG(LOG_DEBUG, "reconfiguring virtual DCD");
+    cfg->ip232_dcd = dcd;
+    if (cfg->is_connected) {
+      LOG(LOG_DEBUG, "Sending data");
       cmd[0] = 255;
       cmd[1] = dcd ? 1 : 0;
       write(cfg->fd, cmd, sizeof(cmd));
@@ -202,7 +197,6 @@ int ip232_read(dce_config *cfg, unsigned char *data, int len) {
     if (0 >= res) {
       LOG(LOG_INFO, "No ip232 socket data read, assume closed peer");
       ip_disconnect(cfg->fd);
-      //cfg->fd = cfg->dp[0][0];
       cfg->is_connected = FALSE;
     } else {
       LOG(LOG_DEBUG, "Read %d bytes from ip232 socket", res);
@@ -215,9 +209,11 @@ int ip232_read(dce_config *cfg, unsigned char *data, int len) {
           switch (ch) {
             case 0:
               cfg->ip232_dtr = FALSE;
+              LOG(LOG_DEBUG, "Virtual DTR line down");
               break;
             case 1:
               cfg->ip232_dtr = TRUE;
+              LOG(LOG_DEBUG, "Virtual DTR line up");
               break;
             case 255:
               data[text_len++] = 255;

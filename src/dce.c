@@ -137,8 +137,10 @@ int dce_write(dce_config *cfg, unsigned char data[], int len) {
     buf = malloc(len);  // TODO what if malloc fails?
     memcpy(buf, data, len);
 
-    for (i = 0; i < len; i++) {
-      buf[i] = apply_parity(data[i], cfg->parity);
+    if(0 < cfg->parity) {
+      for (i = 0; i < len; i++) {
+        buf[i] = apply_parity(data[i], cfg->parity);
+      }
     }
   } else {
     buf = data;
@@ -152,13 +154,12 @@ int dce_write(dce_config *cfg, unsigned char data[], int len) {
 int dce_write_char_raw(dce_config *cfg, unsigned char data) {
   int rc;
 
+  log_trace(TRACE_SERIAL_OUT, &data, 1);
   if (cfg->is_ip232) {
     rc = ip232_write(cfg, &data, 1);
   } else {
     rc = ser_write(cfg->fd, &data, 1);
   }
-  data &= 0x7f;
-  log_trace(TRACE_SERIAL_OUT, &data, 1);
   return rc;
 }
 
@@ -173,7 +174,7 @@ int dce_read(dce_config *cfg, unsigned char data[], int len) {
   }
   if(0 < res) {
     LOG(LOG_DEBUG, "Read %d bytes from serial port", res);
-    if(cfg->parity) {
+    if(0 < cfg->parity) {
       for (i = 0; i < res; i++) {
         data[i] &= 0x7f;  // strip parity from returned data
       }
@@ -194,10 +195,7 @@ int dce_read_char_raw(dce_config *cfg) {
   }
   if(0 < res) {
     res = data[0];
-    LOG(LOG_DEBUG, "Read %d raw bytes from serial port", res);
-    if(cfg->parity) {
-      data[0] &= 0x7f;
-    }
+    LOG(LOG_DEBUG, "Read 1 raw byte from serial port");
     log_trace(TRACE_SERIAL_IN, data, 1);
   }
   return res;

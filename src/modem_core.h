@@ -78,7 +78,6 @@ typedef struct modem_config {
   // need to eventually change these
   dce_config dce_data;
   line_config line_data;
-  char config0[1024];
   int line_speed;
   int conn_type;
   int is_ringing;
@@ -96,9 +95,9 @@ typedef struct modem_config {
   unsigned char first_ch;
   int is_cmd_started;
   int is_cmd_mode;
-  char last_cmd[1024];
   char cur_line[1024];
   int cur_line_idx;
+  int last_line_idx;
   // dailing information
   char dialno[256];
   char last_dialno[256];

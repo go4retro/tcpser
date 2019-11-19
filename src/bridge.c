@@ -195,7 +195,6 @@ void *ip_thread(void *arg) {
         } else {
           LOG(LOG_DEBUG, "Read %d bytes from socket", res);
           buf[res] = 0;
-          log_trace(TRACE_IP_IN, buf, res);
           parse_ip_data(cfg, buf, res);
         }
       }
@@ -220,16 +219,21 @@ void *ctrl_thread(void *arg) {
   while(status > -1) {
     new_status = dce_check_control_lines(&cfg->dce_data);
     if(new_status > -1 && status != new_status) {
+      LOG(LOG_DEBUG, "Control Line Change");
       writePipe(cfg->wp[0][1], MSG_CONTROL_LINES);
-      if((new_status & DCE_CL_DTR)) {
-        LOG(LOG_INFO, "DTR has gone high");
-      } else {
-        LOG(LOG_INFO, "DTR has gone low");
+      if((new_status & DCE_CL_DTR) != (status & DCE_CL_DTR)) {
+        if((new_status & DCE_CL_DTR)) {
+          LOG(LOG_INFO, "DTR has gone high");
+        } else {
+          LOG(LOG_INFO, "DTR has gone low");
+        }
       }
-      if((new_status & DCE_CL_LE)) {
-        LOG(LOG_INFO, "Link has come up");
-      } else {
-        LOG(LOG_INFO, "Link has gone down");
+      if((new_status & DCE_CL_LE) != (status & DCE_CL_LE)) {
+        if((new_status & DCE_CL_LE)) {
+          LOG(LOG_INFO, "Link has come up");
+        } else {
+          LOG(LOG_INFO, "Link has gone down");
+        }
       }
     }
     status = new_status;
@@ -237,39 +241,6 @@ void *ctrl_thread(void *arg) {
   LOG_EXIT();
   // need to quit application, as status cannot be obtained.
   exit(-1);
-}
-
-int spawn_ctrl_thread(modem_config *cfg) {
-  int rc;
-  pthread_t thread_id;
-
-  rc = pthread_create(&thread_id, NULL, ctrl_thread, (void *)cfg);
-  LOG(LOG_ALL, "CTRL thread ID=%ld", (long)thread_id);
-
-  if(rc < 0) {
-    ELOG(LOG_FATAL, "CTRL thread could not be started");
-    exit(-1);
-  }
-  return 0;
-}
-
-int spawn_ip_thread(modem_config *cfg) {
-  int rc;
-  pthread_t thread_id;
-
-  rc = pthread_create(&thread_id, NULL, ip_thread, (void *)cfg);
-  LOG(LOG_ALL, "IP thread ID=%ld", (long)thread_id);
-
-  if(rc < 0) {
-    ELOG(LOG_FATAL, "IP thread could not be started");
-    exit(-1);
-  }
-  return 0;
-}
-
-void disconnect(modem_config *cfg) {
-  mdm_disconnect(cfg);
-  cfg->is_binary_negotiated = FALSE;
 }
 
 void *run_bridge(void *arg) {
@@ -302,17 +273,14 @@ void *run_bridge(void *arg) {
     exit(-1);
   }
 
-  spawn_ctrl_thread(cfg);
-  spawn_ip_thread(cfg);
+  spawn_thread((void *)ctrl_thread, (void *)cfg, "CTRL");
+  spawn_thread((void *)ip_thread, (void *)cfg, "IP");
 
   mdm_set_control_lines(cfg);
   last_conn_type = cfg->conn_type;
-  last_cmd_mode = cfg->is_cmd_mode;
   cfg->allow_transmit = FALSE;
   // call some functions behind the scenes
-  disconnect(cfg);
-  if(strlen(cfg->config0)) {
-    strncpy(cfg->cur_line, cfg->config0, sizeof(cfg->cur_line));
+  if(cfg->cur_line_idx) {
     mdm_parse_cmd(cfg);
   }
   if (cfg->direct_conn == TRUE) {
@@ -415,7 +383,7 @@ void *run_bridge(void *arg) {
           } else {
             writeFile(cfg->no_answer, cfg->line_data.fd);
           }
-          disconnect(cfg);
+          mdm_disconnect(cfg);
         } else
           mdm_send_ring(cfg);
       } else 
@@ -428,7 +396,7 @@ void *run_bridge(void *arg) {
         if(cfg->conn_type == MDM_CONN_NONE && cfg->is_off_hook == TRUE) {
           // this handles the case where atdt goes off hook, but no
           // connection
-          disconnect(cfg);
+          mdm_disconnect(cfg);
           mdm_send_response(MDM_RESP_OK, cfg);
         } else {
           mdm_parse_data(cfg, buf, res);
@@ -438,12 +406,12 @@ void *run_bridge(void *arg) {
     if (FD_ISSET(cfg->wp[0][0], &readfs)) {  // control pipe
       res = readPipe(cfg->wp[0][0], buf, sizeof(buf) - 1);
       buf[res] = 0;
-      LOG(LOG_DEBUG, "Received %s from Control line watch task", buf);
+      LOG(LOG_DEBUG, "Received %s from control line watch task", buf);
       status = dce_get_control_lines(&cfg->dce_data);
       if(!(status & DCE_CL_DTR)) {
         // DTR drop, close any active connection and put
         // in cmd_mode
-        disconnect(cfg);
+        mdm_disconnect(cfg);
       }
     }
     if (FD_ISSET(cfg->cp[0][0], &readfs)) {  // ip thread pipe

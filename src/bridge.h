@@ -5,7 +5,7 @@
 
 #define MSG_CALLING       'C'
 #define MSG_BUSY          'B'
-#define MSG_CONTROL_LINES 'd'
+#define MSG_CONTROL_LINES 'D'
 #define MSG_DISCONNECT    'H'
 #define MSG_NOTIFY        'N'
 

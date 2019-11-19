@@ -47,6 +47,7 @@ int parseRegister(char line[],
                   int simple_parse
                  );
 int getcmd(char line[],
+           int len,
            int *index, 
            int *num, 
            int *data_start, 
