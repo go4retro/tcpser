@@ -11,8 +11,6 @@
 
 void dce_init_config(dce_config *cfg) {
   cfg->parity = -1;  // parity not yet checked.
-  if(!cfg->is_ip232)
-    cfg->is_connected = TRUE;  // serial link is always up
 }
 
 int detect_parity (int charA, int charT) {
@@ -38,7 +36,10 @@ int dce_connect(dce_config *cfg) {
     rc = ip232_init_conn(cfg);
   } else {
     rc = ser_init_conn(cfg->tty, cfg->port_speed);
-    cfg->fd = rc;
+    if(-1 < rc) {
+      cfg->is_connected = TRUE;
+      cfg->fd = rc;
+    }
   }
 
   LOG_EXIT();

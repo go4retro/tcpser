@@ -112,7 +112,7 @@ int init(int argc,
         break;
       case 'i':
         strncpy(cfg[i].cur_line, optarg, sizeof(cfg[i].cur_line));
-        cfg[i].cur_line_idx = strlen(cfg->cur_line);
+        cfg[i].cur_line_idx = strlen(cfg[i].cur_line);
         break;
       case 'I':
         cfg[i].invert_dcd = TRUE;
@@ -163,6 +163,7 @@ int init(int argc,
           }
         }
         strncpy((char *)cfg[i].dce_data.tty, optarg, sizeof(cfg[i].dce_data.tty));
+        LOG(LOG_ALL, "Setting TTY to %s", optarg);
         cfg[i].dce_data.is_ip232 = ('v' == opt);
         tty_set = TRUE;
         break;

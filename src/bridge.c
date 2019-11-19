@@ -272,6 +272,10 @@ void *run_bridge(void *arg) {
     ELOG(LOG_FATAL, "IP thread outgoing IPC pipe could not be created");
     exit(-1);
   }
+  if(dce_connect(&cfg->dce_data) < 0) {
+    ELOG(LOG_FATAL, "Could not open serial port %s", cfg->dce_data.tty);
+    exit(-1);
+  }
 
   spawn_thread((void *)ctrl_thread, (void *)cfg, "CTRL");
   spawn_thread((void *)ip_thread, (void *)cfg, "IP");
@@ -324,7 +328,7 @@ void *run_bridge(void *arg) {
       last_cmd_mode = cfg->is_cmd_mode;
     }
     LOG(LOG_ALL, "Waiting for modem/control line/timer/socket activity");
-    LOG(LOG_ALL, "Command Mode=%d, Connection status=%d", cfg->is_cmd_mode, cfg->conn_type);
+    LOG(LOG_ALL, "Command Mode=%d, DCE status=%d, Line status=%d", cfg->is_cmd_mode, cfg->dce_data.is_connected, cfg->conn_type);
     FD_ZERO(&readfs);
     max_fd = cfg->mp[1][0];
     FD_SET(cfg->mp[1][0], &readfs);

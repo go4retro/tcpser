@@ -63,20 +63,6 @@ void *ip232_thread(void *arg) {
   LOG_EXIT();
 }
 
-int spawn_ip232_thread(dce_config *cfg) {
-  int rc;
-  pthread_t thread_id;
-
-  rc = pthread_create(&thread_id, NULL, ip232_thread, (void *)cfg);
-  LOG(LOG_ALL, "ip232 thread ID=%ld", (long)thread_id);
-
-  if(rc < 0) {
-    ELOG(LOG_FATAL, "ip232 thread could not be started");
-    exit(-1);
-  }
-  return 0;
-}
-
 int ip232_init_conn(dce_config *cfg) {
   int rc = -1;
 
@@ -100,10 +86,10 @@ int ip232_init_conn(dce_config *cfg) {
 
   cfg->sSocket = rc;
   cfg->is_connected = FALSE;
-  spawn_ip232_thread(cfg);
+  spawn_thread(ip232_thread, (void *)cfg, "IP232");
   LOG(LOG_INFO, "ip232 device configured");
   LOG_EXIT();
-  return rc;
+  return 0;
 }
 
 

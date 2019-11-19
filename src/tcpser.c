@@ -26,7 +26,6 @@ int main(int argc, char *argv[]) {
   char default_ip[] = "6400";
 
   char all_busy[255];
-  pthread_t thread_id;
   int i;
   int rc = 0;
   int sSocket = 0;
@@ -59,25 +58,17 @@ int main(int argc, char *argv[]) {
 
   for(i = 0; i < modem_count; i++) {
     LOG(LOG_INFO, "Creating modem #%d", i);
-    if( -1 == pipe(cfg[i].mp[0])) {
+    if(-1 == pipe(cfg[i].mp[0])) {
       ELOG(LOG_FATAL, "Bridge task incoming IPC pipe could not be created");
       exit(-1);
     }
-    if( -1 == pipe(cfg[i].mp[1])) {
+    if(-1 == pipe(cfg[i].mp[1])) {
       ELOG(LOG_FATAL, "Bridge task outgoing IPC pipe could not be created");
-      exit(-1);
-    }
-    if(dce_connect(&cfg[i].dce_data) < 0) {
-      ELOG(LOG_FATAL, "Could not open serial port %s", cfg[i].dce_data.tty);
       exit(-1);
     }
     cfg[i].line_data.sfd = sSocket;
 
-    rc=pthread_create(&thread_id, NULL, *run_bridge, (void *)&cfg[i]);
-    if(rc < 0) {
-        ELOG(LOG_FATAL, "IP thread could not be started");
-        exit(-1);
-    }
+    spawn_thread(*run_bridge, (void *)&cfg[i], "BRIDGE");
 
   }
 
