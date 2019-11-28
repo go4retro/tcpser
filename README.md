@@ -11,6 +11,17 @@ many of them).  TCPSER can be used for both inbound and outbound connections.
 
 TCPSER is distributed under the GPL 2.0 or later
 
+## Installation
+
+### macOS
+
+Install with [Homebrew](https://brew.sh/) by
+
+```
+brew tap rickard-von-essen/formulae
+brew install tcpser
+```
+
 ## Executable/Building
 
 ### UNIX/Linux/BSD/macOS
