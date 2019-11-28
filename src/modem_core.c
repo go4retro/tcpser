@@ -84,7 +84,7 @@ void mdm_init_config(modem_config *cfg) {
   cfg->cur_line_idx = 0;
   cfg->rings = 0;
 
-  for(i = 0; i < 100; i++) {
+  for(i = 0; i < sizeof(cfg->s) / sizeof(cfg->s[0]); i++) {
     cfg->s[i] = 0;
   }
   cfg->s[S_REG_BREAK] = 43;
@@ -420,14 +420,18 @@ int mdm_parse_cmd(modem_config* cfg) {
       case 'S':
         strncpy(tmp, command + start, end - start);
         tmp[end - start] = '\0';
-        cfg->s[num] = atoi(tmp);
-        switch(num) {
-          case 3:
-            cfg->crlf[0] = cfg->s[S_REG_CR];
-            break;
-          case 4:
-            cfg->crlf[1] = cfg->s[S_REG_LF];
-            break;
+        if(num < sizeof(cfg->s)) {
+          cfg->s[num] = atoi(tmp); // TODO do not assume this is always a number...
+          switch(num) {
+            case S_REG_CR:
+              cfg->crlf[0] = cfg->s[S_REG_CR];
+              break;
+            case S_REG_LF:
+              cfg->crlf[1] = cfg->s[S_REG_LF];
+              break;
+          }
+        } else {
+          LOG(LOG_DEBUG, "Ignoring S register %d=%s", num, tmp);
         }
         break;
       case AT_CMD_FLAG_QUERY | 'S':

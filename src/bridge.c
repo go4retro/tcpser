@@ -243,7 +243,7 @@ void *ctrl_thread(void *arg) {
   exit(-1);
 }
 
-void *run_bridge(void *arg) {
+void *bridge_task(void *arg) {
   modem_config *cfg = (modem_config *)arg;
   struct timeval timer;  
   struct timeval *ptimer;  

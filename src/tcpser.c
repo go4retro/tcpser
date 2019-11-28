@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
     }
     cfg[i].line_data.sfd = sSocket;
 
-    spawn_thread(*run_bridge, (void *)&cfg[i], "BRIDGE");
+    spawn_thread(*bridge_task, (void *)&cfg[i], "BRIDGE");
 
   }
 
