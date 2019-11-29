@@ -97,17 +97,11 @@ int line_connect(line_config *cfg, char *addy) {
   }
 }
 
-// TODO Need to rationalize where direct_conn flag sits...
-int line_disconnect(line_config *cfg, int direct_conn) {
+int line_disconnect(line_config *cfg) {
   LOG(LOG_INFO, "Disconnecting line");
-  if(direct_conn == TRUE) {
-    LOG(LOG_INFO, "Direct connection active, maintaining link");
-    return -1;
-  } else {
-    if(cfg->is_connected == TRUE) {
-      ip_disconnect(cfg->fd);
-    }
-    reset_config(cfg);
+  if(cfg->is_connected == TRUE) {
+    ip_disconnect(cfg->fd);
   }
+  reset_config(cfg);
   return 0;
 }

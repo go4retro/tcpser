@@ -20,6 +20,6 @@ int line_listen(line_config *cfg);
 int line_accept(line_config *cfg);
 int line_off_hook(line_config *cfg);
 int line_connect(line_config *cfg, char* dialno);
-int line_disconnect(line_config *cfg, int direct_conn);
+int line_disconnect(line_config *cfg);
 
 #endif

@@ -130,7 +130,7 @@ int mdm_answer(modem_config *cfg);
 int mdm_print_speed(modem_config *cfg);
 int mdm_connect(modem_config *cfg);
 int mdm_listen(modem_config *cfg);
-int mdm_disconnect(modem_config *cfg);
+int mdm_disconnect(modem_config *cfg, unsigned char force);
 int mdm_parse_cmd(modem_config *cfg);
 int mdm_handle_char(modem_config *cfg, unsigned char ch);
 int mdm_clear_break(modem_config *cfg);

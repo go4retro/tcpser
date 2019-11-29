@@ -25,8 +25,7 @@ int accept_connection(modem_config *cfg) {
     if(cfg->direct_conn == TRUE) {
       cfg->conn_type = MDM_CONN_INCOMING;
       mdm_off_hook(cfg);
-      cfg->is_cmd_mode = TRUE;
-	    } else {
+    } else {
       //line_write(cfg,(unsigned char*)CONNECT_NOTICE,strlen(CONNECT_NOTICE));
       cfg->rings = 0;
       mdm_send_ring(cfg);
@@ -328,7 +327,7 @@ void *bridge_task(void *arg) {
       last_cmd_mode = cfg->is_cmd_mode;
     }
     LOG(LOG_ALL, "Waiting for modem/control line/timer/socket activity");
-    LOG(LOG_ALL, "Command Mode=%d, DCE status=%d, Line status=%d", cfg->is_cmd_mode, cfg->dce_data.is_connected, cfg->conn_type);
+    LOG(LOG_ALL, "CMD:%d, DCE:%d, LINE:%d, TYPE:%d, HOOK:%d", cfg->is_cmd_mode, cfg->dce_data.is_connected, cfg->line_data.is_connected, cfg->conn_type, cfg->is_off_hook);
     FD_ZERO(&readfs);
     max_fd = cfg->mp[1][0];
     FD_SET(cfg->mp[1][0], &readfs);
@@ -387,7 +386,8 @@ void *bridge_task(void *arg) {
           } else {
             writeFile(cfg->no_answer, cfg->line_data.fd);
           }
-          mdm_disconnect(cfg);
+          cfg->is_ringing = FALSE;
+          //mdm_disconnect(cfg, FALSE); // not sure need to do a disconnect here, no connection
         } else
           mdm_send_ring(cfg);
       } else 
@@ -397,11 +397,12 @@ void *bridge_task(void *arg) {
       LOG(LOG_DEBUG, "Data available on serial port");
       res = mdm_read(cfg, buf, sizeof(buf));
       if(res > 0) {
-        if(cfg->conn_type == MDM_CONN_NONE && cfg->is_off_hook == TRUE) {
-          // this handles the case where atdt goes off hook, but no
+        if(cfg->conn_type == MDM_CONN_NONE
+           && !cfg->is_cmd_mode
+           && cfg->is_off_hook) {
+          // this handles the case where atdt/ata goes off hook, but no
           // connection
-          mdm_disconnect(cfg);
-          mdm_send_response(MDM_RESP_OK, cfg);
+          mdm_disconnect(cfg, FALSE);
         } else {
           mdm_parse_data(cfg, buf, res);
         }
@@ -415,7 +416,7 @@ void *bridge_task(void *arg) {
       if(!(status & DCE_CL_DTR)) {
         // DTR drop, close any active connection and put
         // in cmd_mode
-        mdm_disconnect(cfg);
+        mdm_disconnect(cfg, FALSE);
       }
     }
     if (FD_ISSET(cfg->cp[0][0], &readfs)) {  // ip thread pipe
@@ -426,11 +427,9 @@ void *bridge_task(void *arg) {
           if(cfg->direct_conn == TRUE) {
             // what should we do here...
             LOG(LOG_ERROR, "Direct Connection Link broken, disconnecting and awaiting new direct connection");
-            cfg->direct_conn = FALSE;
-            mdm_disconnect(cfg);
-            cfg->direct_conn = TRUE;
+            mdm_disconnect(cfg, TRUE);
           } else {
-            mdm_disconnect(cfg);
+            mdm_disconnect(cfg, FALSE);
           }
           break;
       }
