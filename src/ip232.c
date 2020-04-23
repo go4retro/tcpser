@@ -36,7 +36,7 @@ void *ip232_thread(void *arg) {
       // handle error
     } else {
       if (FD_ISSET(cfg->dp[1][0], &readfs)) {  // pipe
-        rc = read(cfg->dp[1][0], buf, sizeof(buf) - 1);
+        rc = readPipe(cfg->dp[1][0], buf, sizeof(buf) - 1);
         LOG(LOG_DEBUG, "ip232 thread notified");
       }
       if (FD_ISSET(cfg->sSocket, &readfs)) {  // ip connection
@@ -98,15 +98,10 @@ int ip232_set_flow_control(dce_config *cfg, int status) {
 }
 
 int ip232_get_control_lines(dce_config *cfg) {
-  int status = 0;
 
-  if (cfg->is_connected && cfg->ip232_dtr) {
-    status |= DCE_CL_DTR;
-  }
-  if(cfg->is_connected) {
-    status |= DCE_CL_LE;
-  }
-  return status;
+  return ((cfg->is_connected ? DCE_CL_LE : 0)
+          | ((cfg->is_connected && cfg->ip232_dtr) ? DCE_CL_DTR : 0)
+         );
 }
 
 int ip232_set_control_lines(dce_config *cfg, int state) {

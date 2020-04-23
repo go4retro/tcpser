@@ -199,7 +199,7 @@ void *ip_thread(void *arg) {
       }
       if (FD_ISSET(cfg->cp[1][0], &readfs)) {  // pipe
 
-        res = read(cfg->cp[1][0], buf, sizeof(buf) - 1);
+        res = readPipe(cfg->cp[1][0], buf, sizeof(buf) - 1);
         LOG(LOG_DEBUG, "IP thread notified");
         action_pending = FALSE;
       }
@@ -219,19 +219,22 @@ void *ctrl_thread(void *arg) {
     new_status = dce_check_control_lines(&cfg->dce_data);
     if(new_status > -1 && status != new_status) {
       LOG(LOG_DEBUG, "Control Line Change");
-      writePipe(cfg->wp[0][1], MSG_CONTROL_LINES);
       if((new_status & DCE_CL_DTR) != (status & DCE_CL_DTR)) {
         if((new_status & DCE_CL_DTR)) {
           LOG(LOG_INFO, "DTR has gone high");
+          writePipe(cfg->wp[0][1], MSG_DTR_UP);
         } else {
           LOG(LOG_INFO, "DTR has gone low");
+          writePipe(cfg->wp[0][1], MSG_DTR_DOWN);
         }
       }
       if((new_status & DCE_CL_LE) != (status & DCE_CL_LE)) {
         if((new_status & DCE_CL_LE)) {
           LOG(LOG_INFO, "Link has come up");
+          writePipe(cfg->wp[0][1], MSG_LE_UP);
         } else {
           LOG(LOG_INFO, "Link has gone down");
+          writePipe(cfg->wp[0][1], MSG_LE_DOWN);
         }
       }
     }
@@ -251,7 +254,6 @@ void *bridge_task(void *arg) {
   int res = 0;
   unsigned char buf[256];
   int rc = 0;
-  int status;
 
   int last_conn_type;
   int last_cmd_mode = cfg->is_cmd_mode;
@@ -410,17 +412,21 @@ void *bridge_task(void *arg) {
     }
     if (FD_ISSET(cfg->wp[0][0], &readfs)) {  // control pipe
       res = readPipe(cfg->wp[0][0], buf, sizeof(buf) - 1);
-      buf[res] = 0;
       LOG(LOG_DEBUG, "Received %s from control line watch task", buf);
-      status = dce_get_control_lines(&cfg->dce_data);
-      if(!(status & DCE_CL_DTR)) {
-        // DTR drop, close any active connection and put
-        // in cmd_mode
-        mdm_disconnect(cfg, FALSE);
+      for(int i = 0; i < res ; i++) {
+        switch (buf[0]) {
+          case MSG_DTR_DOWN:
+            // DTR drop, close any active connection and put
+            // in cmd_mode
+            mdm_disconnect(cfg, FALSE);
+            break;
+          default:
+            break;
+        }
       }
     }
     if (FD_ISSET(cfg->cp[0][0], &readfs)) {  // ip thread pipe
-      res = read(cfg->cp[0][0], buf, sizeof(buf));
+      res = readPipe(cfg->cp[0][0], buf, sizeof(buf));
       LOG(LOG_DEBUG, "Received %c from ip thread", buf[0]);
       switch (buf[0]) {
         case MSG_DISCONNECT:
@@ -436,7 +442,7 @@ void *bridge_task(void *arg) {
     }
     if (FD_ISSET(cfg->mp[1][0], &readfs)) {  // parent pipe
       LOG(LOG_DEBUG, "Data available on incoming IPC pipe");
-      res = read(cfg->mp[1][0], buf, sizeof(buf));
+      res = readPipe(cfg->mp[1][0], buf, sizeof(buf));
       switch (buf[0]) {
         case MSG_CALLING:       // accept connection.
           accept_connection(cfg);

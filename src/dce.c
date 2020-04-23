@@ -78,11 +78,11 @@ int dce_set_control_lines(dce_config *cfg, int state) {
   int rc;
 
   LOG_ENTER();
-  if((state & DCE_CL_CTS) != 0) {
-    LOG(LOG_ALL, "Setting CTS pin high");
-  } else {
-    LOG(LOG_ALL, "Setting CTS pin low");
-  }
+//  if((state & DCE_CL_CTS) != 0) {
+//    LOG(LOG_ALL, "Setting CTS pin high");
+//  } else {
+//    LOG(LOG_ALL, "Setting CTS pin low");
+//  }
   if((state & DCE_CL_DCD) != 0) {
     LOG(LOG_ALL, "Setting DCD pin high");
   } else {

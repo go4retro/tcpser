@@ -144,30 +144,27 @@ int ser_get_control_lines(int fd) {
     ELOG(LOG_FATAL, "Could not obtain serial port status");
     return -1;
   }
-  // RS232 link is always up.
-  return (DCE_CL_LE
+
+  return (DCE_CL_LE           // RS232 link is always up.
           | ((status & TIOCM_DSR) ? DCE_CL_DTR : 0)
-          | ((status & TIOCM_DTR) ? DCE_CL_DCD : 0)
-          | ((status & TIOCM_RTS) ? DCE_CL_CTS : 0)
+          //| ((status & TIOCM_CTS) ? DCE_CL_RTS : 0)
          );
 }
 
 int ser_set_control_lines(int fd, int state) {
   int status;
 
-  if(0 > (status = ser_get_control_lines(fd))) {
-    return status;
-  }
-  status &= ~(TIOCM_RTS | TIOCM_DTR);
-  status |= (state & DCE_CL_DCD ? TIOCM_DTR : 0);
-  status |= (state & DCE_CL_CTS ? TIOCM_RTS : 0);
-  if(0 > ioctl(fd, TIOCMSET, &status)) {
-#ifndef WIN32
-    ELOG(LOG_FATAL, "Could not set serial port status");
+  if(0 > ioctl(fd, TIOCMGET, &status)) {
+    ELOG(LOG_FATAL, "Could not obtain serial port status");
     return -1;
-#else
-    ELOG(LOG_WARN, "Could not set serial port status, CYGWIN bug?");
-#endif
+  }
+
+  status &= ~(TIOCM_DTR);
+  //status &= ~(TIOCM_RTS | TIOCM_DTR);
+  status |= (state & DCE_CL_DCD ? TIOCM_DTR : 0);
+  //status |= (state & DCE_CL_CTS ? TIOCM_RTS : 0);
+  if(0 > ioctl(fd, TIOCMSET, &status)) {
+    ELOG(LOG_WARN, "Could not set serial port status");
   }
   return 0;
 }
