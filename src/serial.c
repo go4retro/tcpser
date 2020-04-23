@@ -17,7 +17,7 @@ int ser_get_bps_const(int speed) {
   LOG(LOG_DEBUG,"Checking speed: %d",speed);
 
   switch (speed) {
-    case 30240000:
+    case 230400:
       bps_rate = B230400;
       break;
     case 115200:

@@ -165,18 +165,11 @@ pip-log.txt
 #SVN
 .svn
 
-#Project Stuff
+#GCC
 .dep
 obj-*
-*.xmsgs
-/hdl/*.err
-/pcb/*.lck
-/hdl/iseconfig/*.filter
-*.tim
-*.tspec
-archive
-*.err
-_xmsgs
 
+#Project Stuff
+archive
 tcpser
 src/*.o
