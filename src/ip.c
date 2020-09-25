@@ -53,7 +53,7 @@ int ip_init_server_conn(char *ip) {
       ELOG(LOG_ERROR, "bind address checking could not be turned off");
     }
 
-    if(ip_addr != NULL) { /* gwb */
+    if (strcmp(ip_addr,"") != 0) /* changed to strcmp test -04Mar17 gwb */
       serverName.sin_addr.s_addr = inet_addr(ip_addr);
       LOG(LOG_DEBUG, "Using specified ip address %s", ip_addr);
     } else {
