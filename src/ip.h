@@ -7,7 +7,7 @@
 #endif
 
 int ip_init(void);
-int ip_init_server_conn(char *ip);
+int ip_init_server_conn(char *ip, int port);
 int ip_connect(char *ip);
 int ip_accept(int sSocket);
 int ip_disconnect(int fd);

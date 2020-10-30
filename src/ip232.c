@@ -68,7 +68,7 @@ int ip232_init_conn(dce_config *cfg) {
 
   LOG_ENTER();
   LOG(LOG_INFO, "Opening ip232 device");
-  rc = ip_init_server_conn(cfg->tty);
+  rc = ip_init_server_conn(cfg->tty, 25232);
 
   if (rc < 0) {
     ELOG(LOG_FATAL, "Could not initialize ip232 server socket");

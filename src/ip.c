@@ -11,21 +11,31 @@
 
 const int BACK_LOG = 5;
 
-int ip_init_server_conn(char *ip) {
-  int port;
+int ip_init_server_conn(char *ip, int port) {
   char *ip_addr = NULL;
   int sSocket = 0, on = 0, rc = 0;
   struct sockaddr_in serverName = { 0 };
-
-  if (strstr(ip, ":") > 0) {
-    ip_addr = strtok(ip, ":");
-    port = (atoi(strtok(NULL, ":")));
-  } else {
-    port = (atoi(ip));
-  }
-
+  char * tmp;
 
   LOG_ENTER();
+
+  // Handle special case ":<port>"
+  // Without it, ip_add will be set to port and port will be null
+
+  if(ip != NULL) {
+    if(ip[0] == ':') {
+      ip = &ip[1];
+    }
+    if (strchr(ip, ':') != NULL) {
+      ip_addr = strtok(ip, ":");
+      tmp = strtok(NULL,":");
+      if(tmp != NULL && strlen(tmp) > 0) {
+        port = (atoi(tmp));
+      }
+    } else if(strlen(ip) > 0) {
+      port = (atoi(ip));
+    }
+  }
 
   LOG(LOG_DEBUG, "Creating server socket");
 
@@ -53,9 +63,9 @@ int ip_init_server_conn(char *ip) {
       ELOG(LOG_ERROR, "bind address checking could not be turned off");
     }
 
-    if (strcmp(ip_addr,"") != 0) /* changed to strcmp test -04Mar17 gwb */
+    if (ip_addr != NULL && strcmp(ip_addr,"") != 0) { /* changed to strcmp test -04Mar17 gwb */
+      LOG(LOG_DEBUG, "Using specified ip address '%s'", ip_addr);
       serverName.sin_addr.s_addr = inet_addr(ip_addr);
-      LOG(LOG_DEBUG, "Using specified ip address %s", ip_addr);
     } else {
       serverName.sin_addr.s_addr = htonl(INADDR_ANY);
     }
@@ -69,6 +79,7 @@ int ip_init_server_conn(char *ip) {
               (struct sockaddr *) &serverName,
               sizeof(serverName)
              );
+
     if (-1 == rc) {
       ELOG(LOG_FATAL, "Server socket could not be bound to port");
       sSocket = -1;
@@ -97,6 +108,7 @@ int ip_connect(char *ip) {
   char *tmp;
 
   LOG_ENTER();
+  // TODO Can ip be null? If so, fix.
   address = strtok(ip, ":");
   tmp = strtok(NULL, ":");
   if(tmp != NULL && strlen(tmp) > 0) {

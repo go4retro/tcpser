@@ -23,7 +23,6 @@ int main(int argc, char *argv[]) {
   modem_config cfg[MAX_MODEMS];
   int modem_count;
   char *ip_addr = NULL;
-  char default_ip[] = "6400";
 
   char all_busy[255];
   int i;
@@ -48,9 +47,7 @@ int main(int argc, char *argv[]) {
   signal(SIGIO, SIG_IGN); /* Some Linux variant term on SIGIO by default */
 
   modem_count = init(argc, argv, cfg, MAX_MODEMS, &ip_addr, all_busy, sizeof(all_busy));
-  if(ip_addr == NULL)
-    ip_addr = default_ip;
-  sSocket = ip_init_server_conn(ip_addr);
+  sSocket = ip_init_server_conn(ip_addr, 6400);
   if(-1 == sSocket) {
     ELOG(LOG_FATAL, "Could not listen on %s", ip_addr);
     exit (-1);
