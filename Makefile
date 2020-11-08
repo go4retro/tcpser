@@ -4,7 +4,7 @@ OBJS = $(SRC)/bridge.o $(SRC)/debug.o $(SRC)/getcmd.o $(SRC)/ip.o $(SRC)/init.o 
 CC = gcc
 DEF = 
 CFLAGS = -O $(DEF) -Wall
-LDFLAGS = -lpthread
+LDFLAGS = -pthread -lpthread
 DEPEND = makedepend $(DEF) $(CFLAGS)
 
 all:	tcpser
