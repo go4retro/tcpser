@@ -36,7 +36,8 @@ void print_help(char* name) {
   fprintf(stderr, "  -T   filename to send upon inactivity timeout\n");
   fprintf(stderr, "  -i   modem init string (defaults to '', leave off 'at' prefix when specifying)\n");
   fprintf(stderr, "  -D   direct connection (follow with hostname:port for caller, : for receiver)\n");
-  exit(1);
+  fprintf(stderr, "  -V   print version number\n");
+  exit(0);
 }
 
 int init(int argc,
@@ -61,7 +62,7 @@ int init(int argc,
   cfg[0].line_speed = 38400;
 
   while(opt>-1 && i < max_modem) {
-    opt=getopt(argc, argv, "p:s:S:d:v:hw:i:Il:L:t:n:a:A:c:C:N:B:T:D:");
+    opt=getopt(argc, argv, "p:s:S:d:v:hw:i:Il:L:t:n:a:A:c:C:N:B:T:D:V");
     switch(opt) {
       case 't':
         trace_flags = log_get_trace_flags();
@@ -174,6 +175,12 @@ int init(int argc,
       case 'D':
         cfg[i].direct_conn = TRUE;
         strncpy(cfg[i].direct_conn_num, optarg, sizeof(cfg[i].direct_conn_num));
+        break;
+      case 'V':
+        printf("%s (TCPSER) %s\n", argv[0], "1.1.rc2");
+        printf("Copyright (C) 2020 Jim Brain (tcpser@jbrain.com)\n");
+        //printf("%s (TCPSER) %s\n", argv[0], "1.1.rc2");
+        exit(0);
         break;
     }
   }

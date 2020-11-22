@@ -1,3 +1,7 @@
+
+#define PH_BOOK_SIZE    100
+#define PH_ENTRY_SIZE   128
+
 int pb_init(void);
 int pb_add(char *from, char *to);
-char *pb_search(char *number);
+int pb_search(char *number, char* address);

@@ -83,16 +83,18 @@ int line_off_hook(line_config *cfg) {
   return 0;
 }
 
-int line_connect(line_config *cfg, char *addy) {
+int line_connect(line_config *cfg, char *number) {
+  char address[PH_ENTRY_SIZE];
+
   LOG(LOG_INFO, "Connecting line");
-  addy = pb_search(addy);
-  cfg->fd = ip_connect(addy);
+  pb_search(number, address);
+  cfg->fd = ip_connect(address);
   if(cfg->fd > -1) {
-    LOG(LOG_ALL, "Connected to %s", addy);
+    LOG(LOG_ALL, "Connected to %s", address);
     cfg->is_connected = TRUE;
     return 0;
   } else {
-    LOG(LOG_ALL, "Could not connect to %s",addy);
+    LOG(LOG_ALL, "Could not connect to %s",address);
     return -1;
   }
 }

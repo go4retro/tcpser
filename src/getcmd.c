@@ -68,7 +68,7 @@ int getNumber(char line[], int *index, int len) {
   int num = 0;
   int found = FALSE;
 
-  while(*index < len && 0 != isdigit(line[*index])) {
+  while(*index < len && 0 != isdigit((int)line[*index])) {
     num = num * 10 + line[(*index)++] - '0';
     found = 1;
   }

@@ -40,16 +40,15 @@ void *ip232_thread(void *arg) {
         LOG(LOG_DEBUG, "ip232 thread notified");
       }
       if (FD_ISSET(cfg->sSocket, &readfs)) {  // ip connection
+        LOG(LOG_DEBUG, "Incoming ip232 connection");
+        rc = ip_accept(cfg->sSocket);
         if(cfg->is_connected) {
           LOG(LOG_DEBUG, "Already have ip232 connection, rejecting new");
           // already have a connection... accept and close
-          rc = ip_accept(cfg->sSocket);
           if(rc > -1) {
             close(rc);
           }
         } else {
-          LOG(LOG_DEBUG, "Incoming ip232 connection");
-          rc = ip_accept(cfg->sSocket);
           if(rc > -1) {
             cfg->fd = rc;
             cfg->is_connected = TRUE;
