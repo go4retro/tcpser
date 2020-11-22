@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>       // for exit,atoi
 #include <unistd.h>
+#include "version.h"
 #include "debug.h"
 #include "phone_book.h"
 #include "init.h"
@@ -177,7 +178,7 @@ int init(int argc,
         strncpy(cfg[i].direct_conn_num, optarg, sizeof(cfg[i].direct_conn_num));
         break;
       case 'V':
-        printf("%s (TCPSER) %s\n", argv[0], "1.1.rc2");
+        printf("%s (TCPSER) %s\n", argv[0], VERSION);
         printf("Copyright (C) 2020 Jim Brain (tcpser@jbrain.com)\n");
         //printf("%s (TCPSER) %s\n", argv[0], "1.1.rc2");
         exit(0);
