@@ -43,10 +43,13 @@ void *ip232_thread(void *arg) {
         LOG(LOG_DEBUG, "Incoming ip232 connection");
         rc = ip_accept(cfg->sSocket);
         if(cfg->is_connected) {
-          LOG(LOG_DEBUG, "Already have ip232 connection, rejecting new");
-          // already have a connection... accept and close
+          // KLUDGE Alert!
+          LOG(LOG_DEBUG, "Already have ip232 connection, should reject this one, but VICE needs us to accept it");
           if(rc > -1) {
-            close(rc);
+            close(cfg->fd);
+            cfg->fd = rc;
+            cfg->ip232_dtr = FALSE;
+            cfg->ip232_dcd = FALSE;
           }
         } else {
           if(rc > -1) {
