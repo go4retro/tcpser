@@ -24,38 +24,28 @@ brew install tcpser
 
 ## Executable/Building
 
-### UNIX/Linux/BSD/macOS
-
-Simply untar the archive into a directory, and use the appropriate make command
-generate the exectutable.  If unsure, try the default make command first.
+Simply clone the repository and use the appropriate make command to generate the executable.  If unsure, try the default make command first.
 
 | OS                  | Command                    |
-|---------------------|----------------------------|
+| ------------------- | -------------------------- |
 | Default/Linux/macOS | `make`                     |
 | Solaris             | `make -f Makefile.solaris` |
 | *BSD                | `gmake`                    |
-
-### Windows 95/OSR2/98/SE/ME/NT/2000/XP/2003
+| Windows             | `make`                     |
 
 The application archive contains a pregenerated Windows 32 bit executable 
 (tcpser.exe).  No compilation should be required, though the GNU toolchain and 
 the CYGWIN POSIX libraries can be used to regenerate the executable if desired:
 
-Win32:  make -f Makefile.win32
-
 Note that at least the cygwin1.dll library is required to operate tcpser under 
 Windows.  I recommend downloading a recent version from www.cygwin.com
-
-This version of tcpser supports setting up an ip232 port instead of using a
-real serial port.  This is for use with the version of WinVICE 1.19 that has
-the ACIA fix and ip232 support, allowing WinVICE to use tcpser as if it was
-connected via a serial cable.
 
 ## Operation
 ```
 tcpser -d <dev> -s <speed> -l <log_level> -t <tracing options> ...
 ```
 -or-
+
 ```
 tcpser -v <port> -s <speed> -l <log_level> -t <tracing options> ...
 ```
@@ -67,6 +57,7 @@ Will start tcpser on ttyS0 at 38400 bps, level 7 logging, tracing of
 inbound serial, outbound serial, inbound IP, outbound IP, init
 modem to answer after 1 ring, and listen for incoming connections on port
 6400
+
 ```
 tcpser -v 25232 -s 38400 -l 4 -p 23
 ```
@@ -88,7 +79,7 @@ tcpser can be configured to send the contents of a file upon:
 For connect and answer, there are separate options for sending a file to the
 local serial connection (-c, -a) and the remote IP connection (-C, -A).  
 
-If tcpser connects to a telnet service, tcpser will negotiate the connection
+If tcpser connects to a telnet service, it will negotiate the connection
 using the telnet protocol.  If telnet is detected, then tcpser will support
 RFC 856 (Telnet Binary Transmission), so that 8-bit file transfers will
 work correctly.
@@ -205,9 +196,9 @@ does not operate correctly.
 Raymond Day sends the following Ubuntu 7.10 autorun scripts:
 
 In:
- 
+
 /etc/init.d/
- 
+
 Make a file named something like tcpser with this code in it:
 ```
 #!/bin/sh
@@ -225,14 +216,7 @@ case "$1" in
 esac
 exit 0
 ```
-This has been tested on the following platforms:
-
-* Linux 2.4.20-8
-* Windows XP
-* Windows XP SP1
-* Slackware 10.0
-
-Help:
+## Help
 
 tcpser has a small but active user community.  Help can be found by asking a 
 question in comp.sys.cbm, on the NEWNet #c64friends IRC channel, or by emailing
@@ -241,11 +225,13 @@ the author.
 ---
 
 Jim Brain
-brain@jbrain.com
+tcpser@jbrain.com
 www.jbrain.com
 
+Thanks:
 
-The ip232 support was added by Anthony Tolle.  For questions regarding that,
-e-mail atolle@gcns.com
+- The ip232 support was added by Anthony Tolle.
+- Telnet support fixes were added by Gene Buckle (geneb): https://github.com/geneb/tcpser
+- Automatic modem parity detection and numerous fixes were added by Chris Osborn (fozztexx): https://github.com/FozzTexx/tcpser
 
 
