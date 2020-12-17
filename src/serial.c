@@ -17,65 +17,101 @@ int ser_get_bps_const(int speed) {
   LOG(LOG_DEBUG,"Checking speed: %d",speed);
 
   switch (speed) {
-#ifndef __APPLE__
+#if defined (B921600)
     case 921600:
       bps_rate = B921600;
       break;
+#endif /* B921600 */
+#if defined (B460800)
     case 460800:
       bps_rate = B460800;
       break;
-#endif
+#endif /* B460800 */
+#if defined (B230400)
     case 230400:
       bps_rate = B230400;
       break;
+#endif /* B230400 */
+#if defined (B115200)
     case 115200:
       bps_rate = B115200;
       break;
+#endif /* B115200 */
+#if defined (B57600)
     case 57600:
       bps_rate = B57600;
       break;
+#endif /* B57600 */
+#if defined (B38400)
     case 38400:
       bps_rate = B38400;
       break;
+#endif /* B38400 */
+#if defined (B19200)
     case 19200:
       bps_rate = B19200;
       break;
+#endif /* B19200 */
+#if defined (B9600)
     case 9600:
       bps_rate = B9600;
       break;
+#endif /* B9600 */
+#if defined (B4800)
     case 4800:
       bps_rate = B4800;
       break;
+#endif /* B4800 */
+#if defined (B2400)
     case 2400:
       bps_rate = B2400;
       break;
+#endif /* B2400 */
+#if defined (B1200)
     case 1200:
       bps_rate = B1200;
       break;
+#endif /* B1200 */
+#if defined (B600)
     case 600:
       bps_rate = B600;
       break;
+#endif /* B600 */
+#if defined (B300)
     case 300:
       bps_rate = B300;
       break;
+#endif /* B300 */
+#if defined (B150)
     case 150:
       bps_rate = B150;
       break;
+#endif /* B150 */
+#if defined (B134)
     case 134:
       bps_rate = B134;
       break;
+#endif /* B134 */
+#if defined (B110)
     case 110:
       bps_rate = B110;
       break;
+#endif /* B110 */
+#if defined (B75)
     case 75:
       bps_rate = B75;
       break;
+#endif /* B75 */
+#if defined (B50)
     case 50:
       bps_rate = B50;
       break;
+#endif /* B50 */
+#if defined (B0)
     case 0:
       bps_rate = B0;
       break;
+#endif /* B0 */
     default:
       ELOG(LOG_FATAL, "Unknown baud rate"); 
       bps_rate = -1;
