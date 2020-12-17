@@ -5,7 +5,7 @@
 #include "debug.h"
 #include "modem_core.h"
 
-char* mdm_responses[MDM_RESP_END_OF_LIST - 1];
+char* mdm_responses[MDM_RESP_END_OF_LIST];
 
 void mdm_init(void) {
   mdm_responses[MDM_RESP_OK] =             "OK";
