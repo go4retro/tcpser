@@ -17,12 +17,14 @@ int ser_get_bps_const(int speed) {
   LOG(LOG_DEBUG,"Checking speed: %d",speed);
 
   switch (speed) {
+#ifndef __APPLE__
     case 921600:
       bps_rate = B921600;
       break;
     case 460800:
       bps_rate = B460800;
       break;
+#endif
     case 230400:
       bps_rate = B230400;
       break;
