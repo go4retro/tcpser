@@ -62,8 +62,9 @@ modem_response get_connect_response(int speed, int level) {
       return MDM_RESP_CONNECT_1200;
     case 600:
       return MDM_RESP_CONNECT_0600;
+    default:
+      return MDM_RESP_CONNECT;
   }
-  return MDM_RESP_CONNECT;
 }
 
 void mdm_init_config(modem_config *cfg) {

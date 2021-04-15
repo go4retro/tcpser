@@ -152,8 +152,11 @@ int ser_init_conn(char *tty, int speed) {
 
       // leave CRTSCTS off when building for Windows on Rapsberry Pi...
       // https://github.com/driver1998/tcpser
-      //tio.c_cflag = CS8 | CLOCAL | CREAD;
+#ifdef WIN_RPI
+      tio.c_cflag = CS8 | CLOCAL | CREAD;
+#else
       tio.c_cflag = CS8 | CLOCAL | CREAD | CRTSCTS;
+#endif
       tio.c_iflag = IGNBRK;
       tio.c_oflag = 0;
       tio.c_lflag = 0;
