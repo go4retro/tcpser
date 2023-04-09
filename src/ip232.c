@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <pthread.h>
+#include <sys/select.h>
 
 #include "util.h"
 #include "debug.h"
