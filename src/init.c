@@ -27,6 +27,8 @@ void print_help(char* name) {
   fprintf(stderr, "  -s   serial port speed (defaults to 38400)\n");
   fprintf(stderr, "  -S   speed modem will report (defaults to -s value)\n");
   fprintf(stderr, "  -I   invert DCD pin\n");
+  fprintf(stderr, "  -r   handle RI pin\n");
+  fprintf(stderr, "  -R   invert RI pin\n");
   fprintf(stderr, "  -n   add phone entry (number=replacement)\n");
   fprintf(stderr, "  -a   filename to send to local side upon answer\n");
   fprintf(stderr, "  -A   filename to send to remote side upon answer\n");
@@ -63,7 +65,7 @@ int init(int argc,
   cfg[0].line_speed = 38400;
 
   while(opt>-1 && i < max_modem) {
-    opt=getopt(argc, argv, "p:s:S:d:v:hw:i:Il:L:t:n:a:A:c:C:N:B:T:D:V");
+    opt=getopt(argc, argv, "p:s:S:d:v:hw:i:Il:L:t:n:a:A:c:C:N:B:T:D:V:r:R");
     switch(opt) {
       case 't':
         trace_flags = log_get_trace_flags();
@@ -118,6 +120,12 @@ int init(int argc,
         break;
       case 'I':
         cfg[i].invert_dcd = TRUE;
+        break;
+      case 'r':
+        cfg[i].handle_ri = TRUE;
+        break;
+      case 'R':
+        cfg[i].invert_ri = TRUE;
         break;
       case 'p':
         *ip_addr = optarg;

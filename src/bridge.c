@@ -381,7 +381,7 @@ void *bridge_task(void *arg) {
          && cfg->conn_type == MDM_CONN_NONE
          && cfg->line_data.is_connected == TRUE
         ) {
-        if(cfg->s[0] == 0 && cfg->rings == 10) {
+        if(cfg->s[0] == 0 && cfg->rings == (10 * 2)) {
           // not going to answer, send some data back to IP and disconnect.
           if(strlen(cfg->no_answer) == 0) {
             line_write(&cfg->line_data, (unsigned char *)MDM_NO_ANSWER, strlen(MDM_NO_ANSWER));
@@ -390,6 +390,7 @@ void *bridge_task(void *arg) {
           }
           cfg->is_ringing = FALSE;
           //mdm_disconnect(cfg, FALSE); // not sure need to do a disconnect here, no connection
+          mdm_set_control_lines(cfg);
         } else
           mdm_send_ring(cfg);
       } else 

@@ -89,6 +89,12 @@ int dce_set_control_lines(dce_config *cfg, int state) {
     LOG(LOG_ALL, "Setting DCD pin low");
   }
 
+  if((state & DCE_CL_RI) != 0) {
+    LOG(LOG_ALL, "Setting RI pin high");
+  } else {
+    LOG(LOG_ALL, "Setting RI pin low");
+  }
+
   if (cfg->is_ip232) {
     rc = ip232_set_control_lines(cfg, state);
   } else {

@@ -106,20 +106,24 @@ int ip232_get_control_lines(dce_config *cfg) {
 
 int ip232_set_control_lines(dce_config *cfg, int state) {
   int dcd;
+  int ri;
   unsigned char cmd[2];
 
   dcd = (state & DCE_CL_DCD) ? TRUE : FALSE;
-  LOG(LOG_DEBUG, "ip232 control line state: %x", dcd);
-  if (dcd != cfg->ip232_dcd) {
-    LOG(LOG_DEBUG, "reconfiguring virtual DCD");
+  ri = (state & DCE_CL_RI) ? TRUE : FALSE;
+  LOG(LOG_DEBUG, "ip232 control line state dcd:%x ri:%x", dcd, ri);
+  if ((dcd != cfg->ip232_dcd) || (ri != cfg->ip232_ri)){
+    LOG(LOG_DEBUG, "reconfiguring virtual DCD/RI");
     cfg->ip232_dcd = dcd;
+    cfg->ip232_ri = ri;
     if (cfg->is_connected) {
       LOG(LOG_DEBUG, "Sending data");
       cmd[0] = 255;
-      cmd[1] = dcd ? 1 : 0;
+      cmd[1] = (dcd ? 1 : 0) | (ri ? 2 : 0);
       write(cfg->fd, cmd, sizeof(cmd));
     }
   }
+
   return 0;
 }
 
