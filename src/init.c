@@ -65,7 +65,7 @@ int init(int argc,
   cfg[0].line_speed = 38400;
 
   while(opt>-1 && i < max_modem) {
-    opt=getopt(argc, argv, "p:s:S:d:v:hw:i:Il:L:t:n:a:A:c:C:N:B:T:D:V:r:R");
+    opt=getopt(argc, argv, "p:s:S:d:v:hw:i:Il:L:t:n:a:A:c:C:N:B:T:D:VrR");
     switch(opt) {
       case 't':
         trace_flags = log_get_trace_flags();
