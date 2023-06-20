@@ -127,7 +127,6 @@ void mdm_init_config(modem_config *cfg) {
   cfg->allow_transmit = TRUE;
   cfg->invert_dsr = FALSE;
   cfg->invert_dcd = FALSE;
-  cfg->invert_ri = FALSE;
 
   dce_init_config(&cfg->dce_data);
   line_init_config(&cfg->line_data);
@@ -154,9 +153,9 @@ int get_new_dcd_state(modem_config *cfg, int up) {
 int get_new_ri_state(modem_config *cfg, int up) {
   if(cfg->handle_ri) {
     if(cfg->is_ringing && ((cfg->rings & 1) == 0)) {
-      return (cfg->invert_ri ? 0 : DCE_CL_RI);
+      return DCE_CL_RI;
     }
-    return (cfg->invert_ri ? DCE_CL_RI : 0);
+    return 0;
   }
   return 0;
 }
