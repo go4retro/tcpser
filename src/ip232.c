@@ -112,7 +112,7 @@ int ip232_set_control_lines(dce_config *cfg, int state) {
   dcd = (state & DCE_CL_DCD) ? TRUE : FALSE;
   ri = (state & DCE_CL_RI) ? TRUE : FALSE;
   LOG(LOG_DEBUG, "ip232 control line state dcd:%x ri:%x", dcd, ri);
-  if ((dcd != cfg->ip232_dcd) || (ri != cfg->ip232_ri)){
+  if ((dcd != cfg->ip232_dcd) || (ri != cfg->ip232_ri)) {
     LOG(LOG_DEBUG, "reconfiguring virtual DCD/RI");
     cfg->ip232_dcd = dcd;
     cfg->ip232_ri = ri;
@@ -123,7 +123,6 @@ int ip232_set_control_lines(dce_config *cfg, int state) {
       write(cfg->fd, cmd, sizeof(cmd));
     }
   }
-
   return 0;
 }
 

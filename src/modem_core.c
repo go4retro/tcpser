@@ -89,7 +89,7 @@ void mdm_init_config(modem_config *cfg) {
   cfg->is_off_hook = FALSE;
   cfg->is_ringing = FALSE;
   cfg->cur_line_idx = 0;
-  cfg->rings = 0;
+  cfg->ring_ctr = 0;
 
   for(i = 0; i < sizeof(cfg->s) / sizeof(cfg->s[0]); i++) {
     cfg->s[i] = 0;
@@ -121,7 +121,6 @@ void mdm_init_config(modem_config *cfg) {
   cfg->dsr_active = FALSE;
   cfg->force_dsr = TRUE;
   cfg->force_dcd = FALSE;
-  cfg->handle_ri = FALSE;
   cfg->first_ch = 0;
   cfg->is_cmd_started = FALSE;
   cfg->allow_transmit = TRUE;
@@ -151,13 +150,7 @@ int get_new_dcd_state(modem_config *cfg, int up) {
 }
 
 int get_new_ri_state(modem_config *cfg, int up) {
-  if(cfg->handle_ri) {
-    if(cfg->is_ringing && ((cfg->rings & 1) == 0)) {
-      return DCE_CL_RI;
-    }
-    return 0;
-  }
-  return 0;
+  return (cfg->is_ringing && (cfg->ring_ctr == 0) ? DCE_CL_RI : 0);
 }
 
 int mdm_set_control_lines(modem_config *cfg) {
@@ -313,7 +306,7 @@ int mdm_disconnect(modem_config* cfg, unsigned char force) {
       mdm_send_response(MDM_RESP_OK, cfg);
       usleep(cfg->disconnect_delay * 1000);
     }
-    cfg->rings = 0;
+    cfg->s[S_REG_RING_COUNT] = 0;
     mdm_listen(cfg);
   }
   LOG_EXIT();
@@ -659,16 +652,11 @@ int mdm_handle_timeout(modem_config *cfg) {
 int mdm_send_ring(modem_config *cfg) {
   LOG(LOG_DEBUG, "Sending 'RING' to modem");
   cfg->is_ringing = TRUE;
-  mdm_set_control_lines(cfg);
-  if ((cfg->rings & 1) == 0) {
-    mdm_send_response(MDM_RESP_RING, cfg);
-  }
-  cfg->rings++;
-  if ((cfg->rings & 1) == 0) {
-    LOG(LOG_ALL,"Sent #%d ring", cfg->rings / 2);
-    if(cfg->is_cmd_mode == FALSE || (cfg->s[S_REG_RINGS] != 0 && (cfg->rings / 2) >= cfg->s[S_REG_RINGS])) {
-        mdm_answer(cfg);
-    }
+  mdm_send_response(MDM_RESP_RING, cfg);
+  cfg->s[S_REG_RING_COUNT]++;
+  LOG(LOG_ALL,"Sent #%d ring", cfg->s[S_REG_RING_COUNT]);
+  if(cfg->is_cmd_mode == FALSE || (cfg->s[S_REG_RINGS] != 0 && cfg->s[S_REG_RING_COUNT] >= cfg->s[S_REG_RINGS])) {
+    mdm_answer(cfg);
   }
   return 0;
 }

@@ -49,6 +49,7 @@ typedef struct x_config {
 
 enum {
   S_REG_RINGS = 0,
+  S_REG_RING_COUNT = 1,
   S_REG_BREAK = 2,
   S_REG_CR = 3,
   S_REG_LF = 4,
@@ -60,7 +61,8 @@ enum {
   S_REG_CARRIER_LOSS = 10,
   S_REG_DTMF_TIME = 11,
   S_REG_GUARD_TIME = 12,
-  S_REG_INACTIVITY_TIME = 30
+  S_REG_INACTIVITY_TIME = 30,
+  S_REG_MAX_ARRAY_SIZE
 };
 
 typedef struct modem_config {
@@ -87,12 +89,11 @@ typedef struct modem_config {
   int dsr_active;
   int force_dsr;
   int force_dcd;
-  int handle_ri;
   int invert_dsr;
   int invert_dcd;
   int allow_transmit;
   int is_binary_negotiated;
-  int rings;
+  int ring_ctr;
   // command information
   int pre_break_delay;
   unsigned char first_ch;
@@ -113,7 +114,7 @@ typedef struct modem_config {
   int send_responses;
   int text_responses;
   int is_echo;
-  int s[100];
+  int s[S_REG_MAX_ARRAY_SIZE];
   int break_len;
   int disconnect_delay;
   char crlf[3];
@@ -124,6 +125,7 @@ void mdm_init_config(modem_config *cfg);
 int get_new_cts_state(modem_config *cfg, int up);
 int get_new_dsr_state(modem_config *cfg, int up);
 int get_new_dcd_state(modem_config *cfg, int up);
+int get_new_ri_state(modem_config *cfg, int up);
 int mdm_set_control_lines(modem_config *cfg);
 void mdm_write_char(modem_config *cfg, unsigned char data);
 void mdm_write(modem_config *cfg, unsigned char *data, int len);

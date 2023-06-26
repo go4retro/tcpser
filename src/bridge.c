@@ -27,7 +27,7 @@ int accept_connection(modem_config *cfg) {
       mdm_off_hook(cfg);
     } else {
       //line_write(cfg,(unsigned char*)CONNECT_NOTICE,strlen(CONNECT_NOTICE));
-      cfg->rings = 0;
+      cfg->ring_ctr = 0;
       mdm_send_ring(cfg);
     }
     // tell parent I got it.
@@ -355,7 +355,7 @@ void *bridge_task(void *arg) {
         timer.tv_sec = 1;   // 1 second
         timer.tv_usec = 0;
         ptimer = &timer;
-      } else if (cfg->s[30] != 0) {
+      } else if (cfg->s[S_REG_INACTIVITY_TIME] != 0) {
         LOG(LOG_ALL, "Setting timer for inactivity delay");
         timer.tv_sec = cfg->s[S_REG_INACTIVITY_TIME] * 10;
         timer.tv_usec = 0;
@@ -366,9 +366,13 @@ void *bridge_task(void *arg) {
               && cfg->line_data.is_connected == TRUE
              ) {
         LOG(LOG_ALL, "Setting timer for rings");
-        timer.tv_sec = 4;
+        timer.tv_sec = 1; // every 1 second, 4 seconds for a ring period.
         timer.tv_usec = 0;
         ptimer = &timer;
+        cfg->ring_ctr = 0;
+        cfg->s[S_REG_RING_COUNT] = 0;
+        mdm_set_control_lines(cfg);
+        mdm_send_ring(cfg);  // send the first ring.
     }
     max_fd++;
     rc = select(max_fd, &readfs, NULL, NULL, ptimer);
@@ -377,24 +381,34 @@ void *bridge_task(void *arg) {
       // handle error
     } else if(rc == 0) {
       // timer popped.
+      cfg->ring_ctr++;  // TODO ring counter should go back to 0 after 8 secs of no ringing.
+      if(cfg->ring_ctr == 4) { // every 4 cycles, do another RING
+        cfg->s[S_REG_RING_COUNT]++;
+        cfg->ring_ctr = 0;
+      }
       if(cfg->is_cmd_mode == TRUE
          && cfg->conn_type == MDM_CONN_NONE
          && cfg->line_data.is_connected == TRUE
         ) {
-        if(cfg->s[0] == 0 && (cfg->rings / 2) == 10) {
-          // not going to answer, send some data back to IP and disconnect.
-          if(strlen(cfg->no_answer) == 0) {
-            line_write(&cfg->line_data, (unsigned char *)MDM_NO_ANSWER, strlen(MDM_NO_ANSWER));
+        if(cfg->ring_ctr == 0) {
+          if(cfg->s[0] == 0 && cfg->s[S_REG_RING_COUNT] == 10) {
+            // not going to answer, send some data back to IP and disconnect.
+            if(strlen(cfg->no_answer) == 0) {
+              line_write(&cfg->line_data, (unsigned char *)MDM_NO_ANSWER, strlen(MDM_NO_ANSWER));
+            } else {
+              writeFile(cfg->no_answer, cfg->line_data.fd);
+            }
+            cfg->is_ringing = FALSE;
+            //mdm_disconnect(cfg, FALSE); // not sure need to do a disconnect here, no connection
+            //mdm_set_control_lines(cfg);  // set lines below.
           } else {
-            writeFile(cfg->no_answer, cfg->line_data.fd);
+            mdm_send_ring(cfg);
           }
-          cfg->is_ringing = FALSE;
-          //mdm_disconnect(cfg, FALSE); // not sure need to do a disconnect here, no connection
-          mdm_set_control_lines(cfg);
-        } else
-          mdm_send_ring(cfg);
-      } else 
+        }
+      } else {
         mdm_handle_timeout(cfg);
+      }
+      mdm_set_control_lines(cfg);
     }
     if (FD_ISSET(cfg->dce_data.fd, &readfs)) {  // serial port
       LOG(LOG_DEBUG, "Data available on serial port");
