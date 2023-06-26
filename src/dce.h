@@ -6,6 +6,7 @@
 #define DCE_CL_CTS 4
 #define DCE_CL_DTR 8
 #define DCE_CL_LE 16
+#define DCE_CL_RI 32
 
 /* This is a cool piece of code found by Chris Osborn (fozztexx@fozztexx.com) from
  * https://graphics.stanford.edu/~seander/bithacks.html#ParityWith64Bits  that
@@ -42,6 +43,7 @@ typedef struct dce_config {
   int ip232_dtr;
   int ip232_dcd;
   int ip232_iac;
+  int ip232_ri;
 } dce_config;
 
 void dce_init_config(dce_config *cfg);

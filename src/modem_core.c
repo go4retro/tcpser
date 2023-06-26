@@ -121,6 +121,7 @@ void mdm_init_config(modem_config *cfg) {
   cfg->dsr_active = FALSE;
   cfg->force_dsr = TRUE;
   cfg->force_dcd = FALSE;
+  cfg->handle_ri = FALSE;
   cfg->first_ch = 0;
   cfg->is_cmd_started = FALSE;
   cfg->allow_transmit = TRUE;
@@ -149,6 +150,16 @@ int get_new_dcd_state(modem_config *cfg, int up) {
   return (cfg->invert_dcd ? DCE_CL_DCD : 0);
 }
 
+int get_new_ri_state(modem_config *cfg, int up) {
+  if(cfg->handle_ri) {
+    if(cfg->is_ringing && ((cfg->rings & 1) == 0)) {
+      return DCE_CL_RI;
+    }
+    return 0;
+  }
+  return 0;
+}
+
 int mdm_set_control_lines(modem_config *cfg) {
   int state = 0;
   int up = (cfg->conn_type == MDM_CONN_NONE ? FALSE : TRUE);
@@ -156,12 +167,14 @@ int mdm_set_control_lines(modem_config *cfg) {
   state |= get_new_cts_state(cfg, up);
   state |= get_new_dsr_state(cfg, up);
   state |= get_new_dcd_state(cfg, up);
+  state |= get_new_ri_state(cfg, up);
 
   LOG(LOG_INFO, 
-      "Control Lines: DSR:%d DCD:%d CTS:%d",
+      "Control Lines: DSR:%d DCD:%d CTS:%d RI:%d",
       ((state & DCE_CL_DSR) != 0 ? 1 : 0),
       ((state & DCE_CL_DCD) != 0 ? 1 : 0),
-      ((state & DCE_CL_CTS) != 0 ? 1 : 0)
+      ((state & DCE_CL_CTS) != 0 ? 1 : 0),
+      ((state & DCE_CL_RI) != 0 ? 1 : 0)
      );
 
   dce_set_control_lines(&cfg->dce_data, state);
@@ -646,11 +659,16 @@ int mdm_handle_timeout(modem_config *cfg) {
 int mdm_send_ring(modem_config *cfg) {
   LOG(LOG_DEBUG, "Sending 'RING' to modem");
   cfg->is_ringing = TRUE;
-  mdm_send_response(MDM_RESP_RING, cfg);
+  mdm_set_control_lines(cfg);
+  if ((cfg->rings & 1) == 0) {
+    mdm_send_response(MDM_RESP_RING, cfg);
+  }
   cfg->rings++;
-  LOG(LOG_ALL,"Sent #%d ring", cfg->rings);
-  if(cfg->is_cmd_mode == FALSE || (cfg->s[S_REG_RINGS] != 0 && cfg->rings >= cfg->s[S_REG_RINGS])) {
-    mdm_answer(cfg);
+  if ((cfg->rings & 1) == 0) {
+    LOG(LOG_ALL,"Sent #%d ring", cfg->rings / 2);
+    if(cfg->is_cmd_mode == FALSE || (cfg->s[S_REG_RINGS] != 0 && (cfg->rings / 2) >= cfg->s[S_REG_RINGS])) {
+        mdm_answer(cfg);
+    }
   }
   return 0;
 }

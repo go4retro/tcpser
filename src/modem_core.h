@@ -87,6 +87,7 @@ typedef struct modem_config {
   int dsr_active;
   int force_dsr;
   int force_dcd;
+  int handle_ri;
   int invert_dsr;
   int invert_dcd;
   int allow_transmit;
