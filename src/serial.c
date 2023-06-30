@@ -1,9 +1,16 @@
 #include <sys/file.h>
 #include <unistd.h>
+#ifdef _WIN32
+#include <windows.h>
+#include "mingw-termios.h"
+#define O_NOCTTY 0
+#define O_NONBLOCK 0
+#else
 #include <termios.h>
+#include <sys/ioctl.h>
+#endif
 #include <stdio.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
 #include "dce.h"
 #include "debug.h"
 
