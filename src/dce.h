@@ -25,10 +25,10 @@
 #endif
 
 enum {
-  PARITY_SPACE_NONE = 0,
-  PARITY_ODD,
-  PARITY_EVEN,
-  PARITY_MARK
+  PAR_SPACE_ONE = 0,
+  PAR_ODD,
+  PAR_EVEN,
+  PAR_MARK
 };
 
 typedef struct dce_config {
