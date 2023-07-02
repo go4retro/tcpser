@@ -119,7 +119,7 @@ int ip232_set_control_lines(dce_config *cfg, int state) {
     if (cfg->is_connected) {
       LOG(LOG_DEBUG, "Sending data");
       cmd[0] = 255;
-      cmd[1] = (dcd ? 1 : 0) | (ri ? 2 : 0);
+      cmd[1] = (dcd ? IP232_DCD : 0) | (ri ? IP232_RI : 0);
       write(cfg->fd, cmd, sizeof(cmd));
     }
   }

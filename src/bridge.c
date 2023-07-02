@@ -28,7 +28,9 @@ int accept_connection(modem_config *cfg) {
     } else {
       //line_write(cfg,(unsigned char*)CONNECT_NOTICE,strlen(CONNECT_NOTICE));
       cfg->ring_ctr = 0;
-      mdm_send_ring(cfg);
+      cfg->s[S_REG_RING_COUNT] = 0;
+      mdm_set_control_lines(cfg);
+      mdm_send_ring(cfg);  // send the first RING
     }
     // tell parent I got it.
     LOG(LOG_DEBUG, "Informing parent task that I am busy");
@@ -361,18 +363,17 @@ void *bridge_task(void *arg) {
         timer.tv_usec = 0;
         ptimer = &timer;
       }
-    } else if(cfg->is_cmd_mode == TRUE
+    } else if(cfg->is_ringing == TRUE // TODO Not sure how we can be ringing with a connection or a lack of IP connection, but leaving in for now.
               && cfg->conn_type == MDM_CONN_NONE
               && cfg->line_data.is_connected == TRUE
              ) {
         LOG(LOG_ALL, "Setting timer for rings");
-        timer.tv_sec = 1; // every 1 second, 4 seconds for a ring period.
+        if(cfg->ring_ctr)
+          timer.tv_sec = 3;   // 3 seconds until next RING send
+        else
+          timer.tv_sec = 1;   // 1 second for RI to be high
         timer.tv_usec = 0;
         ptimer = &timer;
-        cfg->ring_ctr = 0;
-        cfg->s[S_REG_RING_COUNT] = 0;
-        mdm_set_control_lines(cfg);
-        mdm_send_ring(cfg);  // send the first ring.
     }
     max_fd++;
     rc = select(max_fd, &readfs, NULL, NULL, ptimer);
@@ -381,16 +382,13 @@ void *bridge_task(void *arg) {
       // handle error
     } else if(rc == 0) {
       // timer popped.
-      cfg->ring_ctr++;  // TODO ring counter should go back to 0 after 8 secs of no ringing.
-      if(cfg->ring_ctr == 4) { // every 4 cycles, do another RING
-        cfg->s[S_REG_RING_COUNT]++;
-        cfg->ring_ctr = 0;
-      }
+      // TODO ring counter should go back to 0 after 8 secs of no ringing.
+      cfg->ring_ctr = 1 - cfg->ring_ctr;
       if(cfg->is_cmd_mode == TRUE
          && cfg->conn_type == MDM_CONN_NONE
          && cfg->line_data.is_connected == TRUE
         ) {
-        if(cfg->ring_ctr == 0) {
+        if(0 == cfg->ring_ctr) {
           if(cfg->s[0] == 0 && cfg->s[S_REG_RING_COUNT] == 10) {
             // not going to answer, send some data back to IP and disconnect.
             if(strlen(cfg->no_answer) == 0) {
@@ -399,8 +397,12 @@ void *bridge_task(void *arg) {
               writeFile(cfg->no_answer, cfg->line_data.fd);
             }
             cfg->is_ringing = FALSE;
+            if(cfg->direct_conn) {
+              LOG(LOG_INFO, "Direct connection active, maintaining link");
+            } else {
+              line_disconnect(&cfg->line_data);
+            }
             //mdm_disconnect(cfg, FALSE); // not sure need to do a disconnect here, no connection
-            //mdm_set_control_lines(cfg);  // set lines below.
           } else {
             mdm_send_ring(cfg);
           }

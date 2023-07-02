@@ -6,6 +6,12 @@
 #define FALSE 0
 #endif
 
+typedef enum {
+  IP232_DCD = 1,
+  IP232_RI = 2,
+  IP232_DTR = 4
+} ip232_flags;
+
 #define MSG_CALLING '+'
 #define MSG_BUSY '+'
 
