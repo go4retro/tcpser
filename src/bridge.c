@@ -29,7 +29,6 @@ int accept_connection(modem_config *cfg) {
       //line_write(cfg,(unsigned char*)CONNECT_NOTICE,strlen(CONNECT_NOTICE));
       cfg->ring_ctr = 0;
       cfg->s[S_REG_RING_COUNT] = 0;
-      mdm_set_control_lines(cfg);
       mdm_send_ring(cfg);  // send the first RING
     }
     // tell parent I got it.

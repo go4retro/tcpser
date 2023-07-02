@@ -1,7 +1,7 @@
 SRC=src
 SRCS = $(SRC)/ip232test.c $(SRC)/debug.c $(SRC)/ip.c $(SRC)/util.c $(SRC)/ip232.c $(SRC)/dce.c $(SRC)/serial.c
 OBJS = $(SRC)/ip232test.o $(SRC)/debug.o $(SRC)/ip.o $(SRC)/util.o $(SRC)/ip232.o $(SRC)/dce.o $(SRC)/serial.o
-CC = gcc
+CC ?= gcc
 DEF = 
 CFLAGS = -O $(DEF) -Wall
 LDFLAGS = -lpthread
@@ -22,7 +22,7 @@ depend: $(SRCS)
 	$(DEPEND) $(SRCS)
 
 clean:
-	-rm ip232test *.bak $(SRC)/*~ $(SRC)/*.o $(SRC)/*.bak core
+	$(RM) ip232test *.bak $(SRC)/*~ $(SRC)/*.o $(SRC)/*.bak core
 
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

@@ -652,6 +652,7 @@ int mdm_handle_timeout(modem_config *cfg) {
 int mdm_send_ring(modem_config *cfg) {
   LOG(LOG_DEBUG, "Sending 'RING' to modem");
   cfg->is_ringing = TRUE;
+  mdm_set_control_lines(cfg);
   mdm_send_response(MDM_RESP_RING, cfg);
   cfg->s[S_REG_RING_COUNT]++;
   LOG(LOG_ALL,"Sent #%d ring", cfg->s[S_REG_RING_COUNT]);
