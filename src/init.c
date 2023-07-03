@@ -8,7 +8,7 @@
 
 void print_help(char* name) {
   fprintf(stderr, "Usage: %s <parameters>\n", name);
-  fprintf(stderr, "  -p   tcp port (or address:port) to listen on (defaults to 6400)\n");
+  fprintf(stderr, "  -p   [ip address:]tcp port to listen on (defaults to 6400)\n");
   fprintf(stderr, "  -t   trace flags: (can be combined)\n");
   fprintf(stderr, "       'm' = modem input\n");
   fprintf(stderr, "       'M' = modem output\n");
@@ -18,12 +18,14 @@ void print_help(char* name) {
   fprintf(stderr, "       'I' = IP output\n");
   fprintf(stderr, "  -l   0 (NONE), 1 (FATAL) - 7 (DEBUG_X) (defaults to 0)\n");
   fprintf(stderr, "  -L   log file (defaults to stderr)\n");
+  fprintf(stderr, "  -V   print version number\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  The following can be repeated for each modem desired\n");
-  fprintf(stderr, "  (-s, -S, and -i will apply to any subsequent device if not set again)\n");
+  fprintf(stderr, "  (all except -d and -v will apply to any subsequent modem if not set again)\n");
   fprintf(stderr, "\n");
-  fprintf(stderr, "  -d   serial device (e.g. /dev/ttyS0). Cannot be used with -v\n");
-  fprintf(stderr, "  -v   tcp port (or address:port) for virtual RS232. Cannot be used with -d\n");
+  fprintf(stderr, "  -d   serial device (e.g. /dev/ttyS0)\n");
+  fprintf(stderr, "  -v   [ip address:]tcp port (or '-' for STDIN/OUT) for virtual RS232\n");
+  fprintf(stderr, "       Only 1 of -d or -v can be used per modem definition\n");
   fprintf(stderr, "  -s   serial port speed (defaults to 38400)\n");
   fprintf(stderr, "  -S   speed modem will report (defaults to -s value)\n");
   fprintf(stderr, "  -I   invert DCD pin\n");
@@ -37,7 +39,6 @@ void print_help(char* name) {
   fprintf(stderr, "  -T   filename to send upon inactivity timeout\n");
   fprintf(stderr, "  -i   modem init string (defaults to '', leave off 'at' prefix when specifying)\n");
   fprintf(stderr, "  -D   direct connection (follow with hostname:port for caller, : for receiver)\n");
-  fprintf(stderr, "  -V   print version number\n");
   exit(0);
 }
 
