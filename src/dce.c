@@ -38,7 +38,8 @@ int dce_connect(dce_config *cfg) {
     rc = ser_init_conn(cfg->tty, cfg->port_speed);
     if(-1 < rc) {
       cfg->is_connected = TRUE;
-      cfg->fd = rc;
+      cfg->ofd = rc;
+      cfg->ifd = rc;
     }
   }
 
@@ -67,7 +68,7 @@ int dce_set_flow_control(dce_config *cfg, int opts) {
   if (cfg->is_ip232) {
     rc = ip232_set_flow_control(cfg, status);
   } else {
-    rc = ser_set_flow_control(cfg->fd, status);
+    rc = ser_set_flow_control(cfg->ofd, status);
   }
 
   LOG_EXIT()
@@ -98,7 +99,7 @@ int dce_set_control_lines(dce_config *cfg, int state) {
   if (cfg->is_ip232) {
     rc = ip232_set_control_lines(cfg, state);
   } else {
-    rc = ser_set_control_lines(cfg->fd, state);
+    rc = ser_set_control_lines(cfg->ofd, state);
   }
 
   LOG_EXIT();
@@ -111,7 +112,7 @@ int dce_get_control_lines(dce_config *cfg) {
   if (cfg->is_ip232) {
     state = ip232_get_control_lines(cfg);
   } else {
-    state = ser_get_control_lines(cfg->fd);
+    state = ser_get_control_lines(cfg->ifd);
   }
   return state;
 }
@@ -152,7 +153,7 @@ int dce_write(dce_config *cfg, unsigned char data[], int len) {
   } else {
     buf = data;
   }
-  rc = ser_write(cfg->fd, buf, len);
+  rc = ser_write(cfg->ofd, buf, len);
   if(cfg->parity)
     free(buf);
   return rc;
@@ -165,7 +166,7 @@ int dce_write_char_raw(dce_config *cfg, unsigned char data) {
   if (cfg->is_ip232) {
     rc = ip232_write(cfg, &data, 1);
   } else {
-    rc = ser_write(cfg->fd, &data, 1);
+    rc = ser_write(cfg->ofd, &data, 1);
   }
   return rc;
 }
@@ -177,7 +178,7 @@ int dce_read(dce_config *cfg, unsigned char data[], int len) {
   if (cfg->is_ip232) {
     res = ip232_read(cfg, data, len);
   } else {
-    res = ser_read(cfg->fd, data, len);
+    res = ser_read(cfg->ifd, data, len);
   }
   if(0 < res) {
     LOG(LOG_DEBUG, "Read %d bytes from serial port", res);
@@ -198,7 +199,7 @@ int dce_read_char_raw(dce_config *cfg) {
   if (cfg->is_ip232) {
     res = ip232_read(cfg, data, 1);
   } else {
-    res = ser_read(cfg->fd, data, 1);
+    res = ser_read(cfg->ifd, data, 1);
   }
   if(0 < res) {
     res = data[0];

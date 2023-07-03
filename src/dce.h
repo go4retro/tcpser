@@ -36,7 +36,8 @@ typedef struct dce_config {
   int parity;
   int is_ip232;
   char tty[256];
-  int fd;
+  int ifd;
+  int ofd;
   int dp[2][2];
   int sSocket;
   int is_connected;

@@ -36,8 +36,8 @@ void *ip_thread(void *arg) {
   LOG_ENTER();
   while(TRUE) {
     FD_ZERO(&readfs);
-    FD_SET(data->fd, &readfs);
-    max_fd=MAX(max_fd, data->fd);
+    FD_SET(data->ifd, &readfs);
+    max_fd=MAX(max_fd, data->ifd);
     max_fd++;
     rc = select(max_fd, &readfs, NULL, NULL, NULL);
     if(rc == -1) {
@@ -45,7 +45,7 @@ void *ip_thread(void *arg) {
       exit(-1);
     } else {
       // we got data
-      if (FD_ISSET(data->fd, &readfs)) {  // socket
+      if (FD_ISSET(data->ifd, &readfs)) {  // socket
         LOG(LOG_DEBUG, "Data available on socket");
         res = dce_read(data, buf, sizeof(buf));
         LOG(LOG_DEBUG, "Read %d bytes from socket", res);
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
   dce_config data;
 
   char address[] = "localhost:25232";
-  unsigned char text[] = "atdtdilbert\x0d";
+  //unsigned char text[] = "atdtdilbert\x0d";
 
   log_init();
   dce_init_config(&data);
@@ -84,8 +84,9 @@ int main(int argc, char *argv[]) {
   log_set_level(LOG_ALL);
   log_set_trace_flags(255);
 
-  data.fd = ip_connect(address);
-  if(data.fd > -1) {
+  data.ofd = ip_connect(address);
+  if(data.ofd > -1) {
+    data.ifd = data.ofd;
     data.is_connected = TRUE;
     spawn_thread(ip_thread, (void *)&data, "IP");
     //dce_write(&data, text, strlen((char *)text));

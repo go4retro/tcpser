@@ -131,36 +131,35 @@ void mdm_init_config(modem_config *cfg) {
   line_init_config(&cfg->line_data);
 }
 
-int get_new_cts_state(modem_config *cfg, int up) {
+static int get_new_cts_state(modem_config *cfg) {
   return DCE_CL_CTS;
 }
 
-int get_new_dsr_state(modem_config *cfg, int up) {
-  if(cfg->force_dsr || up) {
+static int get_new_dsr_state(modem_config *cfg) {
+  if(cfg->force_dsr || (cfg->conn_type != MDM_CONN_NONE)) {
     return (cfg->invert_dsr ? 0 : DCE_CL_DSR);
   }
   return (cfg->invert_dsr ? DCE_CL_DSR : 0);
 }
 
-int get_new_dcd_state(modem_config *cfg, int up) {
-  if(cfg->force_dcd || up) {
+static int get_new_dcd_state(modem_config *cfg) {
+  if(cfg->force_dcd || (cfg->conn_type != MDM_CONN_NONE)) {
     return (cfg->invert_dcd ? 0 : DCE_CL_DCD);
   }
   return (cfg->invert_dcd ? DCE_CL_DCD : 0);
 }
 
-int get_new_ri_state(modem_config *cfg, int up) {
+static int get_new_ri_state(modem_config *cfg) {
   return (cfg->is_ringing && (cfg->ring_ctr == 0) ? DCE_CL_RI : 0);
 }
 
 int mdm_set_control_lines(modem_config *cfg) {
   int state = 0;
-  int up = (cfg->conn_type == MDM_CONN_NONE ? FALSE : TRUE);
 
-  state |= get_new_cts_state(cfg, up);
-  state |= get_new_dsr_state(cfg, up);
-  state |= get_new_dcd_state(cfg, up);
-  state |= get_new_ri_state(cfg, up);
+  state |= get_new_cts_state(cfg);
+  state |= get_new_dsr_state(cfg);
+  state |= get_new_dcd_state(cfg);
+  state |= get_new_ri_state(cfg);
 
   LOG(LOG_INFO, 
       "Control Lines: DSR:%d DCD:%d CTS:%d RI:%d",
@@ -221,7 +220,7 @@ int mdm_print_speed(modem_config *cfg) {
   return 0;
 }
 
-void off_hook(modem_config *cfg) {
+static void off_hook(modem_config *cfg) {
   LOG(LOG_INFO, "taking modem off hook");
   cfg->is_off_hook = TRUE;
   line_off_hook(&cfg->line_data);

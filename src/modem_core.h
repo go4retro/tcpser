@@ -31,9 +31,11 @@ typedef enum {
 #define MDM_FC_RTS 1
 #define MDM_FC_XON 2
 
-#define MDM_CONN_NONE 0
-#define MDM_CONN_OUTGOING 1
-#define MDM_CONN_INCOMING 2
+typedef enum {
+  MDM_CONN_NONE = 0,
+  MDM_CONN_OUTGOING = 1,
+  MDM_CONN_INCOMING = 2
+} conn_type;
 
 #ifndef TRUE
 #define TRUE 1
@@ -122,10 +124,6 @@ typedef struct modem_config {
 
 void mdm_init(void);
 void mdm_init_config(modem_config *cfg);
-int get_new_cts_state(modem_config *cfg, int up);
-int get_new_dsr_state(modem_config *cfg, int up);
-int get_new_dcd_state(modem_config *cfg, int up);
-int get_new_ri_state(modem_config *cfg, int up);
 int mdm_set_control_lines(modem_config *cfg);
 void mdm_write_char(modem_config *cfg, unsigned char data);
 void mdm_write(modem_config *cfg, unsigned char *data, int len);

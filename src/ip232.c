@@ -51,7 +51,8 @@ void *ip232_thread(void *arg) {
           }
         } else {
           if(rc > -1) {
-            cfg->fd = rc;
+            cfg->ofd = rc;
+            cfg->ifd = rc;
             cfg->is_connected = TRUE;
             cfg->ip232_dtr = FALSE;
             cfg->ip232_dcd = FALSE;
@@ -68,25 +69,33 @@ int ip232_init_conn(dce_config *cfg) {
 
   LOG_ENTER();
   LOG(LOG_INFO, "Opening ip232 device");
-  rc = ip_init_server_conn(cfg->tty, 25232);
+  if(cfg->tty[0] == '-') { // use STDIN/STDOUT
+    cfg->ofd = STDOUT_FILENO;
+    cfg->ifd = STDIN_FILENO;
+    cfg->is_connected = TRUE;
+    cfg->ip232_dtr = FALSE;
+    cfg->ip232_dcd = FALSE;
+  } else {
+    rc = ip_init_server_conn(cfg->tty, 25232);
 
-  if (rc < 0) {
-    ELOG(LOG_FATAL, "Could not initialize ip232 server socket");
-    exit(-1);
-  }
-  if(-1 == pipe(cfg->dp[0])) {
-    ELOG(LOG_FATAL, "ip232 thread incoming IPC pipe could not be created");
-    exit(-1);
-  }
+    if (rc < 0) {
+      ELOG(LOG_FATAL, "Could not initialize ip232 server socket");
+      exit(-1);
+    }
+    if(-1 == pipe(cfg->dp[0])) {
+      ELOG(LOG_FATAL, "ip232 thread incoming IPC pipe could not be created");
+      exit(-1);
+    }
 
-  if(-1 == pipe(cfg->dp[1])) {
-    ELOG(LOG_FATAL, "ip232 thread outgoing IPC pipe could not be created");
-    exit(-1);
-  }
+    if(-1 == pipe(cfg->dp[1])) {
+      ELOG(LOG_FATAL, "ip232 thread outgoing IPC pipe could not be created");
+      exit(-1);
+    }
 
-  cfg->sSocket = rc;
-  cfg->is_connected = FALSE;
-  spawn_thread(ip232_thread, (void *)cfg, "IP232");
+    cfg->sSocket = rc;
+    cfg->is_connected = FALSE;
+    spawn_thread(ip232_thread, (void *)cfg, "IP232");
+  }
   LOG(LOG_INFO, "ip232 device configured");
   LOG_EXIT();
   return 0;
@@ -120,7 +129,7 @@ int ip232_set_control_lines(dce_config *cfg, int state) {
       LOG(LOG_DEBUG, "Sending data");
       cmd[0] = 255;
       cmd[1] = (dcd ? IP232_DCD : 0) | (ri ? IP232_RI : 0);
-      write(cfg->fd, cmd, sizeof(cmd));
+      write(cfg->ofd, cmd, sizeof(cmd));
     }
   }
   return 0;
@@ -151,12 +160,12 @@ int ip232_write(dce_config *cfg, unsigned char* data, int len) {
       }
 
       if(text_len == sizeof(text)) {
-        retval = write(cfg->fd, text, text_len);
+        retval = write(cfg->ofd, text, text_len);
         text_len = 0;
       }
     }
     if(text_len) {
-      retval = write(cfg->fd, text, text_len);
+      retval = write(cfg->ofd, text, text_len);
     }
   }
   return retval;
@@ -177,10 +186,10 @@ int ip232_read(dce_config *cfg, unsigned char *data, int len) {
   }
 
   if (cfg->is_connected) {
-    res = recv(cfg->fd, buf, len, 0);
+    res = recv(cfg->ifd, buf, len, 0);
     if (0 >= res) {
       LOG(LOG_INFO, "No ip232 socket data read, assume closed peer");
-      ip_disconnect(cfg->fd);
+      ip_disconnect(cfg->ofd);
       cfg->is_connected = FALSE;
     } else {
       LOG(LOG_DEBUG, "Read %d bytes from ip232 socket", res);

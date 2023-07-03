@@ -179,8 +179,7 @@ int init(int argc,
         break;
       case 'V':
         printf("%s (TCPSER) %s\n", argv[0], VERSION);
-        printf("Copyright (C) 2020 Jim Brain (tcpser@jbrain.com)\n");
-        //printf("%s (TCPSER) %s\n", argv[0], "1.1.rc2");
+        printf("Copyright (C) 2004-%s Jim Brain (tcpser@jbrain.com)\n", __DATE__ + 7);
         exit(0);
         break;
     }
