@@ -18,6 +18,7 @@ void print_help(char* name) {
   fprintf(stderr, "       'I' = IP output\n");
   fprintf(stderr, "  -l   0 (NONE), 1 (FATAL) - 7 (DEBUG_X) (defaults to 0)\n");
   fprintf(stderr, "  -L   log file (defaults to stderr)\n");
+  fprintf(stderr, "  -n   add phone entry (number=replacement)\n");
   fprintf(stderr, "  -V   print version number\n");
   fprintf(stderr, "\n");
   fprintf(stderr, "  The following can be repeated for each modem desired\n");
@@ -29,7 +30,6 @@ void print_help(char* name) {
   fprintf(stderr, "  -s   serial port speed (defaults to 38400)\n");
   fprintf(stderr, "  -S   speed modem will report (defaults to -s value)\n");
   fprintf(stderr, "  -I   invert DCD pin\n");
-  fprintf(stderr, "  -n   add phone entry (number=replacement)\n");
   fprintf(stderr, "  -a   filename to send to local side upon answer\n");
   fprintf(stderr, "  -A   filename to send to remote side upon answer\n");
   fprintf(stderr, "  -c   filename to send to local side upon connect\n");

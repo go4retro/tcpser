@@ -2,29 +2,29 @@
 #define MODEM_CORE_H 1
 
 typedef enum {
-  MDM_RESP_OK =             0,
-  MDM_RESP_CONNECT =        1,
-  MDM_RESP_RING =           2,
-  MDM_RESP_NO_CARRIER =     3,
-  MDM_RESP_ERROR =          4,
-  MDM_RESP_CONNECT_1200 =   5,
-  MDM_RESP_NO_DIALTONE =    6,
-  MDM_RESP_BUSY =           7,
-  MDM_RESP_NO_ANSWER =      8,
-  MDM_RESP_CONNECT_0600 =   9,
-  MDM_RESP_CONNECT_2400 =   10,
-  MDM_RESP_CONNECT_4800 =   11,
-  MDM_RESP_CONNECT_9600 =   12,
-  MDM_RESP_CONNECT_7200 =   13,
-  MDM_RESP_CONNECT_12000 =  14,
-  MDM_RESP_CONNECT_14400 =  15,
-  MDM_RESP_CONNECT_19200 =  16,
-  MDM_RESP_CONNECT_38400 =  17,
-  MDM_RESP_CONNECT_57600 =  18,
-  MDM_RESP_CONNECT_115200 = 19,
-  MDM_RESP_CONNECT_230400 = 20,
-  MDM_RESP_CONNECT_460800 = 21,
-  MDM_RESP_CONNECT_921600 = 22,
+  MDM_RESP_OK =             0,  // Common code
+  MDM_RESP_CONNECT =        1,  // Common code
+  MDM_RESP_RING =           2,  // Common code
+  MDM_RESP_NO_CARRIER =     3,  // Common code
+  MDM_RESP_ERROR =          4,  // Common code
+  MDM_RESP_CONNECT_1200 =   5,  // Common code
+  MDM_RESP_NO_DIALTONE =    6,  // Common code
+  MDM_RESP_BUSY =           7,  // Common code
+  MDM_RESP_NO_ANSWER =      8,  // Common code
+  MDM_RESP_CONNECT_0600 =   9,  // does not appear to be a Hayes code
+  MDM_RESP_CONNECT_2400 =   10, // Common code
+  MDM_RESP_CONNECT_4800 =   11, // Common code
+  MDM_RESP_CONNECT_9600 =   12, // Common code
+  MDM_RESP_CONNECT_14400 =  13, // Hayes code
+  MDM_RESP_CONNECT_19200 =  14, // Hayes code
+  MDM_RESP_CONNECT_57600 =  18, // Conexant code
+  MDM_RESP_CONNECT_115200 = 19, // Conexant code
+  MDM_RESP_CONNECT_230400 = 20, // Conexant code
+  MDM_RESP_CONNECT_460800 = 21, // Conexant code
+  MDM_RESP_CONNECT_921600 = 22, // Conexant code
+  MDM_RESP_CONNECT_7200 =   24, // Hayes code
+  MDM_RESP_CONNECT_12000 =  25, // Hayes code
+  MDM_RESP_CONNECT_38400 =  28, // Hayes code
   MDM_RESP_END_OF_LIST
 } modem_response;
 
