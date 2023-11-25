@@ -11,7 +11,7 @@ typedef enum {
   MDM_RESP_NO_DIALTONE =    6,  // Common code
   MDM_RESP_BUSY =           7,  // Common code
   MDM_RESP_NO_ANSWER =      8,  // Common code
-  MDM_RESP_CONNECT_0600 =   9,  // does not appear to be a Hayes code
+  MDM_RESP_CONNECT_0600 =   9,  // Conexant code
   MDM_RESP_CONNECT_2400 =   10, // Common code
   MDM_RESP_CONNECT_4800 =   11, // Common code
   MDM_RESP_CONNECT_9600 =   12, // Common code

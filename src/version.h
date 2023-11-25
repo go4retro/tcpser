@@ -3,7 +3,7 @@
 
 #define VER_MAJOR         1
 #define VER_MINOR         1
-#define VER_PATCH         5
+#define VER_PATCH         6
 #define VER_FIX           _beta
 
 #ifdef VER_FIX
