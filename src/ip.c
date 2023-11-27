@@ -1,8 +1,13 @@
 #include <sys/types.h>
+#ifdef _WIN32
+#include <windows.h>
+typedef int socklen_t;
+#else
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#endif
 #include <unistd.h>       // for read...
 #include <stdlib.h>       // for atoi...
 

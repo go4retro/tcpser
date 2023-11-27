@@ -1,6 +1,10 @@
 #include <stdio.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <sys/socket.h>   // for recv...
+#endif
 #include <unistd.h>       // for read...
 #include <stdlib.h>       // for exit...
 #include <sys/param.h>

@@ -21,9 +21,9 @@ int detect_parity (int charA, int charT) {
 
   if((parity == 1) || (parity == 2)) {
     if(parity == eobits)
-      return PARITY_EVEN;
+      return PAR_EVEN;
     else
-      return PARITY_ODD;
+      return PAR_ODD;
   } else
       return parity;
 }
